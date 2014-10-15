@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import jp.ac.titech.cs.se.sparesort.SequenceDatabase;
 
 /**
@@ -30,9 +31,14 @@ public class FilteringBlock {
     }
 
     // According to routine by David Lo's Thesis, Figure 5.4
-    private List<AssociationRule> generateRules(List<String> closedSequentialPatterns, double conf) {
+    private List<AssociationRule> generateRules(List<Sequence> closed,
+            double conf) {
         List<AssociationRule> rules = null;
 
+        List<List<String>> closedSequences = closed.stream().map(Sequence::getEvents).collect(Collectors.toList());
+        
+        TrieTree trie = new TrieTree(closedSequences);
+        
         return rules;
     }
 
