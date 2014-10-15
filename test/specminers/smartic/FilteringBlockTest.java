@@ -22,14 +22,9 @@ public class FilteringBlockTest {
      * Test of getFilteredTraces method, of class FilteringBlock.
      */
     @Test
-    public void testGetFilteredTraces() {
-        System.out.println("getFilteredTraces");
-        FilteringBlock instance = null;
-        Iterable<String> expResult = null;
-        Iterable<String> result = instance.getFilteredTraces();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testPrefixTree(){
+        System.out.println("testPrefixTree");
+        
     }
     
 }
