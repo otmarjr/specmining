@@ -7,6 +7,8 @@ package specminers.smartic;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -54,14 +56,19 @@ public class TrieTreeTest {
         t6.addEvent("metA");
         traces.add(t6);
         
-        TrieTree tree = new TrieTree(traces);
+        List<List<String>> sequences = null;
+        sequences = traces.stream().map(Trace::getEvents).collect(Collectors.toList());
+        TrieTree tree = new TrieTree(sequences);
         
-        assertTrue(tree.containsTrace(t1));
-        assertTrue(tree.containsTrace(t2));
-        assertTrue(tree.containsTrace(t3));
-        assertTrue(tree.containsTrace(t4));
-        assertTrue(tree.containsTrace(t5));
-        assertTrue(tree.containsTrace(t6));
+        
+        assertTrue(tree.containsSequence(t1.getEvents(), true));
+        assertTrue(tree.containsSequence(t2.getEvents(), true));
+        assertTrue(tree.containsSequence(t3.getEvents(), true));
+        assertTrue(tree.containsSequence(t4.getEvents(), true));
+        assertTrue(tree.containsSequence(t5.getEvents(), true));
+        assertTrue(tree.containsSequence(t6.getEvents(), true));
+        
+        
     }
 
 }

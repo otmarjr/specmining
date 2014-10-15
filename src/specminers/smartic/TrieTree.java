@@ -30,21 +30,21 @@ public class TrieTree {
 
     private final String PREDEFINED_ROOT_NAME = "root";
     
-    private List<Trace> traces;
+    private List<List<String>> sequences;
     Map<String, Map<String, String>> stateTransitions;
     Set<String> finalStates;
     DeterministicFiniteAutomaton<String, String> automaton;
 
-    public TrieTree(List<Trace> traces) {
-        this.traces = traces;
+    public TrieTree(List<List<String>> sequences) {
+        this.sequences = sequences;
         this.buildTree();
     }
 
     private Set<String> getAlphabet() {
         Set<String> alphabet = new HashSet<>();
 
-        for (Trace t : this.traces) {
-            for (String w : t.getEvents()) {
+        for (List<String> t : this.sequences) {
+            for (String w : t) {
                 alphabet.add(w);
             }
         }
@@ -60,9 +60,18 @@ public class TrieTree {
         
     }
 
-    public Boolean containsTrace(Trace trace){
+    public Boolean containsSequence(List<String> sequence, Boolean verbose){
         try {
-            return this.automaton.accepts(new BasicWord<String>(trace.getEvents()));
+            BasicWord<String> input = new BasicWord<>(sequence);
+            
+            if (verbose){
+                System.out.println();
+                List<String> path = this.automaton.getPath(input);
+                path.stream().forEach(p -> System.out.print("->" + p));
+            }
+            
+            return this.automaton.accepts(input);
+            
         } catch (FAException ex) {
             Logger.getLogger(TrieTree.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -78,12 +87,12 @@ public class TrieTree {
 
         this.finalStates = new HashSet<>();
 
-        for (Trace trace : traces) {
+        for (List<String> sequence : sequences) {
             previousState = PREDEFINED_ROOT_NAME;
 
             int eventIndex = 0;
 
-            for (String event : trace.getEvents()) {
+            for (String event : sequence) {
                 Map<String, String> trans = stateTransitions.get(previousState);
 
                 if (!trans.containsKey(event)) {
@@ -97,7 +106,7 @@ public class TrieTree {
                     previousState = trans.get(event);
                 }
 
-                if (eventIndex == trace.getEvents().size() - 1) {
+                if (eventIndex == sequence.size() - 1) {
                     finalStates.add(previousState);
                 }
 
@@ -142,6 +151,7 @@ public class TrieTree {
         } catch (FABuilderException ex) {
             Logger.getLogger(TrieTree.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
     }
 
 }
