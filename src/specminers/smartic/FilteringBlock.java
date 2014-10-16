@@ -36,8 +36,8 @@ public class FilteringBlock {
         List<AssociationRule> rules = null;
 
         List<List<String>> closedSequences = closed.stream().map(Sequence::getEvents).collect(Collectors.toList());
-        
-        TrieTree trie = new TrieTree(closedSequences);
+        Map<List<String>, Integer> counts = closed.stream().collect(Collectors.toMap(s -> s.getEvents(), s -> s.getCount()));
+        TrieTree trie = new TrieTree(closedSequences, counts);
         
         return rules;
     }
@@ -56,7 +56,7 @@ public class FilteringBlock {
         Map<Sequence, Integer> ClosedCount = new HashMap<>();
 
         for (List<String> events : closedSeqs.keySet()) {
-            Sequence seq = new Sequence(events);
+            Sequence seq = new Sequence(events, closedSeqs.get(events));
             Closed.add(seq);
             ClosedCount.put(seq, closedSeqs.get(events));
         }

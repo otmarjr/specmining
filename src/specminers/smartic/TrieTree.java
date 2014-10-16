@@ -13,14 +13,18 @@ import com.tecacet.math.fsm.DeterministicFiniteAutomaton;
 import com.tecacet.math.fsm.FABuilderException;
 import com.tecacet.math.fsm.FAException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -28,26 +32,58 @@ import java.util.logging.Logger;
  */
 public class TrieTree {
 
+    private class Transition
+    {
+        public String fromState;
+        public String targetState;
+        public String transitionLabel;
+        
+        public Transition(String from, String to, String label){
+            this.fromState = from;
+            this.targetState = to;
+            this.transitionLabel = label;
+        }
+    }
+    
+    private class NodeAnnotations
+    {
+        public List<String> prefix;
+        public Sequence owner;
+        public List<String> postfix;
+        public Integer count;
+        public String event;
+    }
+    
     private final String PREDEFINED_ROOT_NAME = "root";
     
     private List<List<String>> sequences;
     Map<String, Map<String, String>> stateTransitions;
     Set<String> finalStates;
     DeterministicFiniteAutomaton<String, String> automaton;
-
-    public TrieTree(List<List<String>> sequences) {
+    List<String> allStates;
+    List<Transition> allTransitions;
+    Map<String, NodeAnnotations> stateAnnotations;
+    Map<List<String>, Integer> sequenceCounts;
+    List<Sequence> originalSequences;
+    
+    public TrieTree(List<List<String>> sequences, 
+            Map<List<String>, Integer> sequenceCounts) {
         this.sequences = sequences;
+        this.sequenceCounts = sequenceCounts;
+        this.originalSequences = sequenceCounts.keySet().stream()
+                .map(k -> new Sequence(k, sequenceCounts.get(k)))
+                .collect(Collectors.toList());
         this.buildTree();
     }
 
     private Set<String> getAlphabet() {
         Set<String> alphabet = new HashSet<>();
 
-        for (List<String> t : this.sequences) {
-            for (String w : t) {
+        this.sequences.stream().forEach((t) -> {
+            t.stream().forEach((w) -> {
                 alphabet.add(w);
-            }
-        }
+            });
+        });
 
         return alphabet;
     }
@@ -79,7 +115,8 @@ public class TrieTree {
     }
     private void convertTracesToTransitionsAndStates() {
         this.stateTransitions = new LinkedHashMap<>();
-
+        this.allStates = new LinkedList<>();
+        
         String previousState = PREDEFINED_ROOT_NAME;
 
         stateTransitions.put(previousState, new HashMap<>());
@@ -113,8 +150,117 @@ public class TrieTree {
                 eventIndex++;
             }
         }
+        
+        this.stateTransitions.keySet().stream().forEach(s -> this.allStates.add(s));
+        this.allTransitions = this.stateTransitions.keySet().stream()
+                .flatMap(k -> this.stateTransitions.get(k).keySet().stream().map(l -> new Transition(k, this.stateTransitions.get(k).get(l), l)))
+                .collect(Collectors.toList());
+        
+        
     }
 
+    Map<String, List<String>> statePrefixes;
+    
+    private List<String> getStatePrefix(String state){
+        /* According to Lo: 
+        For each node q 2 trie, q.event,and q.prefix denotes their corresponding event
+        and sequence of events from trie’s root to q
+        */
+        
+        if (statePrefixes == null){
+            this.statePrefixes = new LinkedHashMap<>();
+        }
+        
+        if (statePrefixes.containsKey(state))
+            return statePrefixes.get(state);
+        
+        List<String> prefix = new LinkedList<>();
+        
+        String currentState = state;
+        
+        
+        while(!currentState.equals(PREDEFINED_ROOT_NAME)){
+            final String currStateWorkAround = currentState;
+            Transition incomingTransition = this.allTransitions.stream()
+                    .filter(t -> t.targetState.equals(currStateWorkAround))
+                    .collect(Collectors.toList()).get(0);
+            
+            prefix.add(incomingTransition.transitionLabel);
+            
+            currentState = incomingTransition.fromState;
+        }
+        
+        Collections.reverse(prefix);
+        this.statePrefixes.put(state, prefix);
+        return prefix;
+    }
+    
+    private Map<String, Sequence> stateOwners;
+    private Sequence getOwner(String state){
+        /* According to Lo: 
+        A node’s owner, q.owner, is the closed pattern sharing prefix q.prefix 
+        that has the maximum count.
+        */
+        
+        if (stateOwners == null){
+            stateOwners = new LinkedHashMap<>();
+        }
+        
+        if (stateOwners.containsKey(state))
+            return stateOwners.get(state);
+        
+        final List<String> prefix = this.getStatePrefix(state);
+        
+        Sequence owner = this.originalSequences.stream()
+                .filter(os -> os.containsPrefix(prefix))
+                .max(Comparator.comparing(s -> s.getCount())).get();
+        
+        stateOwners.put(state, owner);
+        return owner;
+    }
+    
+    Map<String, List<String>> statePostfixes;
+    
+    private List<String> getStatePostfix(String state){
+        if (this.statePostfixes == null)
+            this.statePostfixes = new LinkedHashMap<>();
+        
+        if (this.statePostfixes.containsKey(state))
+            return this.statePostfixes.get(state);
+        
+        Sequence owner = this.getOwner(state);
+        
+        List<String> postfix = owner.getPostFix(this.getStatePrefix(state));
+        
+        this.statePostfixes.put(state, postfix);
+        
+        return postfix;
+    }
+    
+    private Integer getStateCount(String state){
+        Sequence owner = this.getOwner(state);
+        
+        return owner.getCount();
+    }
+    public void annotateNodes(){
+        this.stateAnnotations = new HashMap<>();
+        
+        
+        this.allStates.forEach(s -> {
+            NodeAnnotations na = new NodeAnnotations();
+            
+            na.event = s.indexOf('_') > 0 ? s.substring(s.indexOf('_')+1) : "";
+            na.prefix = getStatePrefix(s);
+            na.owner = getOwner(s);
+            na.postfix = getStatePostfix(s);
+            na.count = getStateCount(s);
+            
+            this.stateAnnotations.put(s, na);
+            
+        });
+        
+    }
+    
     private void buildAutomaton() {
         
         Set<String> alphabet = this.getAlphabet();
