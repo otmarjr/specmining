@@ -32,30 +32,31 @@ import java.util.stream.Collectors;
  */
 public class TrieTree {
 
-    private class Transition
-    {
+    private class Transition {
+
         public String fromState;
         public String targetState;
         public String transitionLabel;
-        
-        public Transition(String from, String to, String label){
+
+        public Transition(String from, String to, String label) {
             this.fromState = from;
             this.targetState = to;
             this.transitionLabel = label;
         }
     }
-    
-    private class NodeAnnotations
-    {
+
+    private class NodeAnnotations {
+
         public List<String> prefix;
         public Sequence owner;
         public List<String> postfix;
         public Integer count;
         public String event;
+        public List<String> children;
     }
-    
+
     private final String PREDEFINED_ROOT_NAME = "root";
-    
+
     private List<List<String>> sequences;
     Map<String, Map<String, String>> stateTransitions;
     Set<String> finalStates;
@@ -65,8 +66,8 @@ public class TrieTree {
     Map<String, NodeAnnotations> stateAnnotations;
     Map<List<String>, Integer> sequenceCounts;
     List<Sequence> originalSequences;
-    
-    public TrieTree(List<List<String>> sequences, 
+
+    public TrieTree(List<List<String>> sequences,
             Map<List<String>, Integer> sequenceCounts) {
         this.sequences = sequences;
         this.sequenceCounts = sequenceCounts;
@@ -89,34 +90,35 @@ public class TrieTree {
     }
 
     private void buildTree() {
-        
+
         this.convertTracesToTransitionsAndStates();
-        
+
         this.buildAutomaton();
-        
+
     }
 
-    public Boolean containsSequence(List<String> sequence, Boolean verbose){
+    public Boolean containsSequence(List<String> sequence, Boolean verbose) {
         try {
             BasicWord<String> input = new BasicWord<>(sequence);
-            
-            if (verbose){
+
+            if (verbose) {
                 System.out.println();
                 List<String> path = this.automaton.getPath(input);
                 path.stream().forEach(p -> System.out.print("->" + p));
             }
-            
+
             return this.automaton.accepts(input);
-            
+
         } catch (FAException ex) {
             Logger.getLogger(TrieTree.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;
     }
+
     private void convertTracesToTransitionsAndStates() {
         this.stateTransitions = new LinkedHashMap<>();
         this.allStates = new LinkedList<>();
-        
+
         String previousState = PREDEFINED_ROOT_NAME;
 
         stateTransitions.put(previousState, new HashMap<>());
@@ -150,122 +152,158 @@ public class TrieTree {
                 eventIndex++;
             }
         }
-        
+
         this.stateTransitions.keySet().stream().forEach(s -> this.allStates.add(s));
         this.allTransitions = this.stateTransitions.keySet().stream()
                 .flatMap(k -> this.stateTransitions.get(k).keySet().stream().map(l -> new Transition(k, this.stateTransitions.get(k).get(l), l)))
                 .collect(Collectors.toList());
-        
-        
+
     }
 
     Map<String, List<String>> statePrefixes;
-    
-    private List<String> getStatePrefix(String state){
+
+    private List<String> getStatePrefix(String state) {
         /* According to Lo: 
-        For each node q 2 trie, q.event,and q.prefix denotes their corresponding event
-        and sequence of events from trie’s root to q
-        */
-        
-        if (statePrefixes == null){
+         For each node q 2 trie, q.event,and q.prefix denotes their corresponding event
+         and sequence of events from trie’s root to q
+         */
+
+        if (statePrefixes == null) {
             this.statePrefixes = new LinkedHashMap<>();
         }
-        
-        if (statePrefixes.containsKey(state))
+
+        if (statePrefixes.containsKey(state)) {
             return statePrefixes.get(state);
-        
+        }
+
         List<String> prefix = new LinkedList<>();
-        
+
         String currentState = state;
-        
-        
-        while(!currentState.equals(PREDEFINED_ROOT_NAME)){
+
+        while (!currentState.equals(PREDEFINED_ROOT_NAME)) {
             final String currStateWorkAround = currentState;
             Transition incomingTransition = this.allTransitions.stream()
                     .filter(t -> t.targetState.equals(currStateWorkAround))
                     .collect(Collectors.toList()).get(0);
-            
+
             prefix.add(incomingTransition.transitionLabel);
-            
+
             currentState = incomingTransition.fromState;
         }
-        
+
         Collections.reverse(prefix);
         this.statePrefixes.put(state, prefix);
         return prefix;
     }
-    
+
     private Map<String, Sequence> stateOwners;
-    private Sequence getOwner(String state){
+
+    private Sequence getOwner(String state) {
         /* According to Lo: 
-        A node’s owner, q.owner, is the closed pattern sharing prefix q.prefix 
-        that has the maximum count.
-        */
-        
-        if (stateOwners == null){
+         A node’s owner, q.owner, is the closed pattern sharing prefix q.prefix 
+         that has the maximum count.
+         */
+
+        if (stateOwners == null) {
             stateOwners = new LinkedHashMap<>();
         }
-        
-        if (stateOwners.containsKey(state))
+
+        if (stateOwners.containsKey(state)) {
             return stateOwners.get(state);
-        
+        }
+
         final List<String> prefix = this.getStatePrefix(state);
-        
+
         Sequence owner = this.originalSequences.stream()
                 .filter(os -> os.containsPrefix(prefix))
                 .max(Comparator.comparing(s -> s.getCount())).get();
-        
+
         stateOwners.put(state, owner);
         return owner;
     }
-    
+
     Map<String, List<String>> statePostfixes;
-    
-    private List<String> getStatePostfix(String state){
-        if (this.statePostfixes == null)
+
+    private List<String> getStatePostfix(String state) {
+        if (this.statePostfixes == null) {
             this.statePostfixes = new LinkedHashMap<>();
-        
-        if (this.statePostfixes.containsKey(state))
+        }
+
+        if (this.statePostfixes.containsKey(state)) {
             return this.statePostfixes.get(state);
-        
+        }
+
         Sequence owner = this.getOwner(state);
-        
+
         List<String> postfix = owner.getPostFix(this.getStatePrefix(state));
-        
+
         this.statePostfixes.put(state, postfix);
-        
+
         return postfix;
     }
-    
-    private Integer getStateCount(String state){
+
+    private Integer getStateCount(String state) {
         Sequence owner = this.getOwner(state);
-        
+
         return owner.getCount();
     }
-    public void annotateNodes(){
-        this.stateAnnotations = new HashMap<>();
-        
-        
-        this.allStates.forEach(s -> {
-            NodeAnnotations na = new NodeAnnotations();
-            
-            na.event = s.indexOf('_') > 0 ? s.substring(s.indexOf('_')+1) : "";
-            na.prefix = getStatePrefix(s);
-            na.owner = getOwner(s);
-            na.postfix = getStatePostfix(s);
-            na.count = getStateCount(s);
-            
-            this.stateAnnotations.put(s, na);
-            
+
+    private List<String> getChildren(String state) {
+        List<String> children = new LinkedList<>();
+
+        List<Transition> outgoingTransitions = this.allTransitions.stream()
+                .filter(t -> t.fromState.equals(state))
+                .collect(Collectors.toList());
+
+        outgoingTransitions.forEach(t -> {
+            children.addAll(getChildren(t.targetState));
+            children.add(t.targetState);
         });
-        
+
+        return children;
     }
-    
-    private void buildAutomaton() {
+
+    private void annotateNodes() {
+
+        if (stateAnnotations == null) {
+            this.stateAnnotations = new HashMap<>();
+
+            this.allStates.forEach(s -> {
+                NodeAnnotations na = new NodeAnnotations();
+
+                na.event = s.indexOf('_') > 0 ? s.substring(s.indexOf('_') + 1) : "";
+                na.prefix = getStatePrefix(s);
+                na.owner = getOwner(s);
+                na.postfix = getStatePostfix(s);
+                na.count = getStateCount(s);
+                na.children = getChildren(s);
+
+                this.stateAnnotations.put(s, na);
+            });
+        }
+    }
+
+    public List<String> getInterestingNodes(double conf) {
+        this.annotateNodes();
         
+        return this.stateAnnotations.keySet().stream()
+                .filter(k -> {
+                    NodeAnnotations q;
+                    q = this.stateAnnotations.get(k);
+                    
+                    return q.children.stream().filter(kc -> {
+                        NodeAnnotations qd = this.stateAnnotations.get(kc);
+                        double confidence = q.count/(qd.count*1.0);
+                        
+                        return confidence < 1 && confidence >= conf;
+                }).count() > 0
+    }
+
+    private void buildAutomaton() {
+
         Set<String> alphabet = this.getAlphabet();
         Alphabet<String> events = new Alphabet<>(alphabet);
-        
+
         DFABuilder<String, String> builder = DFA.newDFA(events);
 
         try {
@@ -273,7 +311,7 @@ public class TrieTree {
         } catch (FABuilderException ex) {
             Logger.getLogger(TrieTree.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         this.stateTransitions.keySet().stream().forEach((state) -> {
             this.stateTransitions.get(state).keySet().stream().forEach((transitionToken) -> {
                 try {
@@ -283,7 +321,7 @@ public class TrieTree {
                 }
             });
         });
-        
+
         finalStates.stream().forEach((fs) -> {
             try {
                 builder.addFinalState(fs);
@@ -291,13 +329,13 @@ public class TrieTree {
                 Logger.getLogger(TrieTree.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
-        
+
         try {
             this.automaton = builder.build();
         } catch (FABuilderException ex) {
             Logger.getLogger(TrieTree.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
     }
 
 }
