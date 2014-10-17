@@ -268,7 +268,8 @@ public class TrieTree {
         if (stateAnnotations == null) {
             this.stateAnnotations = new HashMap<>();
 
-            this.allStates.forEach(s -> {
+            this.allStates.stream().filter(s -> !s.equals(PREDEFINED_ROOT_NAME))
+            .forEach(s -> {
                 NodeAnnotations na = new NodeAnnotations();
 
                 na.event = s.indexOf('_') > 0 ? s.substring(s.indexOf('_') + 1) : "";
@@ -323,10 +324,10 @@ public class TrieTree {
                     
             
             return qdesc.stream().map(qid -> new AssociationRule(qi.prefix, 
-                    this.stateAnnotations.get(qid).postfix)).collect(Collectors.toList());
+                    this.stateAnnotations.get(qid).postfix, this.stateAnnotations.get(qid).count/(1.0*qi.count))).collect(Collectors.toList());
         }).flatMap(rc -> rc.stream()).collect(Collectors.toList());
         
-        return rules;
+        return AssociationRule.pruneRedundant(rules);
     }
 
     private void buildAutomaton() {

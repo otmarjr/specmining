@@ -40,6 +40,9 @@ public class Sequence {
         if (this.events == null)
             return false;
         
+        if (this.events.size() < prefix.size())
+            return false; 
+        
         for (int i=0;i<prefix.size();i++){
             if (!prefix.get(i).equals(this.events.get(i)))
                 return false;
@@ -50,7 +53,7 @@ public class Sequence {
     
     public List<String> getPostFix(List<String> prefix){
         if (this.containsPrefix(prefix)){
-            return this.events.subList(prefix.size(), this.events.size());
+            return this.events.subList(prefix.size()-1, this.events.size());
         }
         return null;
     }

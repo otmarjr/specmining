@@ -31,15 +31,13 @@ public class FilteringBlock {
     }
 
     // According to routine by David Lo's Thesis, Figure 5.4
-    private List<AssociationRule> generateRules(List<Sequence> closed,
+    public List<AssociationRule> generateRules(List<Sequence> closed,
             double conf) {
-        List<AssociationRule> rules = null;
-
         List<List<String>> closedSequences = closed.stream().map(Sequence::getEvents).collect(Collectors.toList());
         Map<List<String>, Integer> counts = closed.stream().collect(Collectors.toMap(s -> s.getEvents(), s -> s.getCount()));
         TrieTree trie = new TrieTree(closedSequences, counts);
         
-        return rules;
+        return trie.generateRules(conf);
     }
 
     public List<Trace> getFilteredTraces(int minSupport) throws Exception {
