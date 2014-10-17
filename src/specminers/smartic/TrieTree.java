@@ -283,7 +283,7 @@ public class TrieTree {
         }
     }
 
-    public List<String> getInterestingNodes(double conf) {
+    private List<String> getInterestingNodes(double conf) {
         this.annotateNodes();
         
         return this.stateAnnotations.keySet().stream()
@@ -291,12 +291,42 @@ public class TrieTree {
                     NodeAnnotations q;
                     q = this.stateAnnotations.get(k);
                     
-                    return q.children.stream().filter(kc -> {
-                        NodeAnnotations qd = this.stateAnnotations.get(kc);
-                        double confidence = q.count/(qd.count*1.0);
+                    return q.children.stream().anyMatch(c -> {
+                        NodeAnnotations qd = this.stateAnnotations.get(c);
                         
-                        return confidence < 1 && confidence >= conf;
-                }).count() > 0
+                        return conf <= qd.count/(1.0*q.count)
+                                &&
+                                qd.count/(1.0*q.count) < 1;
+                    });
+                            
+                    
+                }).collect(Collectors.toList());
+    }
+    
+    public List<AssociationRule> generateRules(double conf)
+    {
+        List<String> interesting = this.getInterestingNodes(conf);
+        
+        List<AssociationRule> rules;
+        
+        rules = interesting.stream().map(s -> {
+            NodeAnnotations qi = this.stateAnnotations.get(s);
+            
+            List<String> qdesc = qi.children.stream()
+                    .filter(c -> {
+                        NodeAnnotations qd = this.stateAnnotations.get(c);
+                        
+                        return conf <= qd.count/(1.0*qi.count)
+                                &&
+                                qd.count/(1.0*qi.count) < 1;
+                    }).collect(Collectors.toList());
+                    
+            
+            return qdesc.stream().map(qid -> new AssociationRule(qi.prefix, 
+                    this.stateAnnotations.get(qid).postfix)).collect(Collectors.toList());
+        }).flatMap(rc -> rc.stream()).collect(Collectors.toList());
+        
+        return rules;
     }
 
     private void buildAutomaton() {
