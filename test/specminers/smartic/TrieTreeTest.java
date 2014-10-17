@@ -7,8 +7,10 @@ package specminers.smartic;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import jp.ac.titech.cs.se.sparesort.SequenceDatabase;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -20,7 +22,7 @@ import static org.junit.Assert.*;
 public class TrieTreeTest {
 
     @Test
-    public void supportsSpareSortSample() {
+    public void supportsSpareSortSample() throws Exception {
         
         List<Trace> traces = new ArrayList<>();
 
@@ -58,7 +60,16 @@ public class TrieTreeTest {
         
         List<List<String>> sequences = null;
         sequences = traces.stream().map(Trace::getEvents).collect(Collectors.toList());
-        TrieTree tree = new TrieTree(sequences);
+        
+        SequenceDatabase<String> seqDB = new SequenceDatabase<>();
+
+        for (Trace t : traces) {
+            seqDB.addSequence(t.getEvents());
+        }
+        
+        Map<List<String>, Integer> closedSeqs = seqDB.mineFrequentClosedSequences(1);
+        
+        TrieTree tree = new TrieTree(sequences, closedSeqs);
         
         
         assertTrue(tree.containsSequence(t1.getEvents(), true));
