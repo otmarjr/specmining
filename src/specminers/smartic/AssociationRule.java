@@ -5,8 +5,11 @@
  */
 package specminers.smartic;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -66,6 +69,43 @@ public class AssociationRule {
         boolean samePrefix = this.hasSamePrefix(other);
         boolean postFixInferrableFromOther = this.postFixContainedByOtherRule(other);
         return samePrefix &&  postFixInferrableFromOther;
+    }
+    
+    public List<List<String>> substringsSatisfyingPre(Trace t){
+        // using criteria of page 53 of Lo's Thesis
+        
+        int elementsLeftToMatch = this.pre.size();
+        int indexOfLastMatch = -1;
+        int indexOfLastInspection = 0;
+        
+        List<String> text = t.getEvents();
+        
+        while (elementsLeftToMatch > 0 
+                && indexOfLastInspection < text.size()){
+            String candidate = this.pre.get(indexOfLastMatch+1);
+            
+            if (text.get(indexOfLastInspection).equals(candidate)){
+                elementsLeftToMatch--;
+                indexOfLastMatch = indexOfLastInspection;
+            }
+            
+            indexOfLastInspection++;
+        }
+        
+        if (elementsLeftToMatch == 0){
+            int diff = text.size()-(indexOfLastMatch+1);
+            
+            List<List<String>> substrings = new LinkedList<>();
+            
+            for (int i=1;i<=diff;i++){
+                
+            }
+            
+            return substrings;
+        }
+        else{
+            return new LinkedList<>();
+        }
     }
 
     @Override

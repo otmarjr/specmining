@@ -17,7 +17,7 @@ public class Trace {
     
     public Trace()
     {
-        this.events = new ArrayList<String>();
+        this.events = new ArrayList<>();
     }
     
     public void addEvent(String event)

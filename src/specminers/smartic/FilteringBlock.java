@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import jp.ac.titech.cs.se.sparesort.SequenceDatabase;
 
@@ -18,16 +19,14 @@ import jp.ac.titech.cs.se.sparesort.SequenceDatabase;
  */
 public class FilteringBlock {
 
-    private Iterable<Trace> traces;
+    private List<Trace> traces;
+    private List<AssociationRule> outlierDetectionRules;
 
-    public FilteringBlock(Iterable<Trace> executionTraces) {
+    private final float CONFIDENCE_EXPERIMENT_CHAPTER_5_DAVID_LO = 0.5f;
+    private final float SUPPORT_EXPERIMENT_CHAPTER_5_DAVID_LO = 0.1f;
+
+    public FilteringBlock(List<Trace> executionTraces) {
         this.traces = executionTraces;
-    }
-
-    private List<AssociationRule> getTemporalRules() {
-        List<AssociationRule> rules = null;
-
-        return rules;
     }
 
     // According to routine by David Lo's Thesis, Figure 5.4
@@ -36,43 +35,49 @@ public class FilteringBlock {
         List<List<String>> closedSequences = closed.stream().map(Sequence::getEvents).collect(Collectors.toList());
         Map<List<String>, Integer> counts = closed.stream().collect(Collectors.toMap(s -> s.getEvents(), s -> s.getCount()));
         TrieTree trie = new TrieTree(closedSequences, counts);
-        
+
         return trie.generateRules(conf);
     }
 
-    public List<Trace> getFilteredTraces(int minSupport) throws Exception {
+    private void prepareInputsForFiltering() throws Exception {
+        SequenceDatabase<String> seqDB = new SequenceDatabase<>();
 
-        SequenceDatabase<String> seqDB = new SequenceDatabase<String>();
+        this.traces.forEach(t -> seqDB.addSequence(t.getEvents()));
 
-        for (Trace t : this.traces) {
-            seqDB.addSequence(t.getEvents());
-        }
+        int support = Math.round(this.traces.size()
+                * SUPPORT_EXPERIMENT_CHAPTER_5_DAVID_LO);
 
-        Map<List<String>, Integer> closedSeqs = seqDB.mineFrequentClosedSequences(minSupport);
+        Map<List<String>, Integer> closedSeqs
+                = seqDB.mineFrequentClosedSequences(support);
 
-        List<Sequence> Closed = new ArrayList<Sequence>();
+        List<Sequence> Closed = new ArrayList<>();
+
         Map<Sequence, Integer> ClosedCount = new HashMap<>();
 
-        for (List<String> events : closedSeqs.keySet()) {
+        closedSeqs.keySet().stream().forEach((events) -> {
             Sequence seq = new Sequence(events, closedSeqs.get(events));
             Closed.add(seq);
             ClosedCount.put(seq, closedSeqs.get(events));
-        }
-        
-        
+        });
 
-        List<Trace> filteredTraces = new ArrayList<Trace>();
-        List<Trace> erroneousTraces = new ArrayList<Trace>();
+        this.outlierDetectionRules = this.generateRules(Closed,
+                CONFIDENCE_EXPERIMENT_CHAPTER_5_DAVID_LO);
+    }
 
-        List<AssociationRule> outlierDetectionRules;
-        outlierDetectionRules = this.getTemporalRules();
+    public List<Trace> getFilteredTraces() throws Exception {
 
-        for (Trace t : this.traces) {
-            for (AssociationRule ar : outlierDetectionRules) {
+        this.prepareInputsForFiltering();
 
-            }
-        }
+        List<Trace> Filtered = new ArrayList<>();
+        List<Trace> Err = new ArrayList<>();
 
-        return filteredTraces;
+        this.traces.stream().forEach( t->
+        {
+            this.outlierDetectionRules.forEach(r -> {
+                List<List<String>> substrings = r.substringsSatisfyingPre(t);
+            });
+        });
+
+        return Filtered;
     }
 }
