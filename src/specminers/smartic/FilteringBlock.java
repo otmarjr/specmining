@@ -73,9 +73,6 @@ public class FilteringBlock {
 
         this.traces.stream().forEach( t->
         {
-            this.outlierDetectionRules.forEach(r -> {
-                List<List<String>> substrings = r.substringsSatisfyingPre(t);
-            });
         });
 
         return Filtered;

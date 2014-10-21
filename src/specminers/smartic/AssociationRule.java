@@ -6,11 +6,16 @@
 package specminers.smartic;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import specminers.smartic.Trace.SubTrace;
 
 /**
  *
@@ -71,41 +76,51 @@ public class AssociationRule {
         return samePrefix &&  postFixInferrableFromOther;
     }
     
-    public List<List<String>> substringsSatisfyingPre(Trace t){
-        // using criteria of page 53 of Lo's Thesis
+    public List<SubTrace> substringsSatisfyingPre(Trace t){
         
-        int elementsLeftToMatch = this.pre.size();
-        int indexOfLastMatch = -1;
-        int indexOfLastInspection = 0;
+        Map<String, List<Integer>> preMembersMatches = new LinkedHashMap<>();
+
+        this.pre.stream().forEach(ai -> preMembersMatches.putIfAbsent(ai, new LinkedList<>()));
         
-        List<String> text = t.getEvents();
-        
-        while (elementsLeftToMatch > 0 
-                && indexOfLastInspection < text.size()){
-            String candidate = this.pre.get(indexOfLastMatch+1);
-            
-            if (text.get(indexOfLastInspection).equals(candidate)){
-                elementsLeftToMatch--;
-                indexOfLastMatch = indexOfLastInspection;
+        for (int i=0;i< t.getEvents().size();++i){
+            String ai = t.getEvents().get(i);
+            if (this.pre.contains(ai)){
+                preMembersMatches.get(ai).add(i);
             }
-            
-            indexOfLastInspection++;
         }
         
-        if (elementsLeftToMatch == 0){
-            int diff = text.size()-(indexOfLastMatch+1);
+        List<SubTrace> substrings = new LinkedList<>();
+        
+        
+        OptionalInt minimumSize = preMembersMatches.values()
+                .stream().mapToInt(l -> l.size()).min();
+        
+        if (minimumSize.isPresent() && minimumSize.getAsInt() > 0){
+            String aj = this.pre.get(this.pre.size()-1);
+            String ai = this.pre.get(0);
+            int totalSubStrings = 0;
             
-            List<List<String>> substrings = new LinkedList<>();
+            int subStringIndex = 0;
             
-            for (int i=1;i<=diff;i++){
+            while (totalSubStrings < minimumSize.getAsInt()){
+                int i = preMembersMatches.get(ai).get(subStringIndex);
+                int j = preMembersMatches.get(aj).get(subStringIndex);
                 
+                List<String> traceij = t.getEvents().subList(i, j+1);
+                
+                boolean containsAllPreMembers = 
+                        this.pre.stream().allMatch(m -> traceij.contains(m));
+                
+                if (containsAllPreMembers){
+                    int firstI = preMembersMatches.get(ai).get(0);
+                    substrings.add(t.new SubTrace(firstI, j));
+                    totalSubStrings++;
+                }
+                subStringIndex++;
             }
-            
-            return substrings;
         }
-        else{
-            return new LinkedList<>();
-        }
+        
+        return substrings;
     }
 
     @Override
