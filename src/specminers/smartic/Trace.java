@@ -6,7 +6,9 @@
 package specminers.smartic;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -26,6 +28,12 @@ public class Trace {
 
     public List<String> getEvents() {
         return this.events;
+    }
+    
+    public boolean containsSubTraceBeforePosition(int position, SubTrace tk){
+        List<String> subtrace1Tok = this.events.subList(0, position);
+        
+        return tk.getEvents().stream().allMatch(ti -> subtrace1Tok.contains(ti));
     }
 
     public class SubTrace {

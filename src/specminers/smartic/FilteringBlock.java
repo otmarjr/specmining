@@ -7,9 +7,12 @@ package specminers.smartic;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import jp.ac.titech.cs.se.sparesort.SequenceDatabase;
@@ -20,14 +23,46 @@ import jp.ac.titech.cs.se.sparesort.SequenceDatabase;
  */
 public class FilteringBlock {
 
-    private List<Trace> traces;
+    private final Set<Trace> traces;
     private List<AssociationRule> outlierDetectionRules;
 
     private final float CONFIDENCE_EXPERIMENT_CHAPTER_5_DAVID_LO = 0.5f;
     private final float SUPPORT_EXPERIMENT_CHAPTER_5_DAVID_LO = 0.1f;
 
-    public FilteringBlock(List<Trace> executionTraces) {
-        this.traces = executionTraces;
+    public FilteringBlock(List<Trace> tracesTOrig) {
+        this.traces = this.preprocessTraces(tracesTOrig);
+    }
+    
+    
+    /*
+    Lo assumes the list of traces is a multiset, so he preprocess the multiset
+    in order to create its superset to take into account temporal points (p. 55)
+    */
+    private Set<Trace> preprocessTraces(List<Trace> TOrig){
+        Set<Trace> TResult = new HashSet<>();
+        
+        TOrig.forEach(t -> {
+            int suffixSize = 0;
+            TResult.add(t);
+            
+            while (suffixSize <= t.getEvents().size()){
+                int j = t.getEvents().size();
+                int i = j- suffixSize - 1;
+                Trace.SubTrace suffixOfT = t.new SubTrace(i,j);
+                
+                if (t.containsSubTraceBeforePosition(i, suffixOfT)){
+                    Trace tij = new Trace();
+                    
+                    suffixOfT.getEvents().forEach(s -> tij.addEvent(s));
+                    
+                    TResult.add(tij);
+                }
+                
+                suffixSize++;
+            }
+        });
+        
+        return TResult;
     }
 
     // According to routine by David Lo's Thesis, Figure 5.4
