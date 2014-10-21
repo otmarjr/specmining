@@ -76,6 +76,11 @@ public class AssociationRule {
         return samePrefix &&  postFixInferrableFromOther;
     }
     
+    
+    public boolean sequenceSatisfiesPost(List<String> sequence){
+        return this.post.stream().allMatch(a -> sequence.contains(a));
+    }
+    
     public List<SubTrace> substringsSatisfyingPre(Trace t){
         
         Map<String, List<Integer>> preMembersMatches = new LinkedHashMap<>();

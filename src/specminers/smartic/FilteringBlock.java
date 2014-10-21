@@ -7,6 +7,7 @@ package specminers.smartic;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -68,12 +69,33 @@ public class FilteringBlock {
 
         this.prepareInputsForFiltering();
 
-        List<Trace> Filtered = new ArrayList<>();
-        List<Trace> Err = new ArrayList<>();
+        List<Trace> Filtered;
+        Filtered = new ArrayList<>();
+        
+        List<Trace> Err;
+        Err = new ArrayList<>();
 
-        this.traces.stream().forEach( t->
-        {
-        });
+        for (Trace t : this.traces) {
+            boolean traceAddedToErr = false;
+
+            for (AssociationRule r : this.outlierDetectionRules) {
+                if (!traceAddedToErr) {
+                    List<Trace.SubTrace> substringsPre
+                            = r.substringsSatisfyingPre(t);
+
+                    if (substringsPre.stream().anyMatch(sub
+                            -> !r.sequenceSatisfiesPost(sub.getAjPlus1ToAEnd()))) {
+                        Err.add(t);
+                        traceAddedToErr = true;
+                    }
+                }
+            }
+            
+            if (!traceAddedToErr){
+                Filtered.add(t);
+            }
+        }
+        
 
         return Filtered;
     }

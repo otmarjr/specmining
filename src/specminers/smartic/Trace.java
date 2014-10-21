@@ -41,5 +41,9 @@ public class Trace {
         public List<String> getEvents() {
             return events.subList(fromIndex, toIndex+1);
         }
+        
+        public List<String> getAjPlus1ToAEnd(){
+            return events.subList(toIndex+1, events.size());
+        }
     }
 }
