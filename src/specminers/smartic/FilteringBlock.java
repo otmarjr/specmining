@@ -38,7 +38,7 @@ public class FilteringBlock {
     Lo assumes the list of traces is a multiset, so he preprocess the multiset
     in order to create its superset to take into account temporal points (p. 55)
     */
-    private Set<Trace> preprocessTraces(List<Trace> TOrig){
+    public Set<Trace> preprocessTraces(List<Trace> TOrig){
         Set<Trace> TResult = new HashSet<>();
         
         TOrig.forEach(t -> {
