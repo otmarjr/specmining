@@ -20,10 +20,25 @@ public class StringUtilsTest {
     @Test
     public void testGenerateRegexToMatchInput() throws Exception {
         System.out.println("generateRegexToMatchInput");
-        String input = "A B C B C D A B C B C B C D";
+        String input = "ABCBCDABCBCBCD";
         String expResult = "(A(BC)+D)+";
         String result = StringUtils.generateRegexToMatchInput(input);
         assertEquals(expResult, result);
     }
+    
+    @Test
+    public void testGlobalSequenceAlignmentCoursera1() {
+        String input1 = "AGGGCT";
+        String input2 = "AGGCA";
+        
+        int pgap = 1;
+        int pmismatch = 1;
+        
+        
+        int penalty = StringUtils.getSequenceAlignmentPenalty(input1, input2, pgap, pmismatch);
+        
+        assertEquals(pgap + pmismatch, penalty);
+    }
+    
     
 }
