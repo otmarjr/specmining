@@ -21,7 +21,7 @@ import jp.ac.titech.cs.se.sparesort.SequenceDatabase;
  *
  * @author otmar
  */
-public class FilteringBlock {
+public final class FilteringBlock {
 
     private final Set<Trace> traces;
     private List<AssociationRule> outlierDetectionRules;
@@ -32,36 +32,50 @@ public class FilteringBlock {
     public FilteringBlock(List<Trace> tracesTOrig) {
         this.traces = this.preprocessTraces(tracesTOrig);
     }
+
     
+    public Set<Trace> getTraces(){
+        return this.traces;
+    }
     
     /*
-    Lo assumes the list of traces is a multiset, so he preprocess the multiset
-    in order to create its superset to take into account temporal points (p. 55)
-    */
-    public Set<Trace> preprocessTraces(List<Trace> TOrig){
+     Lo assumes the list of traces is a multiset, so he preprocess the multiset
+     in order to create its superset to take into account temporal points (p. 55)
+     */
+    public Set<Trace> preprocessTraces(List<Trace> TOrig) {
         Set<Trace> TResult = new HashSet<>();
-        
         TOrig.forEach(t -> {
-            int suffixSize = 0;
             TResult.add(t);
+            int n = t.getEvents().size();
+            for (int trimRight = 0; trimRight < n; trimRight++) {
+                List<String> tPrime = t.getEvents().subList(0, n - trimRight);
+                for (int j = tPrime.size(); j > 0; j--) {
+                    String tj = tPrime.get(j - 1);
+                    for (int i = j-1; i >= 0; i--) {
+                        List<String> suffixTij = tPrime.subList(i, j);
+                        if (tPrime.subList(0, i).contains(tj)) {
+                            Trace tij = new Trace();
+                            suffixTij.forEach(ak -> tij.addEvent(ak));
+                            TResult.add(tij);
+                        }
+                    }
+                }
+            }
+
+            //TResult.add(t);
             
-            while (suffixSize <= t.getEvents().size()){
+            /*while (suffixSize <= t.getEvents().size()) {
                 int j = t.getEvents().size();
-                int i = j- suffixSize - 1;
-                Trace.SubTrace suffixOfT = t.new SubTrace(i,j);
-                
-                if (t.containsSubTraceBeforePosition(i, suffixOfT)){
+                int i = j - suffixSize - 1;
+                Trace.SubTrace suffixOfT = t.new SubTrace(i, j);
+                if (t.containsSubTraceBeforePosition(i, suffixOfT)) {
                     Trace tij = new Trace();
-                    
                     suffixOfT.getEvents().forEach(s -> tij.addEvent(s));
-                    
                     TResult.add(tij);
                 }
-                
                 suffixSize++;
-            }
+            }*/
         });
-        
         return TResult;
     }
 
@@ -106,7 +120,7 @@ public class FilteringBlock {
 
         List<Trace> Filtered;
         Filtered = new ArrayList<>();
-        
+
         List<Trace> Err;
         Err = new ArrayList<>();
 
@@ -125,12 +139,11 @@ public class FilteringBlock {
                     }
                 }
             }
-            
-            if (!traceAddedToErr){
+
+            if (!traceAddedToErr) {
                 Filtered.add(t);
             }
         }
-        
 
         return Filtered;
     }

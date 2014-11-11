@@ -6,12 +6,7 @@
 package specminers;
 
 import simpleSequitur.sequitur;
-import edu.hawaii.jmotif.gi.GrammarRuleRecord;
-import java.util.List;
-import edu.hawaii.jmotif.gi.sequitur.SAXRule;
-import edu.hawaii.jmotif.gi.sequitur.SequiturFactory;
 import edu.hawaii.jmotif.timeseries.TSException;
-import java.util.ArrayList;
 
 /**
  *

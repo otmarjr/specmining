@@ -23,11 +23,65 @@ import static org.junit.Assert.*;
  *
  * @author otmar
  */
+
 public class FilteringBlockTest {
-    
-    /**
-     * Test of getFilteredTraces method, of class FilteringBlock.
-     */
+
+    @Test
+     public void traceWithoutRepetitionEqualsPostFilteringSuperSet() 
+             throws Exception{
+        
+        List<Trace> traces = new ArrayList<>();
+        Trace t1 = new Trace();
+        t1.addEvent("A");
+        t1.addEvent("B");
+        t1.addEvent("C");
+        traces.add(t1);
+
+        Trace t2 = new Trace();
+        t2.addEvent("A");
+        traces.add(t2);
+        
+        FilteringBlock fb = new FilteringBlock(traces);
+        
+         assertEquals(traces.size(), fb.getTraces().size());
+     }
+
+     @Test
+      public void multisetTraceIncreasesPostFilteringSuperSet() 
+             throws Exception{
+        
+        List<Trace> traces = new ArrayList<>();
+        Trace t1 = new Trace();
+        t1.addEvent("A");
+        t1.addEvent("B");
+        t1.addEvent("C");
+        
+        traces.add(t1);
+
+        Trace t2 = new Trace();
+        t2.addEvent("A");
+        t2.addEvent("B");
+        t2.addEvent("C");
+        t2.addEvent("B");
+        t2.addEvent("C");
+        t2.addEvent("D");
+        t2.addEvent("A");
+        t2.addEvent("B");
+        t2.addEvent("C");
+        t2.addEvent("B");
+        t2.addEvent("C");
+        t2.addEvent("B");
+        t2.addEvent("C");
+        t2.addEvent("D");
+        
+        traces.add(t2);
+        
+        FilteringBlock fb = new FilteringBlock(traces);
+        
+         assertTrue(fb.getTraces().size() > traces.size());
+     }
+     
+     
     @Test
     public void testPrefixTree() throws Exception{
         
@@ -66,3 +120,4 @@ public class FilteringBlockTest {
     }
     
 }
+
