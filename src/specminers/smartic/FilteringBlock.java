@@ -42,10 +42,33 @@ public class FilteringBlock {
         Set<Trace> TResult = new HashSet<>();
         
         TOrig.forEach(t -> {
-            int suffixSize = 0;
-            TResult.add(t);
             
-            while (suffixSize <= t.getEvents().size()){
+            int n = t.getEvents().size();
+            
+            for (int trimRight=0;trimRight<n;trimRight++){
+                List<String> tPrime = t.getEvents().subList(0, n-trimRight);
+                
+                for (int j=tPrime.size();j>0;j--){
+                    String tj = tPrime.get(j-1);
+                    
+                    for (int i=j;i>=0;i--){
+                        List<String> suffixTij = tPrime.subList(i, j);
+                        
+                        if (tPrime.subList(0, i).contains(tj)){
+                            Trace tij = new Trace();
+                    
+                            suffixTij.forEach(ak -> tij.addEvent(ak));
+                            
+                            TResult.add(t);
+                            TResult.add(tij);
+                        }
+                    }
+                }
+            }
+            
+            //TResult.add(t);
+            
+            /*while (suffixSize <= t.getEvents().size()){
                 int j = t.getEvents().size();
                 int i = j- suffixSize - 1;
                 Trace.SubTrace suffixOfT = t.new SubTrace(i,j);
@@ -59,7 +82,7 @@ public class FilteringBlock {
                 }
                 
                 suffixSize++;
-            }
+            }*/
         });
         
         return TResult;

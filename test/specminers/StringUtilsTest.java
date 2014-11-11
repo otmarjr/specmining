@@ -21,6 +21,7 @@ public class StringUtilsTest {
     public void testGenerateRegexToMatchInput() throws Exception {
         System.out.println("generateRegexToMatchInput");
         String input = "A B C B C D A B C B C B C D";
+        String input2 = "ABCBCDABCBCBCD";
         String expResult = "(A(BC)+D)+";
         String result = StringUtils.generateRegexToMatchInput(input);
         assertEquals(expResult, result);

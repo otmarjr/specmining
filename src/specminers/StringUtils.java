@@ -11,6 +11,8 @@ import edu.hawaii.jmotif.gi.sequitur.SAXRule;
 import edu.hawaii.jmotif.gi.sequitur.SequiturFactory;
 import edu.hawaii.jmotif.timeseries.TSException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -27,6 +29,14 @@ public class StringUtils {
         ArrayList<GrammarRuleRecord> recs = r.getRuleRecords();
         
         String result = "";
+        
+         Map<String, String> symbolsResolution;
+        symbolsResolution = new HashMap<>();
+        
+        
+        for (int i=recs.size()-1;i>=0;i--){
+            symbolsResolution.put(recs.get(i).getRuleName(), recs.get(i).getRuleString());
+        }
         
         for (GrammarRuleRecord gr : recs){
             result += "-" + gr.getRuleName() + " : " + gr.getRuleString() +" - exp: " + gr.getExpandedRuleString();
