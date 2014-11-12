@@ -27,6 +27,10 @@ public class ClusteringBlock {
         this.uniqueInputTraces = new HashSet<>(allTraces);
     }
 
+    public Set<Trace> getUniqueInputTraces(){
+        return this.uniqueInputTraces;
+    }
+    
     public Map<Trace, Set<Trace>> executeParameterlessClusteringController() {
         List<Float> featureScoreList = new LinkedList<>();
         Map<Trace, Set<Trace>> clusters = null;
@@ -59,10 +63,10 @@ public class ClusteringBlock {
     private void associateWithClosestMedoid(Map<Trace, Set<Trace>> medoids) {
         List<Trace> nonMedoids =  this.getNonMedoids(medoids);
 
-        for (Trace m : medoids.keySet()){
-            medoids.put(m, new HashSet<>());
-                
-        }
+        medoids.keySet().stream().forEach((m) -> {
+            medoids.put(m, new HashSet<Trace>(){{ add(m);}});
+        });
+        
         nonMedoids.forEach((t) -> {
             Trace closestMedoid;
             closestMedoid = medoids.keySet()
