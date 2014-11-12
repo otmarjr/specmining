@@ -143,4 +143,26 @@ public class ClusteringBlockTest {
         
     }
 
+    @Test 
+    public void kMedoidsWorksWithSingleCluster() {
+        System.out.println("kMedoidsWorksWithSingleCluster");
+        
+        int k =1;
+        List<Trace> items = this.getTestDataSet();
+        ClusteringBlock instance = new ClusteringBlock(items);
+        
+        Map<Trace, Set<Trace>> clusters = instance.kMedoid(k);
+        
+        assertEquals(k, clusters.size());
+    }
+    
+    @Test 
+    public void testParametelessController() {
+        List<Trace> traces = this.getTestDataSet();
+        ClusteringBlock instance = new ClusteringBlock(traces);
+        
+        Map<Trace, Set<Trace>> clusters = instance.executeParameterlessClusteringController();
+        
+        assertEquals(2, clusters.size());
+    }
 }

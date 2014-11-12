@@ -151,6 +151,10 @@ public class ClusteringBlock {
     public Float calculateScore(Map<Trace,Set<Trace>> clusters) {
         Float score = 0f;
 
+        //List<Trace> medoidCenters =  new LinkedList<>(clusters.keySet());
+        
+        
+        
         return score;
     }
 }
