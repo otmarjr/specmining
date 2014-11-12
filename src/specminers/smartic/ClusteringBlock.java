@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -26,9 +27,9 @@ public class ClusteringBlock {
         this.uniqueInputTraces = new HashSet<>(allTraces);
     }
 
-    public List<Set<Trace>> executeParameterlessClusteringController() {
+    public Map<Trace, Set<Trace>> executeParameterlessClusteringController() {
         List<Float> featureScoreList = new LinkedList<>();
-        List<Set<Trace>> clusters = new LinkedList<>();
+        Map<Trace, Set<Trace>> clusters = null;
         boolean isLocalMaxima = false;
 
         Set<Trace> ipTraces = this.uniqueInputTraces;
@@ -49,8 +50,41 @@ public class ClusteringBlock {
         return hasGradientChange;
     }
 
-    public List<Set<Trace>> kMedoid(int k) {
-        List<Set<Trace>> kclusters = new LinkedList<>();
+    private List<Trace> getNonMedoids(Map<Trace, Set<Trace>> medoids){
+        return this.uniqueInputTraces.stream()
+                .filter((t) -> (!medoids.containsKey(t)))
+                .collect(Collectors.toList());
+    }
+        
+    private void associateWithClosestMedoid(Map<Trace, Set<Trace>> medoids) {
+        List<Trace> nonMedoids =  this.getNonMedoids(medoids);
+
+        for (Trace m : medoids.keySet()){
+            medoids.put(m, new HashSet<>());
+                
+        }
+        nonMedoids.forEach((t) -> {
+            Trace closestMedoid;
+            closestMedoid = medoids.keySet()
+                    .stream()
+                    .min((k1, k2)
+                            -> Integer
+                            .compare(k1.getSequenceAlignmentPenalty(t),
+                                    k2.getSequenceAlignmentPenalty(t))
+                    ).get();
+
+            medoids.get(closestMedoid).add(t);
+        });
+    }
+
+    private int getMedoidConfigCost(Map<Trace, Set<Trace>> medoids) {
+        return medoids.keySet().stream()
+                .mapToInt(m -> medoids.get(m).stream()
+                        .mapToInt(o -> o.getSequenceAlignmentPenalty(m))
+                        .sum()).sum();
+    }
+
+    public Map<Trace,Set<Trace>> kMedoid(int k) {
 
         List<Trace> l = new LinkedList(this.uniqueInputTraces);
 
@@ -68,28 +102,49 @@ public class ClusteringBlock {
         boolean medoidChanged = true;
 
         while (medoidChanged) {
-            this.uniqueInputTraces.stream()
-                    .filter((t) -> (!medoidsSets.containsKey(t)))
-                    .forEach((t) -> {
-                        Trace closestMedoid;
-                        closestMedoid = medoidsSets.keySet()
-                        .stream()
-                        .min((k1, k2)
-                                -> Integer
-                                .compare(k1.getSequenceAlignmentPenalty(t),
-                                        k2.getSequenceAlignmentPenalty(t))
-                        ).get();
+            medoidChanged = false;
 
-                        medoidsSets.get(closestMedoid).add(t);
-                    });
+            associateWithClosestMedoid(medoidsSets);
+            int currentCost = getMedoidConfigCost(medoidsSets);
+            int minCost = currentCost;
             
+            Map<Trace, Set<Trace>> cheapestConfig = medoidsSets;
             
+            Map<Trace, Set<Trace>> medoidsPrime;
+            medoidsPrime = new HashMap<>();
+            medoidsPrime.putAll(medoidsSets);
+            
+            List<Trace> nonMedoids = getNonMedoids(medoidsSets);
+            
+            for (Trace m : medoidsSets.keySet()){
+                for (Trace o : nonMedoids){
+                    medoidsPrime.remove(m);
+                    medoidsPrime.put(o, new HashSet<>());
+                    
+                    associateWithClosestMedoid(medoidsPrime);
+                    int newCost = getMedoidConfigCost(medoidsPrime);
+                    
+                    if (newCost < minCost){
+                        minCost = newCost;
+                        cheapestConfig = medoidsPrime;
+                        medoidChanged = true;
+                    }
+                    
+                    medoidsPrime.remove(o);
+                    medoidsPrime.put(m, new HashSet<>());
+                }
+            }
+            
+            if (medoidChanged){
+                medoidsSets = cheapestConfig;
+            }
+
         }
 
-        return kclusters;
+        return medoidsSets;
     }
 
-    public Float calculateScore(List<Set<Trace>> clusters) {
+    public Float calculateScore(Map<Trace,Set<Trace>> clusters) {
         Float score = 0f;
 
         return score;
