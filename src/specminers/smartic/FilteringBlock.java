@@ -23,7 +23,7 @@ import jp.ac.titech.cs.se.sparesort.SequenceDatabase;
  */
 public final class FilteringBlock {
 
-    private final Set<Trace> traces;
+    private final List<Trace> traces;
     private List<AssociationRule> outlierDetectionRules;
 
     private final float CONFIDENCE_EXPERIMENT_CHAPTER_5_DAVID_LO = 0.5f;
@@ -34,7 +34,7 @@ public final class FilteringBlock {
     }
 
     
-    public Set<Trace> getTraces(){
+    public List<Trace> getTraces(){
         return this.traces;
     }
     
@@ -42,8 +42,8 @@ public final class FilteringBlock {
      Lo assumes the list of traces is a multiset, so he preprocess the multiset
      in order to create its superset to take into account temporal points (p. 55)
      */
-    public Set<Trace> preprocessTraces(List<Trace> TOrig) {
-        Set<Trace> TResult = new HashSet<>();
+    public List<Trace> preprocessTraces(List<Trace> TOrig) {
+        List<Trace> TResult = new LinkedList<>();
         TOrig.forEach(t -> {
             TResult.add(t);
             int n = t.getEvents().size();
@@ -61,20 +61,6 @@ public final class FilteringBlock {
                     }
                 }
             }
-
-            //TResult.add(t);
-            
-            /*while (suffixSize <= t.getEvents().size()) {
-                int j = t.getEvents().size();
-                int i = j - suffixSize - 1;
-                Trace.SubTrace suffixOfT = t.new SubTrace(i, j);
-                if (t.containsSubTraceBeforePosition(i, suffixOfT)) {
-                    Trace tij = new Trace();
-                    suffixOfT.getEvents().forEach(s -> tij.addEvent(s));
-                    TResult.add(tij);
-                }
-                suffixSize++;
-            }*/
         });
         return TResult;
     }

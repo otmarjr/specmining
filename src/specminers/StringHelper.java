@@ -6,16 +6,13 @@
 package specminers;
 
 import simpleSequitur.sequitur;
-import edu.hawaii.jmotif.timeseries.TSException;
 
 /**
  *
  * @author otmar
  */
-public class StringUtils {
-    public static String generateRegexToMatchInput(String input) 
-            throws TSException{
-        
+public class StringHelper {
+    public static String generateRegexToMatchInput(String input) {
         return sequitur.getGrammarBasedRegex(input, null);
     }
     

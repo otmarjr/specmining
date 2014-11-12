@@ -22,7 +22,7 @@ public class StringUtilsTest {
         System.out.println("generateRegexToMatchInput");
         String input = "ABCBCDABCBCBCD";
         String expResult = "(A(BC)+D)+";
-        String result = StringUtils.generateRegexToMatchInput(input);
+        String result = StringHelper.generateRegexToMatchInput(input);
         assertEquals(expResult, result);
     }
     
@@ -35,7 +35,7 @@ public class StringUtilsTest {
         int pmismatch = 1;
         
         
-        int penalty = StringUtils.getSequenceAlignmentPenalty(input1, input2, pgap, pmismatch);
+        int penalty = StringHelper.getSequenceAlignmentPenalty(input1, input2, pgap, pmismatch);
         
         assertEquals(pgap + pmismatch, penalty);
     }

@@ -7,10 +7,11 @@ package specminers.smartic;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import specminers.StringHelper;
 
 /**
  *
@@ -18,6 +19,37 @@ import java.util.Set;
  */
 public class Trace {
 
+    @Override
+    public boolean equals(Object other){
+        if (!(other instanceof Trace))
+            return false;
+        
+        Trace t2 = (Trace)other;
+        
+        if (t2.events == null) return this.events == null;
+        
+        if (t2.events.size() != this.events.size()) return false;
+        
+        for (int i=0;i<this.events.size();i++){
+            if (!this.events.get(i).equals(t2.events.get(i)))
+                return false;
+        }
+        
+        return true;
+    }
+    @Override
+    public int hashCode(){
+        HashCodeBuilder hcb;
+        
+        hcb = new HashCodeBuilder(17, 43);
+        
+        if (this.events != null){
+            this.events.forEach(e -> hcb.append(e));
+        }
+        
+        return hcb.toHashCode();
+    }
+    
     List<String> events;
 
     public Trace() {
@@ -37,19 +69,27 @@ public class Trace {
 
         return tk.getEvents().stream().allMatch(ti -> subtrace1Tok.contains(ti));
     }
-
-    public Set<Integer> findTemporalPoints() {
-        Set<Integer> temporalPoints = new HashSet<>();
-
-        for (int i=0;i<this.events.size();i++){
-          for (int j=i+1;j<this.events.size();j++){
-              String tj = this.events.get(j);
-          }  
-        }
-        
-        return temporalPoints;
+    
+    public String getEventsString(){
+        return getEventsString("");
     }
-
+    public String getEventsString(String delimiter){
+        return StringUtils.join(events, delimiter);
+    }
+    
+    public int getSequenceAlignmentPenalty(Trace other){
+        Trace x = this;
+        Trace y = other;
+        
+        String ex = x.getEventsString();
+        String ey = y.getEventsString();
+        
+        String reX = StringHelper.generateRegexToMatchInput(ex);
+        String rey = StringHelper.generateRegexToMatchInput(ey);
+        
+        return StringHelper.getSequenceAlignmentPenalty(ex, ey, 1, 1);
+    }
+    
     public class SubTrace {
 
         private final int fromIndex;
