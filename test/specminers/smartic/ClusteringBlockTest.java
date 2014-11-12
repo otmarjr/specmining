@@ -107,7 +107,7 @@ public class ClusteringBlockTest {
         assertEquals(expected, instance.uniqueInputTraces.size());
     }
 
-    @Test
+    //@Test
     public void testClustering() {
         int k = 2;
 

@@ -23,6 +23,8 @@ public class ClusteringBlock {
 
     Set<Trace> uniqueInputTraces;
 
+    Set<Trace> currentClusteringDataItems;
+    
     public ClusteringBlock(List<Trace> allTraces) {
         this.uniqueInputTraces = new HashSet<>(allTraces);
     }
@@ -55,7 +57,7 @@ public class ClusteringBlock {
     }
 
     private List<Trace> getNonMedoids(Map<Trace, Set<Trace>> medoids){
-        return this.uniqueInputTraces.stream()
+        return this.currentClusteringDataItems.stream()
                 .filter((t) -> (!medoids.containsKey(t)))
                 .collect(Collectors.toList());
     }
@@ -89,8 +91,15 @@ public class ClusteringBlock {
     }
 
     public Map<Trace,Set<Trace>> kMedoid(int k) {
+        return this.kMedoid(this.uniqueInputTraces, k);
+    }
+    
+    
+    public Map<Trace,Set<Trace>> kMedoid(Set<Trace> traces, int k) {
 
-        List<Trace> l = new LinkedList(this.uniqueInputTraces);
+        this.currentClusteringDataItems = new HashSet<>(traces);
+        
+        List<Trace> l = new LinkedList(traces);
 
         Collections.shuffle(l);
 
@@ -148,13 +157,44 @@ public class ClusteringBlock {
         return medoidsSets;
     }
 
-    public Float calculateScore(Map<Trace,Set<Trace>> clusters) {
+    public Float calculateScore(Map<Trace,Set<Trace>> IPClusters) {
         Float score = 0f;
 
-        //List<Trace> medoidCenters =  new LinkedList<>(clusters.keySet());
+        Set<Trace> medoidCenters =  IPClusters.keySet();
+        Map<Trace, Set<Trace>> medoidCentersCluster = kMedoid(medoidCenters,1);
+        Trace repMedoid = medoidCentersCluster.keySet()
+                .stream().findFirst().get();
         
+        Float simMedoids = 0f;
+        Float simWithinClusters = 0f;
         
+        for (Trace medoid : IPClusters.keySet()){
+            if (!medoid.equals(repMedoid)){
+                simMedoids += medoid.getSequenceAlignmentPenalty(repMedoid);
+            }
+        }
         
+        float averageSimMedoids = simMedoids/(medoidCenters.size()*1f);
+        
+        for (Trace medoid : IPClusters.keySet()){
+            Set<Trace> cluster = IPClusters.get(medoid);
+       
+            List<Trace> dataItems = cluster.stream()
+                    .filter(d -> !d.equals(medoid))
+                    .collect(Collectors.toList());
+            
+            int AClusterSim = dataItems.stream()
+                    .mapToInt(d -> d.getSequenceAlignmentPenalty(medoid))
+                    .sum();
+            
+            float averageAClusterSim = AClusterSim/(1f*dataItems.size());
+            
+            simWithinClusters += averageAClusterSim;
+        }
+       
+        float averageSimWithinClusters = simWithinClusters / (1f*IPClusters.size());
+        
+        score = averageSimWithinClusters - averageSimMedoids;
         return score;
     }
 }
