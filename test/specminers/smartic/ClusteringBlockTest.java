@@ -158,12 +158,12 @@ public class ClusteringBlockTest {
     private List<Trace> fabricateDataSet(int numberOfClusters) {
         List<Trace> traces = new LinkedList<>();
 
-        int N = 20;
+        int N = 10;
 
         char currentClusterLetter = 'A';
 
         for (int i = 0; i < numberOfClusters; i++) {
-            char currentDifferentiatingLetter = 'A';
+            char currentDifferentiatingLetter = currentClusterLetter;
             List<String> commonPrefix = new LinkedList();
 
             String e = Character.toString(currentClusterLetter);
