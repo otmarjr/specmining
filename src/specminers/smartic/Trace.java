@@ -89,8 +89,7 @@ public class Trace {
         String reY;
         reY = StringHelper.generateRegexToMatchInput(ey);
         
-        //return StringHelper.getSequenceAlignmentPenalty(reX, reY, 1, 1);
-        return StringHelper.getSequenceAlignmentPenalty(ex, ey, 1, 1);
+        return StringHelper.getSequenceAlignmentPenalty(reX, reY, 1, 1);
     }
     
     public class SubTrace {
