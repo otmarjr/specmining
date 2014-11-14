@@ -84,10 +84,12 @@ public class Trace {
         String ex = x.getEventsString();
         String ey = y.getEventsString();
         
-        String reX = StringHelper.generateRegexToMatchInput(ex);
-        String rey = StringHelper.generateRegexToMatchInput(ey);
+        String reX;
+        reX = StringHelper.generateRegexToMatchInput(ex);
+        String reY;
+        reY = StringHelper.generateRegexToMatchInput(ey);
         
-        return StringHelper.getSequenceAlignmentPenalty(ex, ey, 1, 1);
+        return StringHelper.getSequenceAlignmentPenalty(reX, reY, 1, 1);
     }
     
     public class SubTrace {

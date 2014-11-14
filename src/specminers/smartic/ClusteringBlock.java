@@ -139,7 +139,8 @@ public class ClusteringBlock {
                     
                     if (newCost < minCost){
                         minCost = newCost;
-                        cheapestConfig = medoidsPrime;
+                        cheapestConfig = new HashMap<>();
+                        cheapestConfig.putAll(medoidsPrime);
                         medoidChanged = true;
                     }
                     

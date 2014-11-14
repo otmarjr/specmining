@@ -27,6 +27,24 @@ public class StringUtilsTest {
     }
     
     @Test
+    public void testPlusOperatorOnPrimitiveRepetition() {
+        System.out.println("testPlusOperatorOnPrimitiveRepetition");
+        String input = "BAAB";
+        String expected  = "B(A)+B";
+        String result = StringHelper.generateRegexToMatchInput(input);
+        assertEquals(expected, result);
+    }
+    
+     @Test
+    public void testNestedPlusOperator() {
+        System.out.println("testPlusOperatorOnPrimitiveRepetition");
+        String input = "AAAA";
+        String expected  = "(A)+";
+        String result = StringHelper.generateRegexToMatchInput(input);
+        assertEquals(expected, result);
+    }
+    
+    @Test
     public void testGlobalSequenceAlignmentCoursera1() {
         String input1 = "AGGGCT";
         String input2 = "AGGCA";
