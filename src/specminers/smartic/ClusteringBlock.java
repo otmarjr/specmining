@@ -47,24 +47,12 @@ public class ClusteringBlock {
             isLocalMaxima = hasGradientChange(featureScoreList);
         }
 
-        clusters = kMedoid(clusters.size()-1);
         return clusters;
     }
 
     public boolean hasGradientChange(List<Float> values) {
         boolean hasGradientChange = false;
 
-        if (values.size() > 2){
-            float last = values.get(values.size()-1);
-            float beforeLast = values.get(values.size()-2);
-            float beforeBeforeLast = values.get(values.size()-3);
-            
-            boolean beforeLastIsLocalMaxima = beforeLast < last
-                    && beforeLast < beforeBeforeLast;
-            
-            hasGradientChange = beforeLastIsLocalMaxima;
-        }
-        
         return hasGradientChange;
     }
 
@@ -189,27 +177,23 @@ public class ClusteringBlock {
         
         float averageSimMedoids = simMedoids/(medoidCenters.size()*1f);
         
-        float numNonemptyClusters = 0;
-        
         for (Trace medoid : IPClusters.keySet()){
             Set<Trace> cluster = IPClusters.get(medoid);
        
             List<Trace> dataItems = cluster.stream()
                     .filter(d -> !d.equals(medoid))
                     .collect(Collectors.toList());
-            if (dataItems.size() > 0) {
-                int AClusterSim = dataItems.stream()
-                        .mapToInt(d -> d.getSequenceAlignmentPenalty(medoid))
-                        .sum();
-
-                float averageAClusterSim = AClusterSim/(1f*dataItems.size());
-
-                simWithinClusters += averageAClusterSim;
-                numNonemptyClusters +=1f;
-            }
+            
+            int AClusterSim = dataItems.stream()
+                    .mapToInt(d -> d.getSequenceAlignmentPenalty(medoid))
+                    .sum();
+            
+            float averageAClusterSim = AClusterSim/(1f*dataItems.size());
+            
+            simWithinClusters += averageAClusterSim;
         }
        
-        float averageSimWithinClusters = simWithinClusters / (numNonemptyClusters);
+        float averageSimWithinClusters = simWithinClusters / (1f*IPClusters.size());
         
         score = averageSimWithinClusters - averageSimMedoids;
         return score;

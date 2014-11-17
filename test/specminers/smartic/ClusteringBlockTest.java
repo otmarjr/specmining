@@ -158,41 +158,26 @@ public class ClusteringBlockTest {
     private List<Trace> fabricateDataSet(int numberOfClusters) {
         List<Trace> traces = new LinkedList<>();
 
+        int N = 20;
+
         char currentClusterLetter = 'A';
-        char unusedChar = 'Z';
 
         for (int i = 0; i < numberOfClusters; i++) {
-            
-            char currentElement = currentClusterLetter;
-            List<String> clusterAlphabet;
-            clusterAlphabet = new LinkedList();
-            
-            for (int j=0;j<5;j++){
-                clusterAlphabet.add(Character.toString(currentElement));
-                currentElement++;
-                currentClusterLetter++;
-            }
-            
-            List<String> suffix = clusterAlphabet.subList(1, 5);
-            
-            for (int j=0;j<5;j++){
+            char currentDifferentiatingLetter = 'A';
+            List<String> commonPrefix = new LinkedList();
+
+            String e = Character.toString(currentClusterLetter);
+            IntStream.range(1, N)
+                    .forEach(j -> commonPrefix.add(e));
+
+            for (int j = 0; j < N; j++) {
                 Trace t = new Trace();
-                
-                String prefix = clusterAlphabet.get(j);
-                
-                if (prefix.equals(suffix.get(0))){
-                    prefix = Character.toString(unusedChar);
-                }
-                
-                List<String> sequence = new LinkedList<>(suffix);
-                
-                sequence.add(0,prefix);
-                
-                sequence.forEach(a -> t.addEvent(a));
+                commonPrefix.forEach(a -> t.addEvent(a));
+                t.addEvent(Character.toString(currentDifferentiatingLetter));
                 traces.add(t);
+                currentDifferentiatingLetter++;
             }
-            
-            
+
             currentClusterLetter++;
         }
 
