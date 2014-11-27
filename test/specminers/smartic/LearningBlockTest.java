@@ -5,6 +5,7 @@
  */
 package specminers.smartic;
 
+import cz.cuni.mff.ksi.jinfer.base.automaton.Automaton;
 import java.util.LinkedList;
 import java.util.List;
 import org.junit.Test;
@@ -39,19 +40,22 @@ public class LearningBlockTest {
         t2.addEvent("Y");
         
         Trace t3 = new Trace();
-        t2.addEvent("A");
-        t2.addEvent("E");
-        t2.addEvent("B");
-        t2.addEvent("D");
-        t2.addEvent("E");
+        t3.addEvent("A");
+        t3.addEvent("E");
+        t3.addEvent("B");
+        t3.addEvent("D");
+        t3.addEvent("E");
         
         traces.add(t1);
         traces.add(t2);
         traces.add(t3);
         
         List<List<String>> expResult = null;
-        List<List<String>> result = LearningBlock.learnAutomaton(traces);
-        assertEquals(expResult, result);
+        Automaton<String> result;
+        result = LearningBlock.learnAutomaton(traces, 2, 1);
+        
+        int numberOfDistinctKStrings = 9;
+        assertEquals(numberOfDistinctKStrings, result.getDelta().size());
     }
     
 }
