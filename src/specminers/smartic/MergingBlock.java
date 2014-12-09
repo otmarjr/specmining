@@ -80,12 +80,13 @@ public class MergingBlock {
         }
     }
     
-    public Set<List<String>> getAllStringsAcceptedByAutomaton(List<Trace> traces, Automaton<String> automaton){
-        Set<List<String>> accepted = new HashSet<>();
-    
+    public List<List<String>> getAllStringsAcceptedByAutomaton(List<Trace> traces, Automaton<String> automaton){
+        List<List<String>> accepted = new LinkedList<>();
+        Set<List<String>> rejected = new HashSet<>();
+        
         for (Trace t : traces){
             List<String> events = t.getEvents();
-            if (events.size() > 0) continue;
+            if (events.isEmpty()) continue;
             State<String> currentState = automaton.getInitialState();
             boolean recognized = true;
             
@@ -103,6 +104,9 @@ public class MergingBlock {
             
             if (recognized && currentState.getFinalCount() > 0){
                 accepted.add(events);
+            }
+            else {
+                rejected.add(events);
             }
         }
         

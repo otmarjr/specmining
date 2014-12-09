@@ -10,6 +10,7 @@ import cz.cuni.mff.ksi.jinfer.base.automaton.State;
 import cz.cuni.mff.ksi.jinfer.base.automaton.Step;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -53,7 +54,7 @@ public class MergingBlockTest {
         
         automaton.createNewStep("j", s1, s5, 45);
         
-        automaton.createNewStep("j", s2, s6, 21);
+        automaton.createNewStep("n", s2, s6, 21);
         
         automaton.createNewStep("s", s3, s7, 22);
         
@@ -93,19 +94,41 @@ public class MergingBlockTest {
         
         automaton.createNewStep("x", s18, s12, 1);
         
+        
+        s16.setFinalCount(100);
         return automaton;
     }
     @Test
     public void testGetAllStringsAcceptedByAutomaton() {
         System.out.println("getAllStringsAcceptedByAutomaton");
-        List<Trace> traces = null;
-        Automaton<String> automaton = null;
+        List<Trace> traces = LearningBlockTest.testDotStringsFileTraces();
+        Automaton<String> automaton = getRamansTestStringsPostSkStringsAutomaton();
         MergingBlock instance = new MergingBlock();
-        Set<List<String>> expResult = null;
-        Set<List<String>> result = instance.getAllStringsAcceptedByAutomaton(traces, automaton);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        List<List<String>> result = instance.getAllStringsAcceptedByAutomaton(traces, automaton);
+        
+        assertEquals(traces.size(), result.size());
+    }
+    
+    @Test
+    public void testGetAllStringsAcceptedByAutomatonWithNewlyAcceptableStrings() {
+        System.out.println("getAllStringsAcceptedByAutomaton");
+        List<Trace> traces = LearningBlockTest.testDotStringsFileTraces();
+        
+        Trace newlyAcceptableTraceOnState5Loop = new Trace();
+        
+        newlyAcceptableTraceOnState5Loop.addEvent("i");
+        newlyAcceptableTraceOnState5Loop.addEvent("j");
+        IntStream.range(0, 1000).forEach(i -> newlyAcceptableTraceOnState5Loop.addEvent("k"));
+        newlyAcceptableTraceOnState5Loop.addEvent("l");
+        newlyAcceptableTraceOnState5Loop.addEvent("x");
+        newlyAcceptableTraceOnState5Loop.addEvent("y");
+        
+        traces.add(newlyAcceptableTraceOnState5Loop);
+        Automaton<String> automaton = getRamansTestStringsPostSkStringsAutomaton();
+        MergingBlock instance = new MergingBlock();
+        List<List<String>> result = instance.getAllStringsAcceptedByAutomaton(traces, automaton);
+        
+        assertEquals(traces.size(), result.size());
     }
     
 }

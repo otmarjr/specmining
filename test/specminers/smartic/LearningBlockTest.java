@@ -62,7 +62,7 @@ public class LearningBlockTest {
         assertEquals(numberOfDistinctKStrings, result.getDelta().size());
     }
 
-    private List<Trace> testDotStringsFileTraces() {
+    public static List<Trace> testDotStringsFileTraces() {
         // Traces corresponding to test.strings file in Raman's material.
         List<Trace> traces = new LinkedList<>();
         traces.add(new Trace() {
