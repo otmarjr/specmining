@@ -89,10 +89,19 @@ public class MergingBlock {
             }
         }
         
-        if (containsSelfLoop){
+        if (containsSelfLoop){ // Create one path using the loop once and another path not using the self loop.
             Step<String> selfLoop = aut.getFirstStep(n, n);
+    
+            Set<List<Step<String>>> prefixesWithSelfLoop = new HashSet<>();
             
-            prefixes.stream().forEach(pref -> pref.add(selfLoop));
+            for (List<Step<String>> prefix : prefixes){
+                List<Step<String>> prefixWithSelfLoop = new LinkedList<>(prefix);
+                prefixWithSelfLoop.add(selfLoop);
+                prefixesWithSelfLoop.add(prefixWithSelfLoop);
+            }
+            
+            prefixes.addAll(prefixesWithSelfLoop);
+            
         }
         return prefixes;
     }
