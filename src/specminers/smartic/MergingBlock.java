@@ -21,7 +21,7 @@ import java.util.Set;
 public class MergingBlock {
 
     public static final String EPSILON_TRANSITION_SYMBOL = "λ";
-    
+
     class TransitionString {
 
         TransitionString(Step<String> step, Automaton<String> automaton) {
@@ -58,70 +58,105 @@ public class MergingBlock {
         return false;
     }
 
-    public List<Step<String>> getPrefix(Automaton<String> aut, State<String> n) {
-        return null;
+    public Set<List<Step<String>>> getPrefixes(Automaton<String> aut, State<String> n) {
+        State currentState = n;
+        Set<List<Step<String>>> prefixes = new HashSet<>();
+
+        boolean containsSelfLoop = false; 
+        
+        for (Step<String> t : aut.getReverseDelta().get(n)) {
+            if (!t.getSource().equals(t.getDestination())) {
+                Set<List<Step<String>>> preprefixes;
+                preprefixes = getPrefixes(aut, t.getSource());
+
+                if (!preprefixes.isEmpty()) {
+                    for (List<Step<String>> pp : preprefixes) {
+                        List<Step<String>> prefix;
+                        prefix = new LinkedList<>(pp);
+                        prefix.add(t);
+                        prefixes.add(prefix);
+                    }
+                } else {
+
+                    prefixes.add(new LinkedList<Step<String>>() {
+                        {
+                            add(t);
+                        }
+                    });
+                }
+            } else {
+                containsSelfLoop = true;
+            }
+        }
+        
+        if (containsSelfLoop){
+            Step<String> selfLoop = aut.getFirstStep(n, n);
+            
+            prefixes.stream().forEach(pref -> pref.add(selfLoop));
+        }
+        return prefixes;
     }
 
     public List<Step<String>> getSuffixes(Automaton<String> aut, State<String> n) {
         return null;
     }
 
-    public void handleExceptionalCases(Automaton<String> automaton){
+    public void handleExceptionalCases(Automaton<String> automaton) {
         State startNode = automaton.getInitialState();
-        
+
         Map<State<String>, Set<Step<String>>> d = automaton.getDelta();
-        
-        boolean startNodeIsSinkOfATransition =  d.keySet().stream()
+
+        boolean startNodeIsSinkOfATransition = d.keySet().stream()
                 .anyMatch(s -> d.get(s).stream()
                         .anyMatch(t -> t.getDestination().equals(startNode)));
-        
-        if (startNodeIsSinkOfATransition){
+
+        if (startNodeIsSinkOfATransition) {
             automaton.createNewDummyInitialState(EPSILON_TRANSITION_SYMBOL);
         }
     }
-    
-    public List<List<String>> getAllStringsAcceptedByAutomaton(List<Trace> traces, Automaton<String> automaton){
+
+    public List<List<String>> getAllStringsAcceptedByAutomaton(List<Trace> traces, Automaton<String> automaton) {
         List<List<String>> accepted = new LinkedList<>();
         Set<List<String>> rejected = new HashSet<>();
-        
-        for (Trace t : traces){
+
+        for (Trace t : traces) {
             List<String> events = t.getEvents();
-            if (events.isEmpty()) continue;
+            if (events.isEmpty()) {
+                continue;
+            }
             State<String> currentState = automaton.getInitialState();
             boolean recognized = true;
-            
-            for (String e : events){
+
+            for (String e : events) {
                 Step<String> next = automaton.getOutStepOnSymbol(currentState, e);
-                
-                if (next != null){
+
+                if (next != null) {
                     currentState = next.getDestination();
-                }
-                else {
+                } else {
                     recognized = false;
                     break;
                 }
             }
-            
-            if (recognized && currentState.getFinalCount() > 0){
+
+            if (recognized && currentState.getFinalCount() > 0) {
                 accepted.add(events);
-            }
-            else {
+            } else {
                 rejected.add(events);
             }
         }
-        
+
         return accepted;
     }
-    
+
     public Automaton<String> getMergedAutomaton(Automaton<String> x, Automaton<String> y, List<Trace> trainSetX, List<Trace> trainSetY) {
         Automaton<String> merged = null;
-        
-        double weightX = 1.0*trainSetX.size()/(trainSetX.size() + trainSetY.size());
-        double weightY = 1.0*trainSetY.size()/(trainSetX.size() + trainSetY.size());
-        
+
+        double weightX = 1.0 * trainSetX.size() / (trainSetX.size() + trainSetY.size());
+        double weightY = 1.0 * trainSetY.size() / (trainSetX.size() + trainSetY.size());
+
         handleExceptionalCases(x);
         handleExceptionalCases(y);
-        
+
         return merged;
     }
 }
