@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
  *
@@ -104,6 +105,40 @@ public class MergingBlock {
 
         }
         return prefixes;
+    }
+
+    public Set<Pair<State<String>, State<String>>> getUnifiablePairs(Automaton<String> x, Automaton<String> y) {
+        Set<Pair<State<String>, State<String>>> pairs = new HashSet<>();
+
+        for (State<String> nodeX : x.getDelta().keySet()) {
+            Set<List<Step<String>>> prefixesX = this.getPrefixes(x, nodeX);
+            for (State<String> nodeY : y.getDelta().keySet()) {
+                Set<List<Step<String>>> prefixesY = this.getPrefixes(y, nodeY);
+                
+                if (prefixesX.containsAll(prefixesY) && prefixesY.containsAll(prefixesX)){
+                    pairs.add(Pair.of(nodeX, nodeY));
+                }
+            }
+        }
+
+        return pairs;
+    }
+    
+    public Set<Pair<State<String>, State<String>>> getMergeablePairs(Automaton<String> x, Automaton<String> y) {
+        Set<Pair<State<String>, State<String>>> pairs = new HashSet<>();
+
+        for (State<String> nodeX : x.getDelta().keySet()) {
+            Set<List<Step<String>>> suffixesX = this.getSuffixes(x, nodeX);
+            for (State<String> nodeY : y.getDelta().keySet()) {
+                Set<List<Step<String>>> suffixesY = this.getSuffixes(y, nodeY);
+                
+                if (suffixesX.containsAll(suffixesY) && suffixesY.containsAll(suffixesX)){
+                    pairs.add(Pair.of(nodeX, nodeY));
+                }
+            }
+        }
+
+        return pairs;
     }
 
     public Set<List<Step<String>>> getSuffixes(Automaton<String> aut, State<String> n) {
