@@ -8,6 +8,7 @@ package specminers.smartic;
 import cz.cuni.mff.ksi.jinfer.base.automaton.Automaton;
 import cz.cuni.mff.ksi.jinfer.base.automaton.State;
 import cz.cuni.mff.ksi.jinfer.base.automaton.Step;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -107,33 +108,81 @@ public class MergingBlock {
         return prefixes;
     }
 
+    public boolean pairIsUnifiable(Automaton<String> x, State<String> nodeX, Automaton<String> y, State<String> nodeY) {
+        Set<List<Step<String>>> prefixesX = this.getPrefixes(x, nodeX);
+        Set<List<Step<String>>> prefixesY = this.getPrefixes(y, nodeY);
+
+        return prefixesX.containsAll(prefixesY) && prefixesY.containsAll(prefixesX);
+    }
+
+    public boolean pairIsMergeable(Automaton<String> x, State<String> nodeX, Automaton<String> y, State<String> nodeY) {
+        Set<List<Step<String>>> suffixesX = this.getSuffixes(x, nodeX);
+        Set<List<Step<String>>> suffixesY = this.getSuffixes(y, nodeY);
+
+        return suffixesX.containsAll(suffixesY) && suffixesY.containsAll(suffixesX);
+    }
+
     public Set<Pair<State<String>, State<String>>> getUnifiablePairs(Automaton<String> x, Automaton<String> y) {
         Set<Pair<State<String>, State<String>>> pairs = new HashSet<>();
 
-        for (State<String> nodeX : x.getDelta().keySet()) {
-            Set<List<Step<String>>> prefixesX = this.getPrefixes(x, nodeX);
-            for (State<String> nodeY : y.getDelta().keySet()) {
-                Set<List<Step<String>>> prefixesY = this.getPrefixes(y, nodeY);
-                
-                if (prefixesX.containsAll(prefixesY) && prefixesY.containsAll(prefixesX)){
-                    pairs.add(Pair.of(nodeX, nodeY));
+        Set<List<Step<String>>> allPathsForX = getSuffixes(x, x.getInitialState());
+        Set<List<Step<String>>> allPathsForY = getSuffixes(y, y.getInitialState());
+
+        for (List<Step<String>> pathX : allPathsForX) {
+            for (List<Step<String>> pathY : allPathsForY) {
+                for (Step<String> tx : pathX) {
+                    for (Step<String> ty : pathY) {
+                        if (pairIsUnifiable(x, tx.getSource(), y, ty.getSource())) {
+                            pairs.add(Pair.of(tx.getSource(), ty.getSource()));
+                        }
+
+                        if (pairIsUnifiable(x, tx.getSource(), y, ty.getDestination())) {
+                            pairs.add(Pair.of(tx.getSource(), ty.getDestination()));
+                        }
+
+                        if (pairIsUnifiable(x, tx.getDestination(), y, ty.getSource())) {
+                            pairs.add(Pair.of(tx.getDestination(), ty.getSource()));
+                        }
+
+                        if (pairIsUnifiable(x, tx.getDestination(), y, ty.getDestination())) {
+                            pairs.add(Pair.of(tx.getDestination(), ty.getDestination()));
+                        }
+                    }
                 }
             }
         }
-
         return pairs;
     }
-    
+
     public Set<Pair<State<String>, State<String>>> getMergeablePairs(Automaton<String> x, Automaton<String> y) {
         Set<Pair<State<String>, State<String>>> pairs = new HashSet<>();
 
-        for (State<String> nodeX : x.getDelta().keySet()) {
-            Set<List<Step<String>>> suffixesX = this.getSuffixes(x, nodeX);
-            for (State<String> nodeY : y.getDelta().keySet()) {
-                Set<List<Step<String>>> suffixesY = this.getSuffixes(y, nodeY);
-                
-                if (suffixesX.containsAll(suffixesY) && suffixesY.containsAll(suffixesX)){
-                    pairs.add(Pair.of(nodeX, nodeY));
+        State<String> acceptingX = x.getDelta().keySet().stream().filter(s -> s.getFinalCount() > 0).findFirst().get();
+        State<String> acceptingY = y.getDelta().keySet().stream().filter(s -> s.getFinalCount() > 0).findFirst().get();
+
+        Set<List<Step<String>>> allPathsForX = getPrefixes(x, acceptingX);
+        Set<List<Step<String>>> allPathsForY = getPrefixes(y, acceptingY);
+
+        for (List<Step<String>> pathX : allPathsForX) {
+            for (List<Step<String>> pathY : allPathsForY) {
+                for (Step<String> tx : pathX) {
+                    for (Step<String> ty : pathY) {
+                        if (pairIsMergeable(x, tx.getSource(), y, ty.getSource())) {
+                            pairs.add(Pair.of(tx.getSource(), ty.getSource()));
+                        }
+
+                        if (pairIsMergeable(x, tx.getSource(), y, ty.getDestination())) {
+                            pairs.add(Pair.of(tx.getSource(), ty.getDestination()));
+                        }
+
+                        if (pairIsMergeable(x, tx.getDestination(), y, ty.getSource())) {
+                            pairs.add(Pair.of(tx.getDestination(), ty.getSource()));
+                        }
+
+                        if (pairIsMergeable(x, tx.getDestination(), y, ty.getDestination())) {
+                            pairs.add(Pair.of(tx.getDestination(), ty.getDestination()));
+                        }
+                    }
                 }
             }
         }
@@ -141,6 +190,153 @@ public class MergingBlock {
         return pairs;
     }
 
+    public Automaton<String> getTopPartiallyMergedAutomaton(Set<Pair<State<String>, State<String>>> unifiableList, Automaton<String> x, Automaton<String> y) {
+        Automaton<String> aut = new Automaton<>(0, false);
+
+        Map<Pair<State<String>, State<String>>, State<String>> pairNewStates;
+        pairNewStates = new HashMap<>();
+
+        // create states
+        for (Pair<State<String>, State<String>> pair : unifiableList) {
+            State<String> s = aut.createNewState();
+            pairNewStates.put(pair, s);
+        }
+
+        Map<State<String>, Set<Pair<State<String>, State<String>>>> xStatesInUnifiableList = new HashMap<>();
+        Map<State<String>, Set<Pair<State<String>, State<String>>>> yStatesInUnifiableList = new HashMap<>();
+        
+        for (Pair<State<String>,State<String>> pair : unifiableList){
+            State<String> xState = pair.getLeft();
+            State<String> yState = pair.getRight();
+            
+            if (xStatesInUnifiableList.containsKey(xState)){
+                xStatesInUnifiableList.get(xState).add(pair);
+            }
+            else{
+                xStatesInUnifiableList.put(xState, new HashSet<>());
+                xStatesInUnifiableList.get(xState).add(pair);
+            }
+            
+            if (yStatesInUnifiableList.containsKey(yState)){
+                yStatesInUnifiableList.get(yState).add(pair);
+            }
+            else{
+                yStatesInUnifiableList.put(yState, new HashSet<>());
+                yStatesInUnifiableList.get(yState).add(pair);
+            }
+        }
+        
+        for (Pair<State<String>, State<String>> pair : pairNewStates.keySet()) {
+            // Create transitions to states from X present in unifiable list.
+            State<String> xState = pair.getLeft();
+            State<String> newState = pairNewStates.get(pair);
+            
+            for (Step<String> tx : x.getDelta().get(xState)){
+                if (xStatesInUnifiableList.containsKey(tx.getDestination())){
+                    for (Pair<State<String>, State<String>> p2 : xStatesInUnifiableList.get(xState)){
+                        State<String> newStateP2 = pairNewStates.get(p2);
+                        
+                        aut.createNewStep(tx.getAcceptSymbol(), newState, newStateP2);
+                    }
+                }
+            }
+            
+            State<String> yState = pair.getRight();
+            
+            for (Step<String> ty : y.getDelta().get(yState)){
+                if (yStatesInUnifiableList.containsKey(ty.getDestination())){
+                    for (Pair<State<String>, State<String>> p2 : yStatesInUnifiableList.get(yState)){
+                        State<String> newStateP2 = pairNewStates.get(p2);
+                        
+                        aut.createNewStep(ty.getAcceptSymbol(), newState, newStateP2);
+                    }
+                }
+            }
+        }
+
+        return aut;
+    }
+    
+    public Automaton<String> getBottomPartiallyMergedAutomaton(Set<Pair<State<String>, State<String>>> mergeable, Automaton<String> x, Automaton<String> y) {
+        Automaton<String> aut = new Automaton<>(0, false);
+
+        Map<Pair<State<String>, State<String>>, State<String>> pairNewStates;
+        pairNewStates = new HashMap<>();
+
+        // create states
+        for (Pair<State<String>, State<String>> pair : mergeable) {
+            State<String> s = aut.createNewState();
+            pairNewStates.put(pair, s);
+        }
+
+        Map<State<String>, Set<Pair<State<String>, State<String>>>> xStatesInMergeableList = new HashMap<>();
+        Map<State<String>, Set<Pair<State<String>, State<String>>>> yStatesInMergeableList = new HashMap<>();
+        
+        for (Pair<State<String>,State<String>> pair : mergeable){
+            State<String> xState = pair.getLeft();
+            State<String> yState = pair.getRight();
+            
+            if (xStatesInMergeableList.containsKey(xState)){
+                xStatesInMergeableList.get(xState).add(pair);
+            }
+            else{
+                xStatesInMergeableList.put(xState, new HashSet<>());
+                xStatesInMergeableList.get(xState).add(pair);
+            }
+            
+            if (yStatesInMergeableList.containsKey(yState)){
+                yStatesInMergeableList.get(yState).add(pair);
+            }
+            else{
+                yStatesInMergeableList.put(yState, new HashSet<>());
+                yStatesInMergeableList.get(yState).add(pair);
+            }
+        }
+        
+        for (Pair<State<String>, State<String>> pair : pairNewStates.keySet()) {
+            // Create transitions to states from X present in unifiable list.
+            State<String> xState = pair.getLeft();
+            State<String> newState = pairNewStates.get(pair);
+            
+            for (Step<String> tx : x.getDelta().get(xState)){
+                if (xStatesInMergeableList.containsKey(tx.getDestination())){
+                    for (Pair<State<String>, State<String>> p2 : xStatesInMergeableList.get(xState)){
+                        State<String> newStateP2 = pairNewStates.get(p2);
+                        
+                        aut.createNewStep(tx.getAcceptSymbol(), newState, newStateP2);
+                    }
+                }
+            }
+            
+            State<String> yState = pair.getRight();
+            
+            for (Step<String> ty : y.getDelta().get(yState)){
+                if (yStatesInMergeableList.containsKey(ty.getDestination())){
+                    for (Pair<State<String>, State<String>> p2 : yStatesInMergeableList.get(yState)){
+                        State<String> newStateP2 = pairNewStates.get(p2);
+                        
+                        aut.createNewStep(ty.getAcceptSymbol(), newState, newStateP2);
+                    }
+                }
+            }
+        }
+
+        return aut;
+    }
+
+    public Automaton<String> mergeAutomatons(Automaton<String> x, Automaton<String> y, Automaton<String> top,
+            Automaton<String> bottom){
+        Automaton<String> aut = new Automaton<String>();
+        
+        Set<State<String>> initialStates = new HashSet<>();
+        
+        initialStates.add(x.getInitialState());
+        initialStates.add(y.getInitialState());
+        initialStates.add(top.getInitialState());
+        initialStates.add(bottom.getInitialState());
+        
+        return aut;
+    }
     public Set<List<Step<String>>> getSuffixes(Automaton<String> aut, State<String> n) {
         Set<List<Step<String>>> suffixes = new HashSet<>();
         boolean addedSelfLoop = false;
