@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -59,11 +60,10 @@ public class MergingBlock {
     }
 
     public Set<List<Step<String>>> getPrefixes(Automaton<String> aut, State<String> n) {
-        State currentState = n;
         Set<List<Step<String>>> prefixes = new HashSet<>();
 
-        boolean containsSelfLoop = false; 
-        
+        boolean containsSelfLoop = false;
+
         for (Step<String> t : aut.getReverseDelta().get(n)) {
             if (!t.getSource().equals(t.getDestination())) {
                 Set<List<Step<String>>> preprefixes;
@@ -88,26 +88,90 @@ public class MergingBlock {
                 containsSelfLoop = true;
             }
         }
-        
-        if (containsSelfLoop){ // Create one path using the loop once and another path not using the self loop.
+
+        if (containsSelfLoop) { // Create one path using the loop once and another path not using the self loop.
             Step<String> selfLoop = aut.getFirstStep(n, n);
-    
+
             Set<List<Step<String>>> prefixesWithSelfLoop = new HashSet<>();
-            
-            for (List<Step<String>> prefix : prefixes){
+
+            for (List<Step<String>> prefix : prefixes) {
                 List<Step<String>> prefixWithSelfLoop = new LinkedList<>(prefix);
                 prefixWithSelfLoop.add(selfLoop);
                 prefixesWithSelfLoop.add(prefixWithSelfLoop);
             }
-            
+
             prefixes.addAll(prefixesWithSelfLoop);
-            
+
         }
         return prefixes;
     }
 
-    public List<Step<String>> getSuffixes(Automaton<String> aut, State<String> n) {
-        return null;
+    public Set<List<Step<String>>> getSuffixes(Automaton<String> aut, State<String> n) {
+        Set<List<Step<String>>> suffixes = new HashSet<>();
+        boolean addedSelfLoop = false;
+        boolean anyOutwardTransitionAfterSelfLoop = false;
+
+        for (Step<String> t : aut.getDelta().get(n)) {
+            if (!t.getSource().equals(t.getDestination())) {
+                anyOutwardTransitionAfterSelfLoop = true;
+                Set<List<Step<String>>> susufixes;
+                susufixes = getSuffixes(aut, t.getDestination());
+
+                Set<List<Step<String>>> susuffixesWithSelfLoop = susufixes.stream().filter(suf -> {
+                    Step<String> lastStep = suf.get(suf.size() - 1);
+                    return lastStep.getSource().equals(lastStep.getDestination());
+                }).collect(Collectors.toSet());
+
+                for (List<Step<String>> susufWithSelfLoop : susuffixesWithSelfLoop) {
+                    List<Step<String>> susufWithoutSelfLoop = susufWithSelfLoop.stream().limit(susufWithSelfLoop.size() - 1).collect(Collectors.toList());
+
+                    susufixes.add(susufWithoutSelfLoop);
+                }
+
+                if (!susufixes.isEmpty()) {
+                    for (List<Step<String>> pp : susufixes) {
+                        List<Step<String>> sufix;
+                        sufix = new LinkedList<>(pp);
+                        sufix.add(0, t);
+                        suffixes.add(sufix);
+                    }
+                } else {
+
+                    suffixes.add(new LinkedList<Step<String>>() {
+                        {
+                            add(t);
+                        }
+                    });
+                }
+            } else {
+                if (!addedSelfLoop) {
+                    if (t.getDestination().isFinal()) {
+                        suffixes.add(new LinkedList<Step<String>>() {
+                            {
+                                add(t);
+                            }
+                        });
+                    }
+                    addedSelfLoop = true;
+                }
+            }
+        }
+
+        if (anyOutwardTransitionAfterSelfLoop && addedSelfLoop) {
+            Step<String> selfLoop = aut.getFirstStep(n, n);
+
+            Set<List<Step<String>>> suffixesWithSelfLoop = new HashSet<>();
+
+            for (List<Step<String>> suffix : suffixes) {
+                List<Step<String>> suffixWithSelfLoop = new LinkedList<>(suffix);
+                suffixWithSelfLoop.add(0, selfLoop);
+                suffixesWithSelfLoop.add(suffixWithSelfLoop);
+            }
+
+            suffixes.addAll(suffixesWithSelfLoop);
+        }
+
+        return suffixes;
     }
 
     public void handleExceptionalCases(Automaton<String> automaton) {

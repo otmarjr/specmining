@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.internal.matchers.IsCollectionContaining;
 
 /**
  *
@@ -323,6 +324,229 @@ public class MergingBlockTest {
         assertEquals(2, prefix18.size());
         assertTrue(prefix18.stream().anyMatch(pref -> pref.equals(Arrays.asList(t01, t15, t55, t511, t1115,t1518))));
         assertTrue(prefix18.stream().anyMatch(pref -> pref.equals(Arrays.asList(t01, t15, t511, t1115,t1518))));
+    }
+    
+    @Test
+    public void testGetSufixes() {
+        Automaton<String> automaton = this.getRamansTestStringsPostSkStringsAutomaton();
+
+        MergingBlock mb = new MergingBlock();
+
+        State s0 = automaton.getInitialState();
+        State s1 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 1).findFirst().get();
+        State s2 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 2).findFirst().get();
+        State s3 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 3).findFirst().get();
+        State s4 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 4).findFirst().get();
+        State s5 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 5).findFirst().get();
+        State s6 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 6).findFirst().get();
+        State s7 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 7).findFirst().get();
+        State s8 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 8).findFirst().get();
+        State s9 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 9).findFirst().get();
+        State s10 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 10).findFirst().get();
+        State s11 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 11).findFirst().get();
+        State s12 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 12).findFirst().get();
+        State s13 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 13).findFirst().get();
+        State s14 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 14).findFirst().get();
+        State s15 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 15).findFirst().get();
+        State s16 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 16).findFirst().get();
+        State s17 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 17).findFirst().get();
+        State s18 = automaton.getDelta().keySet().stream().filter(k -> k.getName() == 18).findFirst().get();
+
+        Set<List<Step<String>>> suffix18 = mb.getSuffixes(automaton, s18);
+        Set<List<Step<String>>> suffix17 = mb.getSuffixes(automaton, s17);
+        Set<List<Step<String>>> suffix16 = mb.getSuffixes(automaton, s16);
+        Set<List<Step<String>>> suffix15 = mb.getSuffixes(automaton, s15);
+        Set<List<Step<String>>> suffix14 = mb.getSuffixes(automaton, s14);
+        Set<List<Step<String>>> suffix13 = mb.getSuffixes(automaton, s13);
+        Set<List<Step<String>>> suffix12 = mb.getSuffixes(automaton, s12);
+        Set<List<Step<String>>> suffix11 = mb.getSuffixes(automaton, s11);
+        Set<List<Step<String>>> suffix10 = mb.getSuffixes(automaton, s10);
+        Set<List<Step<String>>> suffix9 = mb.getSuffixes(automaton, s9);
+        Set<List<Step<String>>> suffix8 = mb.getSuffixes(automaton, s8);
+        Set<List<Step<String>>> suffix7 = mb.getSuffixes(automaton, s7);
+        Set<List<Step<String>>> suffix6 = mb.getSuffixes(automaton, s6);
+        Set<List<Step<String>>> suffix5 = mb.getSuffixes(automaton, s5);
+        Set<List<Step<String>>> suffix4 = mb.getSuffixes(automaton, s4);
+        Set<List<Step<String>>> suffix3 = mb.getSuffixes(automaton, s3);
+        Set<List<Step<String>>> suffix2 = mb.getSuffixes(automaton, s2);
+        Set<List<Step<String>>> suffix1 = mb.getSuffixes(automaton, s1);
+        Set<List<Step<String>>> suffix0 = mb.getSuffixes(automaton, automaton.getInitialState());
+
+        Step<String> t01 = automaton.getFirstStep(0, 1);
+        Step<String> t02 = automaton.getFirstStep(0, 2);
+        Set<Step<String>> t03 = automaton.getAllSteps(0, 3);
+        Step<String> t04 = automaton.getFirstStep(0, 4);
+
+        Step<String> t15 = automaton.getFirstStep(1, 5);
+
+        Step<String> t26 = automaton.getFirstStep(2, 6);
+
+        Step<String> t37 = automaton.getFirstStep(3, 7);
+
+        Step<String> t46 = automaton.getFirstStep(4, 6);
+
+        Step<String> t55 = automaton.getFirstStep(5, 5);
+        Step<String> t58 = automaton.getFirstStep(5, 8);
+        Step<String> t511 = automaton.getFirstStep(5, 11);
+
+        Step<String> t69 = automaton.getFirstStep(6, 9);
+
+        Step<String> t710 = automaton.getFirstStep(7, 10);
+
+        Step<String> t812 = automaton.getFirstStep(8, 12);
+        Step<String> t813 = automaton.getFirstStep(8, 13);
+
+        Step<String> t913 = automaton.getFirstStep(9, 13);
+
+        Step<String> t1014 = automaton.getFirstStep(10, 14);
+
+        Step<String> t119 = automaton.getFirstStep(11, 9);
+        Step<String> t1115 = automaton.getFirstStep(11, 15);
+
+        Step<String> t1216 = automaton.getFirstStep(12, 16);
+
+        Step<String> t1316 = automaton.getFirstStep(13, 16);
+
+        Step<String> t1417 = automaton.getFirstStep(14, 17);
+
+        Step<String> t1518 = automaton.getFirstStep(15, 18);
+
+        Set<Step<String>> t1616All = automaton.getAllSteps(16, 16);
+        Step<String> t1616f = automaton.getFirstStep(16, 16);
+
+        Step<String> t1716 = automaton.getFirstStep(17, 16);
+
+        Step<String> t1812 = automaton.getFirstStep(18, 12);
+        
+        assertEquals(2, suffix18.size());
+        assertThat(suffix18, IsCollectionContaining.hasItem(Arrays.asList(t1812,t1216,t1616f)));
+        assertThat(suffix18, IsCollectionContaining.hasItem(Arrays.asList(t1812,t1216)));
+        
+        assertEquals(2, suffix17.size());
+        assertThat(suffix17, IsCollectionContaining.hasItem(Arrays.asList(t1716,t1616f)));
+        assertThat(suffix17, IsCollectionContaining.hasItem(Arrays.asList(t1716)));
+        
+        assertEquals(1, suffix16.size());
+        assertThat(suffix16, IsCollectionContaining.hasItem(Arrays.asList(t1616f)));
+        
+        assertEquals(2, suffix15.size());
+        assertThat(suffix15, IsCollectionContaining.hasItem(Arrays.asList(t1518,t1812,t1216,t1616f)));
+        assertThat(suffix15, IsCollectionContaining.hasItem(Arrays.asList(t1518,t1812,t1216)));
+        
+        assertEquals(2, suffix14.size());
+        assertThat(suffix14, IsCollectionContaining.hasItem(Arrays.asList(t1417,t1716,t1616f)));
+        assertThat(suffix14, IsCollectionContaining.hasItem(Arrays.asList(t1417,t1716)));
+        
+        assertEquals(2, suffix13.size());
+        assertThat(suffix13, IsCollectionContaining.hasItem(Arrays.asList(t1316,t1616f)));
+        assertThat(suffix13, IsCollectionContaining.hasItem(Arrays.asList(t1316)));
+        
+        assertEquals(2, suffix12.size());
+        assertThat(suffix12, IsCollectionContaining.hasItem(Arrays.asList(t1216,t1616f)));
+        assertThat(suffix12, IsCollectionContaining.hasItem(Arrays.asList(t1216)));
+        
+        assertEquals(4, suffix11.size());
+        assertThat(suffix11, IsCollectionContaining.hasItem(Arrays.asList(t1115,t1518,t1812,t1216,t1616f)));
+        assertThat(suffix11, IsCollectionContaining.hasItem(Arrays.asList(t1115,t1518,t1812,t1216)));
+        assertThat(suffix11, IsCollectionContaining.hasItem(Arrays.asList(t119,t913,t1316,t1616f)));
+        assertThat(suffix11, IsCollectionContaining.hasItem(Arrays.asList(t119,t913,t1316)));
+        
+        assertEquals(2, suffix10.size());
+        assertThat(suffix10, IsCollectionContaining.hasItem(Arrays.asList(t1014,t1417,t1716,t1616f)));
+        assertThat(suffix10, IsCollectionContaining.hasItem(Arrays.asList(t1014,t1417,t1716)));
+        
+        assertEquals(2, suffix9.size());
+        assertThat(suffix9, IsCollectionContaining.hasItem(Arrays.asList(t913,t1316,t1616f)));
+        assertThat(suffix9, IsCollectionContaining.hasItem(Arrays.asList(t913,t1316)));
+        
+        assertEquals(4, suffix8.size());
+        assertThat(suffix8, IsCollectionContaining.hasItem(Arrays.asList(t813,t1316,t1616f)));
+        assertThat(suffix8, IsCollectionContaining.hasItem(Arrays.asList(t813,t1316)));
+        assertThat(suffix8, IsCollectionContaining.hasItem(Arrays.asList(t812,t1216,t1616f)));
+        assertThat(suffix8, IsCollectionContaining.hasItem(Arrays.asList(t812,t1216)));
+        
+        assertEquals(2, suffix7.size());
+        assertThat(suffix7, IsCollectionContaining.hasItem(Arrays.asList(t710,t1014,t1417,t1716,t1616f)));
+        assertThat(suffix7, IsCollectionContaining.hasItem(Arrays.asList(t710,t1014,t1417,t1716)));
+        
+        assertEquals(2, suffix6.size());
+        assertThat(suffix6, IsCollectionContaining.hasItem(Arrays.asList(t69,t913,t1316,t1616f)));
+        assertThat(suffix6, IsCollectionContaining.hasItem(Arrays.asList(t69,t913,t1316)));
+        
+        assertEquals(16, suffix5.size());
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t58, t813,t1316,t1616f)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t58, t813,t1316)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t58, t812,t1216,t1616f)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t58, t812,t1216)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t55, t58, t813,t1316,t1616f)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t55, t58, t813,t1316)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t55, t58, t812,t1216,t1616f)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t55, t58, t812,t1216)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t511,t1115,t1518,t1812,t1216,t1616f)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t511,t1115,t1518,t1812,t1216)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t511,t119,t913,t1316,t1616f)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t511,t119,t913,t1316)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t55, t511,t1115,t1518,t1812,t1216,t1616f)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t55, t511,t1115,t1518,t1812,t1216)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t55, t511,t119,t913,t1316,t1616f)));
+        assertThat(suffix5, IsCollectionContaining.hasItem(Arrays.asList(t55, t511,t119,t913,t1316)));
+        
+        assertEquals(2, suffix4.size());
+        assertThat(suffix4, IsCollectionContaining.hasItem(Arrays.asList(t46, t69,t913,t1316,t1616f)));
+        assertThat(suffix4, IsCollectionContaining.hasItem(Arrays.asList(t46, t69,t913,t1316)));
+        
+        assertEquals(2, suffix3.size());
+        assertThat(suffix3, IsCollectionContaining.hasItem(Arrays.asList(t37,t710,t1014,t1417,t1716,t1616f)));
+        assertThat(suffix3, IsCollectionContaining.hasItem(Arrays.asList(t37,t710,t1014,t1417,t1716)));
+        
+        assertEquals(2, suffix2.size());
+        assertThat(suffix2, IsCollectionContaining.hasItem(Arrays.asList(t26, t69,t913,t1316,t1616f)));
+        assertThat(suffix2, IsCollectionContaining.hasItem(Arrays.asList(t26, t69,t913,t1316)));
+        
+        assertEquals(16, suffix1.size());
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t58, t813,t1316,t1616f)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t58, t813,t1316)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t58, t812,t1216,t1616f)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t58, t812,t1216)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t55, t58, t813,t1316,t1616f)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t55, t58, t813,t1316)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t55, t58, t812,t1216,t1616f)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t55, t58, t812,t1216)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t511,t1115,t1518,t1812,t1216,t1616f)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t511,t1115,t1518,t1812,t1216)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t511,t119,t913,t1316,t1616f)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t511,t119,t913,t1316)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t55, t511,t1115,t1518,t1812,t1216,t1616f)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t55, t511,t1115,t1518,t1812,t1216)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t55, t511,t119,t913,t1316,t1616f)));
+        assertThat(suffix1, IsCollectionContaining.hasItem(Arrays.asList(t15,t55, t511,t119,t913,t1316)));
+        
+        
+        assertEquals(24, suffix0.size());
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t58, t813,t1316,t1616f)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t58, t813,t1316)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t58, t812,t1216,t1616f)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t58, t812,t1216)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t55, t58, t813,t1316,t1616f)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t55, t58, t813,t1316)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t55, t58, t812,t1216,t1616f)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t55, t58, t812,t1216)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t511,t1115,t1518,t1812,t1216,t1616f)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t511,t1115,t1518,t1812,t1216)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t511,t119,t913,t1316,t1616f)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t511,t119,t913,t1316)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t55, t511,t1115,t1518,t1812,t1216,t1616f)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t55, t511,t1115,t1518,t1812,t1216)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t55, t511,t119,t913,t1316,t1616f)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t01, t15,t55, t511,t119,t913,t1316)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(automaton.getOutStepOnSymbol(s0, "r"), t37,t710,t1014,t1417,t1716,t1616f)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(automaton.getOutStepOnSymbol(s0, "r"), t37,t710,t1014,t1417,t1716)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(automaton.getOutStepOnSymbol(s0, "h"), t37,t710,t1014,t1417,t1716,t1616f)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(automaton.getOutStepOnSymbol(s0, "h"), t37,t710,t1014,t1417,t1716)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t04, t46, t69,t913,t1316,t1616f)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t04, t46, t69,t913,t1316)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t02, t26, t69,t913,t1316,t1616f)));
+        assertThat(suffix0, IsCollectionContaining.hasItem(Arrays.asList(t02, t26, t69,t913,t1316)));
     }
 
     private String prefixesToString(Set<List<Step<String>>> prefixes) {
