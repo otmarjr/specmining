@@ -8,12 +8,16 @@ package specminers.smartic;
 import cz.cuni.mff.ksi.jinfer.base.automaton.Automaton;
 import cz.cuni.mff.ksi.jinfer.base.automaton.State;
 import cz.cuni.mff.ksi.jinfer.base.automaton.Step;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -462,5 +466,37 @@ public class MergingBlock {
         handleExceptionalCases(y);
 
         return merged;
+    }
+    
+    public List<State<String>> getNodesByBreadthFirstSearch(Automaton<String> automaton){
+        LinkedList<State<String>> V  = new LinkedList<>();
+        Queue<State<String>> Q = new LinkedBlockingDeque<>();
+        
+        V.add(automaton.getInitialState());
+        Q.add(automaton.getInitialState());
+        
+        while (!Q.isEmpty()){
+            State<String> t = Q.poll();
+            
+            for (Step<String> delta : automaton.getDelta().get(t)){
+                State<String> u = delta.getDestination();
+                
+                if (!V.contains(u)){
+                    V.add(u);
+                    Q.add(u);
+                }
+            }
+        }
+        
+        return V;
+    }
+    
+    public Set<Pair<State<String>, State<String>>> createUnifiableList(Automaton<String> x, Automaton<String> y){
+        Set<Pair<State<String>, State<String>>> uni = new HashSet<>();
+        
+        List<State<String>> nodesX  = new LinkedList<>();
+        int currentXDistance = 0;
+        
+        return uni;
     }
 }

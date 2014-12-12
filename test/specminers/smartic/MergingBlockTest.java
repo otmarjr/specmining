@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import static org.hamcrest.CoreMatchers.is;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.internal.matchers.IsCollectionContaining;
@@ -573,4 +574,75 @@ public class MergingBlockTest {
                                   t.getDestination().getName() + 
                              ")").collect(Collectors.joining(", ")) + "\n";
     }
+    
+    
+    private Automaton<String> getWikipediaFirstBFSExample() {
+        Automaton<String> automatonBFSWikipedia = new Automaton<String>(1,true);
+        State<String> s1 = automatonBFSWikipedia.getInitialState();
+        
+        State<String> s2 = automatonBFSWikipedia.createNewState();
+        
+        automatonBFSWikipedia.createNewStep("a", s1, s2);
+        
+        State<String> s3 = automatonBFSWikipedia.createNewState();
+        
+        automatonBFSWikipedia.createNewStep("b", s1, s3);
+        
+        State<String> s4 = automatonBFSWikipedia.createNewState();
+        
+        automatonBFSWikipedia.createNewStep("c", s1, s4);
+        
+        State<String> s5 = automatonBFSWikipedia.createNewState();
+        
+        automatonBFSWikipedia.createNewStep("a", s2, s5);
+        
+        State<String> s6 = automatonBFSWikipedia.createNewState();
+        
+        automatonBFSWikipedia.createNewStep("b", s2, s6);
+        
+        State<String> s7 = automatonBFSWikipedia.createNewState();
+        
+        automatonBFSWikipedia.createNewStep("a", s4, s7);
+        
+        State<String> s8 = automatonBFSWikipedia.createNewState();
+        
+        automatonBFSWikipedia.createNewStep("b", s4, s8);
+        
+        State<String> s9 = automatonBFSWikipedia.createNewState();
+        
+        automatonBFSWikipedia.createNewStep("a", s5, s9);
+        
+        State<String> s10 = automatonBFSWikipedia.createNewState();
+        
+        automatonBFSWikipedia.createNewStep("b", s5, s10);
+        
+        State<String> s11 = automatonBFSWikipedia.createNewState();
+        
+        automatonBFSWikipedia.createNewStep("a", s7, s11);
+        
+        State<String> s12 = automatonBFSWikipedia.createNewState();
+        
+        automatonBFSWikipedia.createNewStep("b", s7, s12);
+        
+        s9.setFinalCount(1);
+        s10.setFinalCount(1);
+        s6.setFinalCount(1);
+        s3.setFinalCount(1);
+        s11.setFinalCount(1);
+        s12.setFinalCount(1);
+        s8.setFinalCount(1);
+        
+        return automatonBFSWikipedia;
+    }
+    @Test
+    public void testBFS() {
+        Automaton<String> automatonBFSWikipedia = getWikipediaFirstBFSExample();
+        MergingBlock mb = new MergingBlock();
+        List<State<String>> bfs = mb.getNodesByBreadthFirstSearch(automatonBFSWikipedia);
+        
+        assertThat(bfs.size(), is(12));
+        assertTrue(bfs.containsAll(automatonBFSWikipedia.getDelta().keySet()));
+        assertTrue(bfs.stream().allMatch(ni -> ni.getName() == bfs.indexOf(ni)+1));
+    }
+        
 }

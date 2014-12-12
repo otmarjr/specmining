@@ -8,13 +8,13 @@ package specminers.smartic;
 import cz.cuni.mff.ksi.jinfer.base.automaton.Automaton;
 import cz.cuni.mff.ksi.jinfer.base.automaton.State;
 import cz.cuni.mff.ksi.jinfer.base.automaton.Step;
+import java.util.Arrays;
 import java.util.Formatter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import org.junit.Test;
 import static org.junit.Assert.*;
-
 /**
  *
  * @author otmar
@@ -1162,5 +1162,16 @@ public class LearningBlockTest {
         assertEquals(19, automaton.getDelta().size());
     }
     
-    
+    @Test
+    public void testLearntAutomatonFromTraceABCD(){
+        List<String> input = Arrays.asList("A,B,C,B,C,D,A,B,C,B,C,B,C,D".split(","));
+        
+        Automaton<String> automaton  = new Automaton<>(0, true);
+        
+        automaton.buildPTAOnSymbol(input);
+        
+        String result = automaton.toString();
+        
+        assertNotNull(result);
+    }
 }
