@@ -442,7 +442,27 @@ public class MergingBlock {
         handleExceptionalCases(x);
         handleExceptionalCases(y);
 
+        Set<Pair<State<String>, State<String>>>  unifiableList = createUnifiableList(x, y, true);
+        Set<Pair<State<String>, State<String>>>  mergeableList = createUnifiableList(x, y, false);
+        
+        
         return merged;
+    }
+    
+    public ECDataStructure createEquivalenceClass(Set<Pair<State<String>, State<String>>> mergeableNodes,
+            Set<State<String>> representativeObjects){
+        
+        Automaton<String> bottom = new Automaton<String>(0, false);
+        
+        for (Pair<State<String>, State<String>> pair : mergeableNodes){
+            State<String> nx = pair.getLeft();
+            
+            State<String> equivY = pair.getRight();
+        }
+        
+        ECDataStructure DS = null;
+        
+        return DS;
     }
 
     public List<State<String>> getNodesByBreadthFirstSearch(Automaton<String> automaton) {
@@ -468,8 +488,8 @@ public class MergingBlock {
         return V;
     }
 
-    public boolean checkUnifiable(State<String> nx, State<String> ny, Set<Pair<State<String>, State<String>>> uni,
-            Set<Pair<State<String>, State<String>>> dep, boolean isTopDown, Automaton<String> x, Automaton<String> y) {
+    public boolean checkUnifiable(State<String> nx, State<String> ny,
+            boolean isTopDown, Automaton<String> x, Automaton<String> y) {
 
         Set<List<Step<String>>> txS = new HashSet<>();
         Set<List<Step<String>>> tyS = new HashSet<>();
@@ -489,21 +509,16 @@ public class MergingBlock {
                     .collect(Collectors.toList());
             return trx;
         }).collect(Collectors.toSet());
-        
+
         Set<List<TransitionString>> yTransitionList = tyS.stream().map(ly -> {
             List<TransitionString> trx = ly.stream().map(sy -> new TransitionString(sy, y))
                     .collect(Collectors.toList());
             return trx;
         }).collect(Collectors.toSet());
 
-        isUnifiable = yTransitionList == xTransitionList;
-        
-        return isUnifiable;
-    }
+        isUnifiable = yTransitionList.equals(xTransitionList);
 
-    public boolean solveCircDep(Set<Pair<State<String>, State<String>>> uni,
-            Set<Pair<State<String>, State<String>>> dep) {
-        return false;
+        return isUnifiable;
     }
 
     public Set<Pair<State<String>, State<String>>> createUnifiableList(Automaton<String> x, Automaton<String> y, boolean isTopDown) {
@@ -516,33 +531,13 @@ public class MergingBlock {
             Collections.reverse(nodesX);
             Collections.reverse(nodesY);
         }
-
-        boolean bChange = true;
-
-        Set<Pair<State<String>, State<String>>> prevDep = new HashSet<>();
-
-        while (bChange) {
-            Set<Pair<State<String>, State<String>>> dep = new HashSet<>();
-
-            Set<Pair<State<String>, State<String>>> pairSet = new HashSet<>();
-
-            if (prevDep.isEmpty()) {
-                for (State<String> xNode : nodesX) {
-                    for (State<String> yNode : nodesY) {
-                        pairSet.add(Pair.of(xNode, yNode));
-                    }
-                }
-            } else {
-                pairSet = new HashSet<>(prevDep);
-            }
-
-            for (Pair<State<String>, State<String>> pairNxNy : pairSet) {
-                bChange = bChange || checkUnifiable(pairNxNy.getLeft(), pairNxNy.getRight(), uni, dep, isTopDown, x, y);
-            }
-
-            bChange = bChange || solveCircDep(uni, dep);
-            prevDep = dep;
-        }
+        Set<Pair<State<String>, State<String>>> pairSet = new HashSet<>();
+        
+        nodesX.forEach(xNode -> nodesY.forEach(yNode -> pairSet.add(Pair.of(xNode, yNode))));
+        
+        pairSet.stream().filter((pairNxNy) -> (checkUnifiable(pairNxNy.getLeft(), pairNxNy.getRight(), isTopDown, x, y))).forEach((pairNxNy) -> {
+            uni.add(pairNxNy);
+        });
 
         return uni;
     }
