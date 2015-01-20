@@ -25,28 +25,6 @@ public class MergingBlock {
 
     public static final String EPSILON_TRANSITION_SYMBOL = "λ";
 
-    class TransitionString {
-
-        TransitionString(Step<String> step, Automaton<String> automaton) {
-            loadTokens();
-            loadProbabilities();
-            this.initialStep = step;
-        }
-
-        List<String> tokens;
-        List<Double> probabilities;
-        Step<String> initialStep;
-        Automaton<String> automaton;
-
-        private void loadTokens() {
-            this.tokens = new LinkedList<>();
-        }
-
-        private void loadProbabilities() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
-    }
-
     Automaton<String> X;
     Automaton<String> Y;
 
