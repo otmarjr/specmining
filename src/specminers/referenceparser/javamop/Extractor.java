@@ -66,8 +66,30 @@ public class Extractor {
         return specificationStatements;
     }
 
-    private String expandExtendedRegularExpression(String ere) {
-        return ere;
+    private String expandExtendedRegularExpression(String ere, File specificationFile) throws IOException {
+       String contents = FileUtils.readFileToString(specificationFile);
+       
+       ere = ere.trim();
+       String componentsPattern = "\\(\\w+\\)|\\w+";
+       Matcher m = Pattern.compile(componentsPattern).matcher(ere);
+
+       String aspectJExpression = "((execution)|(call)";
+       String aspectjAdvicePattern = aspectJExpression;
+       
+       while(m.lookingAt()){
+           
+           String component = ere.substring(m.start(),m.end());
+           String componentDefintionRegex = "\\t*(creation)?(\\s|\\t)+(event)(\\s|\\t)+" + component + aspectjAdvicePattern + "\\{(.+)\\}" ; // According to JavaMOP 4 syntax
+           Pattern p = Pattern.compile(componentDefintionRegex, Pattern.DOTALL);
+           Matcher definitionMatcher = p.matcher(contents);
+           
+           if (definitionMatcher.find()){
+               String definition = definitionMatcher.group(5) + definitionMatcher.group(6);
+               return definition;
+           }
+       }
+       
+       return ere;
     }
 
     private List<String> extractSpecStatementsFromFile(File specificationFile) throws IOException {
@@ -76,7 +98,12 @@ public class Extractor {
 
         for (String matchingLine : matchingLines) {
             Matcher m = ERE_PATTERN.matcher(matchingLine);
-            statements.add(expandExtendedRegularExpression(m.group(1)));
+            if (m.matches()){
+                statements.add(expandExtendedRegularExpression(m.group(1), specificationFile));
+            }
+            else{
+                System.out.println(matchingLine + " does not really match the ERE pattern");
+            }
         }
 
         return statements;
