@@ -46,6 +46,10 @@ public class PradelsDotFilesToJffConverter {
         dotFile = new File(dotFilePath);
     }
     
+    public PradelsDotFilesToJffConverter(File file){
+        dotFile = file;
+    }
+    
     public void convert() throws IOException{
         this.stateNames = new HashSet<>();
         this.transitions = new HashSet<>();

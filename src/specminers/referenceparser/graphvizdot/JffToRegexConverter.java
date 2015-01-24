@@ -29,6 +29,10 @@ public class JffToRegexConverter {
     public JffToRegexConverter(String jffPath) {
         this.jffFile = new File(jffPath);
     }
+    
+    public JffToRegexConverter(File jff) {
+        this.jffFile = jff;
+    }
 
     public String getRegularExpression() {
         prepareAutomaton();
