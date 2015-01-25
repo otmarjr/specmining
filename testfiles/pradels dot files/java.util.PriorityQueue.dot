@@ -1,0 +1,40 @@
+digraph Automaton {
+  rankdir = LR;
+  0 [shape=doublecircle,label=""];
+  0 -> 0 [label="#1.java.util.PriorityQueue.iterator() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#2.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 3 [label="#2.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  1 [shape=doublecircle,label=""];
+  1 -> 2 [label="#1.java.util.PriorityQueue.iterator() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.add() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.remove() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.addAll() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.contains() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.size() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.clear() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.offer() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.containsAll() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.comparator() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.element() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.peek() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.removeAll() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.isEmpty() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.retainAll() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.PriorityQueue.poll() [1]",style="setlinewidth(1)",color=gray]
+  2 [shape=doublecircle,label=""];
+  2 -> 2 [label="#1.java.util.PriorityQueue.iterator() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 0 [label="#2.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  3 [shape=doublecircle,label=""];
+  3 -> 3 [label="#1.java.util.PriorityQueue.iterator() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 2 [label="#2.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 4 [label="#2.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  4 [shape=doublecircle,label=""];
+  4 -> 4 [label="#1.java.util.PriorityQueue.iterator() [1]",style="setlinewidth(1)",color=gray]
+  4 -> 0 [label="#2.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+  4 -> 4 [label="#2.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  4 -> 3 [label="#2.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  5 [shape=circle,label=""];
+  initial [shape=plaintext,label=""];
+  initial -> 5
+  5 -> 1 [label="#1.java.util.PriorityQueue.<init>() [1]",style="setlinewidth(1)",color=gray]
+}

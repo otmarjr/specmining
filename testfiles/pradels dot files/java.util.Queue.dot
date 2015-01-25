@@ -1,0 +1,39 @@
+digraph Automaton {
+  rankdir = LR;
+  0 [shape=doublecircle,label=""];
+  0 -> 1 [label="#2.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.Queue.iterator() [1]",style="setlinewidth(1)",color=gray]
+  1 [shape=doublecircle,label=""];
+  1 -> 1 [label="#2.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 3 [label="#2.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Queue.iterator() [1]",style="setlinewidth(1)",color=gray]
+  2 [shape=doublecircle,label=""];
+  2 -> 2 [label="#1.java.util.Queue.add() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Queue.removeAll() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Queue.addAll() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Queue.containsAll() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 0 [label="#1.java.util.Queue.iterator() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Queue.clear() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Queue.peek() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Queue.element() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Queue.contains() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Queue.isEmpty() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Queue.poll() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Queue.retainAll() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Queue.offer() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Queue.size() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Queue.remove() [1]",style="setlinewidth(1)",color=gray]
+  3 [shape=doublecircle,label=""];
+  3 -> 5 [label="#2.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#1.java.util.Queue.iterator() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 0 [label="#2.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+  4 [shape=circle,label=""];
+  initial [shape=plaintext,label=""];
+  initial -> 4
+  4 -> 2 [label="#1.java.util.Queue.<init>() [1]",style="setlinewidth(1)",color=gray]
+  5 [shape=doublecircle,label=""];
+  5 -> 5 [label="#2.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 3 [label="#2.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 5 [label="#1.java.util.Queue.iterator() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 1 [label="#2.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+}

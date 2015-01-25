@@ -12,6 +12,7 @@ import javax.xml.transform.TransformerException;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import specminers.TestsHelper;
 
 /**
  *
@@ -22,9 +23,8 @@ public class PradelsDotFilesToJffConverterTest {
     public PradelsDotFilesToJffConverterTest() {
     }
 
-    
     private PradelsDotFilesToJffConverter getDatagramSocketDotFileInstance(){
-        return new PradelsDotFilesToJffConverter("C:\\Users\\Otmar\\Google Drive\\Mestrado\\SpecMining\\material-framework-referencia-pradel\\dots\\java.net.DatagramSocket.dot");
+        return new PradelsDotFilesToJffConverter(new File(TestsHelper.getTestFilesFolder(),"/pradels dot files/java.net.DatagramSocket.dot"));
     }
     /**
      * Test of convert method, of class PradelsDotFilesToJffConverter.
@@ -56,7 +56,7 @@ public class PradelsDotFilesToJffConverterTest {
     public void testSaveToFile() throws TransformerException, ParserConfigurationException, IOException {
         System.out.println("saveToFile");
         PradelsDotFilesToJffConverter instance = getDatagramSocketDotFileInstance();
-        File jffFile = new File("c:\\windows\\temp\\datagramsocket.jff");
+        File jffFile = new File(TestsHelper.getTestFilesFolder(),"/intermediate jff/datagramsocket.jff");
         if (jffFile.exists()) {
             jffFile.delete();
         }

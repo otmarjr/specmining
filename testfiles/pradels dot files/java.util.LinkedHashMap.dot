@@ -1,0 +1,54 @@
+digraph Automaton {
+  rankdir = LR;
+  0 [shape=doublecircle,label=""];
+  0 -> 0 [label="#1.java.util.LinkedHashMap.entrySet() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.LinkedHashMap.keySet() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.LinkedHashMap.remove() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.LinkedHashMap.clear() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 6 [label="#1.java.util.LinkedHashMap.values() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.LinkedHashMap.containsKey() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.LinkedHashMap.get() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.LinkedHashMap.put() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.LinkedHashMap.containsValue() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.LinkedHashMap.putAll() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.LinkedHashMap.size() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.LinkedHashMap.isEmpty() [1]",style="setlinewidth(1)",color=gray]
+  1 [shape=doublecircle,label=""];
+  1 -> 2 [label="#3.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#2.java.util.Collection.iterator() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.LinkedHashMap.values() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 4 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  2 [shape=doublecircle,label=""];
+  2 -> 2 [label="#2.java.util.Collection.iterator() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.LinkedHashMap.values() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 5 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  3 [shape=circle,label=""];
+  initial [shape=plaintext,label=""];
+  initial -> 3
+  3 -> 0 [label="#1.java.util.LinkedHashMap.<init>() [1]",style="setlinewidth(1)",color=gray]
+  4 [shape=doublecircle,label=""];
+  4 -> 5 [label="#3.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+  4 -> 4 [label="#2.java.util.Collection.iterator() [1]",style="setlinewidth(1)",color=gray]
+  4 -> 4 [label="#1.java.util.LinkedHashMap.values() [1]",style="setlinewidth(1)",color=gray]
+  4 -> 4 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  4 -> 1 [label="#3.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  5 [shape=doublecircle,label=""];
+  5 -> 5 [label="#2.java.util.Collection.iterator() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 5 [label="#1.java.util.LinkedHashMap.values() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 5 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 1 [label="#3.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  6 [shape=doublecircle,label=""];
+  6 -> 6 [label="#1.java.util.LinkedHashMap.clear() [1]",style="setlinewidth(1)",color=gray]
+  6 -> 6 [label="#1.java.util.LinkedHashMap.values() [1]",style="setlinewidth(1)",color=gray]
+  6 -> 6 [label="#1.java.util.LinkedHashMap.containsKey() [1]",style="setlinewidth(1)",color=gray]
+  6 -> 6 [label="#1.java.util.LinkedHashMap.get() [1]",style="setlinewidth(1)",color=gray]
+  6 -> 6 [label="#1.java.util.LinkedHashMap.containsValue() [1]",style="setlinewidth(1)",color=gray]
+  6 -> 6 [label="#1.java.util.LinkedHashMap.putAll() [1]",style="setlinewidth(1)",color=gray]
+  6 -> 6 [label="#1.java.util.LinkedHashMap.isEmpty() [1]",style="setlinewidth(1)",color=gray]
+  6 -> 6 [label="#1.java.util.LinkedHashMap.entrySet() [1]",style="setlinewidth(1)",color=gray]
+  6 -> 6 [label="#1.java.util.LinkedHashMap.keySet() [1]",style="setlinewidth(1)",color=gray]
+  6 -> 6 [label="#1.java.util.LinkedHashMap.remove() [1]",style="setlinewidth(1)",color=gray]
+  6 -> 2 [label="#2.java.util.Collection.iterator() [1]",style="setlinewidth(1)",color=gray]
+  6 -> 6 [label="#1.java.util.LinkedHashMap.put() [1]",style="setlinewidth(1)",color=gray]
+  6 -> 6 [label="#1.java.util.LinkedHashMap.size() [1]",style="setlinewidth(1)",color=gray]
+}

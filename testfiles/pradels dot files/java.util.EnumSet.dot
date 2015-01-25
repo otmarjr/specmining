@@ -1,0 +1,38 @@
+digraph Automaton {
+  rankdir = LR;
+  0 [shape=circle,label=""];
+  initial [shape=plaintext,label=""];
+  initial -> 0
+  0 -> 2 [label="#1.java.util.EnumSet.<init>() [1]",style="setlinewidth(1)",color=gray]
+  1 [shape=doublecircle,label=""];
+  1 -> 4 [label="#3.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.EnumSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 3 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  2 [shape=doublecircle,label=""];
+  2 -> 2 [label="#1.java.util.EnumSet.add() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.EnumSet.retainAll() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.EnumSet.addAll() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.EnumSet.containsAll() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.EnumSet.clear() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#2.java.util.[C] pollLast() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.EnumSet.isEmpty() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.EnumSet.contains() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#2.java.util.[C] lower() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.EnumSet.remove() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.EnumSet.size() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#2.java.util.[C] pollFirst() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 4 [label="#1.java.util.EnumSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.EnumSet.removeAll() [1]",style="setlinewidth(1)",color=gray]
+  3 [shape=doublecircle,label=""];
+  3 -> 1 [label="#3.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 5 [label="#3.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#1.java.util.EnumSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  4 [shape=doublecircle,label=""];
+  4 -> 4 [label="#1.java.util.EnumSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  4 -> 5 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  5 [shape=doublecircle,label=""];
+  5 -> 1 [label="#3.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 5 [label="#1.java.util.EnumSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 5 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+}

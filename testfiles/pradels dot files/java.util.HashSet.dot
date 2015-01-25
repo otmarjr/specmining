@@ -1,0 +1,38 @@
+digraph Automaton {
+  rankdir = LR;
+  0 [shape=doublecircle,label=""];
+  0 -> 4 [label="#3.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.HashSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 1 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  1 [shape=doublecircle,label=""];
+  1 -> 0 [label="#3.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 2 [label="#3.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.HashSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  2 [shape=doublecircle,label=""];
+  2 -> 0 [label="#3.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.HashSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  3 [shape=doublecircle,label=""];
+  3 -> 3 [label="#1.java.util.HashSet.add() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#1.java.util.HashSet.retainAll() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#1.java.util.HashSet.addAll() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#1.java.util.HashSet.containsAll() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#1.java.util.HashSet.clear() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#2.java.util.[C] pollLast() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#1.java.util.HashSet.isEmpty() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#1.java.util.HashSet.contains() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#2.java.util.[C] lower() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#1.java.util.HashSet.remove() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#1.java.util.HashSet.size() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#2.java.util.[C] pollFirst() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 4 [label="#1.java.util.HashSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#1.java.util.HashSet.removeAll() [1]",style="setlinewidth(1)",color=gray]
+  4 [shape=doublecircle,label=""];
+  4 -> 4 [label="#1.java.util.HashSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  4 -> 2 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  5 [shape=circle,label=""];
+  initial [shape=plaintext,label=""];
+  initial -> 5
+  5 -> 3 [label="#1.java.util.HashSet.<init>() [1]",style="setlinewidth(1)",color=gray]
+}

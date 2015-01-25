@@ -5,17 +5,11 @@
  */
 package specminers.referenceparser.graphvizdot;
 
-import automata.Automaton;
 import automata.fsa.FSAToREPreparationWorkflow;
 import automata.fsa.FSAToRegularExpressionConverter;
 import automata.fsa.FiniteStateAutomaton;
-import file.Codec;
 import file.XMLCodec;
-import gui.action.OpenAction;
-import gui.regular.FSAToREController;
-import gui.viewer.SelectionDrawer;
 import java.io.File;
-import java.io.Serializable;
 
 /**
  *

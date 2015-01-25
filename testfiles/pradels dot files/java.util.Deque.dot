@@ -1,0 +1,60 @@
+digraph Automaton {
+  rankdir = LR;
+  0 [shape=doublecircle,label=""];
+  0 -> 0 [label="#1.java.util.Deque.iterator() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 3 [label="#2.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.Deque.descendingIterator() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#2.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  1 [shape=doublecircle,label=""];
+  1 -> 1 [label="#1.java.util.Deque.pollFirst() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.removeFirst() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.offer() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.clear() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.poll() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.contains() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 2 [label="#1.java.util.Deque.iterator() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.containsAll() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.offerFirst() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.removeLast() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.element() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.offerLast() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.pollLast() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.removeFirstOccurrence() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 2 [label="#1.java.util.Deque.descendingIterator() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.peekFirst() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.push() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.add() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.retainAll() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.addAll() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.peek() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.pop() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.addFirst() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.getFirst() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.size() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.removeLastOccurrence() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.addLast() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.getLast() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.peekLast() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.removeAll() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.isEmpty() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.Deque.remove() [1]",style="setlinewidth(1)",color=gray]
+  2 [shape=doublecircle,label=""];
+  2 -> 2 [label="#1.java.util.Deque.iterator() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.Deque.descendingIterator() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 0 [label="#2.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  3 [shape=doublecircle,label=""];
+  3 -> 3 [label="#1.java.util.Deque.iterator() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 3 [label="#1.java.util.Deque.descendingIterator() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 5 [label="#2.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 2 [label="#2.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+  4 [shape=circle,label=""];
+  initial [shape=plaintext,label=""];
+  initial -> 4
+  4 -> 1 [label="#1.java.util.Deque.<init>() [1]",style="setlinewidth(1)",color=gray]
+  5 [shape=doublecircle,label=""];
+  5 -> 5 [label="#1.java.util.Deque.iterator() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 3 [label="#2.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 5 [label="#1.java.util.Deque.descendingIterator() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 5 [label="#2.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 0 [label="#2.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+}

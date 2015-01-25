@@ -1,0 +1,53 @@
+digraph Automaton {
+  rankdir = LR;
+  0 [shape=doublecircle,label=""];
+  0 -> 4 [label="#3.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.TreeSet.descendingIterator() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.TreeSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 5 [label="#3.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  1 [shape=doublecircle,label=""];
+  1 -> 1 [label="#1.java.util.TreeSet.removeAll() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 2 [label="#1.java.util.TreeSet.descendingIterator() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.higher() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.comparator() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.remove() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.contains() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.containsAll() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.isEmpty() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.descendingSet() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.last() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.retainAll() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#2.java.util.TreeSet pollFirst() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.subSet() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.add() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.addAll() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#2.java.util.TreeSet lower() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.size() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.ceiling() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.first() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.clear() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.floor() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#2.java.util.TreeSet pollLast() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 2 [label="#1.java.util.TreeSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.headSet() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.TreeSet.tailSet() [1]",style="setlinewidth(1)",color=gray]
+  2 [shape=doublecircle,label=""];
+  2 -> 2 [label="#1.java.util.TreeSet.descendingIterator() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 2 [label="#1.java.util.TreeSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  2 -> 4 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  3 [shape=circle,label=""];
+  initial [shape=plaintext,label=""];
+  initial -> 3
+  3 -> 1 [label="#1.java.util.TreeSet.<init>() [1]",style="setlinewidth(1)",color=gray]
+  4 [shape=doublecircle,label=""];
+  4 -> 4 [label="#1.java.util.TreeSet.descendingIterator() [1]",style="setlinewidth(1)",color=gray]
+  4 -> 4 [label="#1.java.util.TreeSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  4 -> 5 [label="#3.java.util.Iterator.next() [1]",style="setlinewidth(1)",color=gray]
+  4 -> 4 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+  5 [shape=doublecircle,label=""];
+  5 -> 2 [label="#3.java.util.Iterator.remove() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 5 [label="#1.java.util.TreeSet.descendingIterator() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 5 [label="#1.java.util.TreeSet.iterator() [1]",style="setlinewidth(1)",color=gray]
+  5 -> 0 [label="#3.java.util.Iterator.hasNext() [1]",style="setlinewidth(1)",color=gray]
+}

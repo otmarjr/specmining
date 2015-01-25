@@ -1,0 +1,23 @@
+digraph Automaton {
+  rankdir = LR;
+  0 [shape=doublecircle,label=""];
+  0 -> 3 [label="#1.java.util.StringTokenizer.nextToken() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.StringTokenizer.hasMoreElements() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 0 [label="#1.java.util.StringTokenizer.hasMoreTokens() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 1 [label="#1.java.util.StringTokenizer.countTokens() [1]",style="setlinewidth(1)",color=gray]
+  0 -> 3 [label="#1.java.util.StringTokenizer.nextElement() [1]",style="setlinewidth(1)",color=gray]
+  1 [shape=doublecircle,label=""];
+  1 -> 1 [label="#1.java.util.StringTokenizer.nextToken() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 0 [label="#1.java.util.StringTokenizer.hasMoreElements() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 0 [label="#1.java.util.StringTokenizer.hasMoreTokens() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.StringTokenizer.countTokens() [1]",style="setlinewidth(1)",color=gray]
+  1 -> 1 [label="#1.java.util.StringTokenizer.nextElement() [1]",style="setlinewidth(1)",color=gray]
+  2 [shape=circle,label=""];
+  initial [shape=plaintext,label=""];
+  initial -> 2
+  2 -> 3 [label="#1.java.util.StringTokenizer.<init>() [1]",style="setlinewidth(1)",color=gray]
+  3 [shape=doublecircle,label=""];
+  3 -> 0 [label="#1.java.util.StringTokenizer.hasMoreElements() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 0 [label="#1.java.util.StringTokenizer.hasMoreTokens() [1]",style="setlinewidth(1)",color=gray]
+  3 -> 1 [label="#1.java.util.StringTokenizer.countTokens() [1]",style="setlinewidth(1)",color=gray]
+}
