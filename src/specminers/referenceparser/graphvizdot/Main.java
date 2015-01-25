@@ -105,7 +105,9 @@ public class Main {
             } else {
                 // Just want to save the jflap files
                 if (outputDir != null && outputDir.exists()) {
-                    converter.saveToFile(outputDir.getAbsolutePath());
+                    File jffFile;
+                    jffFile = java.nio.file.Paths.get(outputDir.getAbsolutePath(), specFile.getName().replace(".dot", "") + "_jflap_automaton.jff").toFile();
+                    converter.saveToFile(jffFile.getAbsolutePath());
                 } else {
                     System.out.println("JFlap file for dot file " + specFile.getName());
                     System.out.println(converter.getAsJffFormat());
