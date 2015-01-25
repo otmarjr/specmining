@@ -7,9 +7,15 @@ package specminers.referenceparser.graphvizdot;
 
 import automata.fsa.FSAToREPreparationWorkflow;
 import automata.fsa.FSAToRegularExpressionConverter;
+import automata.fsa.FSATransition;
 import automata.fsa.FiniteStateAutomaton;
 import file.XMLCodec;
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -30,16 +36,15 @@ public class JffToRegexConverter {
 
     public String getRegularExpression() {
         prepareAutomaton();
-
-        FiniteStateAutomaton clone = (FiniteStateAutomaton)this.automaton.clone();
-        
-        FSAToREPreparationWorkflow workflow = new FSAToREPreparationWorkflow(clone);
+        this.automaton.compressTransitionLabelsAlphabet();
+    
+        FSAToREPreparationWorkflow workflow = new FSAToREPreparationWorkflow(this.automaton);
         workflow.perform();
-        this.automaton = workflow.getPreaparedFSA();
+        this.automaton = workflow.getPreparedFSA();
         
         String regex = FSAToRegularExpressionConverter.convertToRegularExpression(this.automaton);
-
-        return regex;
+        String r2  = automaton.decodeRegexFromCompressedAutomaton(regex);
+        return r2;
     }
 
     private void parseAutomaton() {

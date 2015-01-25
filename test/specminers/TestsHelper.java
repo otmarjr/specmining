@@ -16,14 +16,12 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class TestsHelper {
     public static File getTestFilesFolder() {
-        String pathFromArgument = System.getProperty("java.testfiles.path");
-        File testFilesFolder;
-        if (StringUtils.isNotBlank(pathFromArgument) && (testFilesFolder = new File(pathFromArgument)).exists()){
-            return testFilesFolder;
-        }
-        else{
-            Path currentWorkingPath = Paths.get("");
-            return currentWorkingPath.toFile(); // Assume all files are in current working dir!
-        }
+        // Assuming test files folder is in current working dir!
+        Path currentWorkingPath = Paths.get("");
+        return Paths.get(currentWorkingPath.toFile().getAbsolutePath(), "testfiles").toFile(); 
+    }
+    
+    public static File getTestFileFromTestsFolder(String folder, String fileName){
+        return new File(TestsHelper.getTestFilesFolder(), folder +"/" + fileName);
     }
 }

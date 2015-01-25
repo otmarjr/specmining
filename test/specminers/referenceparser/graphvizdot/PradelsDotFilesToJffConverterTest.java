@@ -24,7 +24,7 @@ public class PradelsDotFilesToJffConverterTest {
     }
 
     private PradelsDotFilesToJffConverter getDatagramSocketDotFileInstance(){
-        return new PradelsDotFilesToJffConverter(new File(TestsHelper.getTestFilesFolder(),"/pradels dot files/java.net.DatagramSocket.dot"));
+        return new PradelsDotFilesToJffConverter(new File(TestsHelper.getTestFilesFolder(),"pradels dot files/java.net.DatagramSocket.dot"));
     }
     /**
      * Test of convert method, of class PradelsDotFilesToJffConverter.

@@ -96,9 +96,11 @@ public class Main {
                     }
                 } catch (RuntimeException exception) {
                     System.err.println("The automaton corresponding to the file " + specFile.getPath() + " seems to have some problems, like the lack of initial or final states, or multiple final states. Check this before trying to convert this file. Error message sent by the converter " + exception);
+                    exception.printStackTrace();
                 }
-                catch (Throwable t){
+                catch (OutOfMemoryError t){
                     System.err.println("The automaton corresponding to the file " + specFile.getPath() + " seems to have some problems, like the lack of initial or final states, or multiple final states. Check this before trying to convert this file. Error message sent by the converter " + t);
+                    t.printStackTrace();
                 }
             } else {
                 // Just want to save the jflap files
