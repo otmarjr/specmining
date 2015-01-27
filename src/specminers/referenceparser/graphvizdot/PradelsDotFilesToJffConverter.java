@@ -28,6 +28,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.w3c.dom.Document;
+import specminers.StringHelper;
 
 /**
  *
@@ -141,19 +142,7 @@ public class PradelsDotFilesToJffConverter {
         StreamResult result = new StreamResult(new File(outputPath));
         transformer.transform(source, result);
     }
-
-    private String extractSingleValueWithRegex(String rawText, String regex, int groupIndex){
-        Pattern p = Pattern.compile(regex);
-        Matcher m;
-        rawText = rawText.trim();
-        m = p.matcher(rawText);
-        
-        if (m.matches()){
-            return m.group(groupIndex);
-        }
-        return "";
-    }
-    
+  
     private void parseStates() throws IOException {
         
         // Since Pradel's dot files seem to contain one element definition per line,
@@ -167,8 +156,8 @@ public class PradelsDotFilesToJffConverter {
         
         
         for (String line : stateDeclarationLines){
-            String stateName = extractSingleValueWithRegex(line, stateDeclarationPattern, 1);
-            String shape = extractSingleValueWithRegex(line, stateDeclarationPattern, 3);
+            String stateName = StringHelper.extractSingleValueWithRegex(line, stateDeclarationPattern, 1);
+            String shape =  StringHelper.extractSingleValueWithRegex(line, stateDeclarationPattern, 3);
          
             if (StringUtils.equalsIgnoreCase(shape, FINAL_STATE_SHAPE_NAME)){
                 finalStates.add(stateName);
@@ -185,7 +174,7 @@ public class PradelsDotFilesToJffConverter {
                 .collect(Collectors.toList());
         
         for (String line : initialStateDeclarationLines){
-            String initialStateName = extractSingleValueWithRegex(line, initialStatePattern, 3);
+            String initialStateName = StringHelper.extractSingleValueWithRegex(line, initialStatePattern, 3);
             this.initialStates.add(initialStateName);
         }
     }
@@ -200,9 +189,9 @@ public class PradelsDotFilesToJffConverter {
         
         
         for (String line : transitionsDeclarationLines){
-            String sourceName = extractSingleValueWithRegex(line, transitionsPattern, 1);
-            String destinationName = extractSingleValueWithRegex(line, transitionsPattern, 4);
-            String signature = extractSingleValueWithRegex(line, transitionsPattern, 7);
+            String sourceName = StringHelper.extractSingleValueWithRegex(line, transitionsPattern, 1);
+            String destinationName = StringHelper.extractSingleValueWithRegex(line, transitionsPattern, 4);
+            String signature = StringHelper.extractSingleValueWithRegex(line, transitionsPattern, 7);
          
             transitions.add(Triple.of(sourceName, destinationName, signature));
         }

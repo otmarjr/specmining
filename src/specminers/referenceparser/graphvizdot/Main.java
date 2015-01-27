@@ -7,6 +7,7 @@ package specminers.referenceparser.graphvizdot;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import specminers.ExecutionArgsHelper;
 
 /**
  *
@@ -27,31 +29,16 @@ public class Main {
     final static String OUTPUT_OPTION = "-o";
     final static String DIRECT_CONVERSION_OPTION = "-d";
 
-    private static Map<String, String> convertArgsToMap(String[] args) {
-        Map<String, String> options = new HashMap();
-
-        String lastOption = null;
-
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i];
-            if (arg.startsWith("-")) {
-                options.put(arg, "");
-                lastOption = arg;
-            } else {
-                if (lastOption != null && options.containsKey(lastOption)) {
-                    options.put(lastOption, arg);
-                }
-            }
-        }
-
-        return options;
-    }
-
     public static void main(String[] args) throws IOException, TransformerException, ParserConfigurationException {
-        Map<String, String> options = convertArgsToMap(args);
+        Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
         if (options.containsKey(HELP_OPTION)) {
-            displayHelp();
+            ExecutionArgsHelper.displayHelp(Arrays.asList(
+                    "In order to execute this program options:",
+                    "-p <PATH> : Where to recursivelly search for file containing the specification statements. Mandatory argument",
+                    "-o <PATH> : Mandatory folder path, where to save the converted files.",
+                    "-d <PATH> : Optional argument. Indicates that the conversion will directly convert from .dot files to text files containing the regular expressions for each class."
+            ));
         }
 
         boolean argumentsOK = validateInputArguments(options);
@@ -97,8 +84,7 @@ public class Main {
                 } catch (RuntimeException exception) {
                     System.err.println("The automaton corresponding to the file " + specFile.getPath() + " seems to have some problems, like the lack of initial or final states, or multiple final states. Check this before trying to convert this file. Error message sent by the converter " + exception);
                     exception.printStackTrace();
-                }
-                catch (OutOfMemoryError t){
+                } catch (OutOfMemoryError t) {
                     System.err.println("The automaton corresponding to the file " + specFile.getPath() + " seems to have some problems, like the lack of initial or final states, or multiple final states. Check this before trying to convert this file. Error message sent by the converter " + t);
                     t.printStackTrace();
                 }
@@ -135,12 +121,5 @@ public class Main {
         }
 
         return ok;
-    }
-
-    private static void displayHelp() {
-        System.out.println("In order to execute this program options:");
-        System.out.println("-p <PATH> : Where to recursivelly search for file containing the specification statements. Mandatory argument");
-        System.out.println("-o <PATH> : Mandatory folder path, where to save the converted files.");
-        System.out.println("-d <PATH> : Optional argument. Indicates that the conversion will directly convert from .dot files to text files containing the regular expressions for each class.");
     }
 }

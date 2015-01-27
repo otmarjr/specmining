@@ -5,6 +5,8 @@
  */
 package specminers;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import simpleSequitur.sequitur;
 
 /**
@@ -46,5 +48,17 @@ public class StringHelper {
         }
         
         return A[m][n];
+    }
+    
+      public static String extractSingleValueWithRegex(String rawText, String regex, int groupIndex){
+        Pattern p = Pattern.compile(regex);
+        Matcher m;
+        rawText = rawText.trim();
+        m = p.matcher(rawText);
+        
+        if (m.matches()){
+            return m.group(groupIndex);
+        }
+        return "";
     }
 }
