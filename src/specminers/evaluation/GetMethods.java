@@ -25,7 +25,8 @@ public class GetMethods {
     private final static String PATH_OPTION = "-p";
     private final static String HELP_OPTION = "-h";
     private final static String OUTPUT_OPTION = "-o";
-
+    private final static String GRABBING_TYPE = "-t";
+    
     public static void main(String[] args) throws IOException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
@@ -78,7 +79,7 @@ public class GetMethods {
         for (File sourceFile : sourceFiles) {
             GetMethodsViaRegexExtractor extractor = new GetMethodsViaRegexExtractor(sourceFile);
 
-            Set<String> result = new HashSet<>(extractor.getMatches());
+            Set<String> result = new HashSet<>(extractor.getReadOnlyMethods());
             
             if (outputDir != null && outputDir.exists()) {
                 File regexesFile;
