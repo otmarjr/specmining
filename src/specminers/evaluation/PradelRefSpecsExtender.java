@@ -110,8 +110,8 @@ public class PradelRefSpecsExtender {
 
         for (File file : originalSpecFiles) {
             JflapFileManipulator jffManipulator = new JflapFileManipulator(file);
-            jffManipulator.includeTransitions(publicAPI, true);
-            String extendedSpecPath = Paths.get(outputDir.getPath(), file.getName().replace(".jff", "_class_extended.jff")).toFile().getAbsolutePath();
+            jffManipulator.includeTransitions(publicAPI, false);
+            String extendedSpecPath = Paths.get(outputDir.getPath(), file.getName().replace(".jff", "_package_extended.jff")).toFile().getAbsolutePath();
             jffManipulator.saveToFile(extendedSpecPath);
         }
     }

@@ -26,7 +26,7 @@ public class JflapFileManipulator {
     File jffFile;
     FiniteStateAutomaton automaton;
     private String correspondingClass;
-    
+
     public JflapFileManipulator(String jffPath) {
         this(new File(jffPath));
     }
@@ -41,14 +41,14 @@ public class JflapFileManipulator {
         // Pradel's reference specs follow a pattern, where there is only one
         // transition leaving the initial stating, and this transition correspond
         // to the class' constructor invocation.
-        this.correspondingClass = ((FSATransition)this.automaton.getTransitionsFromState(this.automaton.getInitialState())[0]).getLabel().replace(".<init>()", "");
-                
+        this.correspondingClass = ((FSATransition) this.automaton.getTransitionsFromState(this.automaton.getInitialState())[0]).getLabel().replace(".<init>()", "");
+
     }
-    
-    private String getPackageName(String classFullName){
-        if (classFullName != null && classFullName.contains(".")){
+
+    private String getPackageName(String classFullName) {
+        if (classFullName != null && classFullName.contains(".")) {
             int lastDotPosition = classFullName.lastIndexOf(".");
-            return classFullName.substring(0,lastDotPosition);
+            return classFullName.substring(0, lastDotPosition);
         }
         return "";
     }
@@ -59,38 +59,36 @@ public class JflapFileManipulator {
             this.addTransitionsFromClass(correspondingClass, publicAPI.getOrDefault(correspondingClass, null));
         } else {
             String currentClassPackage = getPackageName(correspondingClass);
-            
+
             List<String> samePackageClasses = publicAPI.keySet().stream()
                     .filter(k -> getPackageName(k).equals(currentClassPackage))
                     .collect(Collectors.toList());
-            
-            samePackageClasses.forEach(c -> addTransitionsFromClass(c, publicAPI.getOrDefault(c,null)));
+
+            samePackageClasses.forEach(c -> addTransitionsFromClass(c, publicAPI.getOrDefault(c, null)));
         }
     }
 
-    private List<FSATransition> getFSATransitionsFromState(State st){
+    private List<FSATransition> getFSATransitionsFromState(State st) {
         return Stream.of(automaton.getFSATransitions()).filter(t -> t.getFromState().equals(st))
                 .collect(Collectors.toList());
     }
-    
+
     private void addTransitionsFromClass(String className, Set<String> transitions) {
-        if (transitions != null){
-            for (State st : this.automaton.getStates()){
-                if (!automaton.getInitialState().equals(st)){
-                    for (String methodSig : transitions){
-                        List<FSATransition> acceptedMethodSigs = getFSATransitionsFromState(st);
-                        
-                        if (!acceptedMethodSigs.stream().anyMatch(t -> t.getLabel().equalsIgnoreCase(methodSig))){
-                            FSATransition fsaT = new FSATransition(st, st, methodSig);
-                            this.automaton.addTransition(fsaT);
-                        }
+        if (transitions != null) {
+            for (State st : this.automaton.getStates()) {
+                for (String methodSig : transitions) {
+                    List<FSATransition> acceptedMethodSigs = getFSATransitionsFromState(st);
+
+                    if (!acceptedMethodSigs.stream().anyMatch(t -> t.getLabel().equalsIgnoreCase(methodSig))) {
+                        FSATransition fsaT = new FSATransition(st, st, methodSig);
+                        this.automaton.addTransition(fsaT);
                     }
                 }
             }
         }
     }
-    
-    public void saveToFile(String targetPath){
+
+    public void saveToFile(String targetPath) {
         XMLCodec jffCodec = new XMLCodec();
         jffCodec.encode(this.automaton, new File(targetPath), null);
     }

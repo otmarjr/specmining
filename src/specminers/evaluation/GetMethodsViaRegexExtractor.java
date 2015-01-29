@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
@@ -42,9 +43,9 @@ public class GetMethodsViaRegexExtractor {
         
         String packagePattern = "^package[\\s\\t]+([\\w\\.]+);";
         
-        String packageNameLine = fileLines.stream().filter(line -> line.trim().matches(packagePattern)).findFirst().get();
-        String packageName = StringHelper.extractSingleValueWithRegex(packageNameLine, packagePattern, 1);
-        this.fullClassName = packageName + "." + javaFile.getName().replace(".java", "");
+        Optional<String> packageNameLine = fileLines.stream().filter(line -> line.trim().matches(packagePattern)).findFirst();
+        String packageName = StringHelper.extractSingleValueWithRegex(packageNameLine.orElse(""), packagePattern, 1);
+        this.fullClassName = "".equals(packageName) ? ""  : packageName + "." + javaFile.getName().replace(".java", "");
         
         fileLines.stream().filter((line) -> 
                 (line.trim().matches(regex) && line.contains("public")))
@@ -62,6 +63,9 @@ public class GetMethodsViaRegexExtractor {
     
     public List<String> getAllPublicMethods() throws IOException {
         String allPublicMethodsPattern = "^((public|private|protected|static|final|native|synchronized|abstract|threadsafe|transient)+\\s)+[\\$_\\w\\<\\>\\[\\]]*\\s+([\\$_\\w]+)\\([^\\)]*\\)?\\s*\\{?[^\\}]*\\}?.+$";
-        return getMethodsViaRegex(allPublicMethodsPattern);
+        List<String> matches = getMethodsViaRegex(allPublicMethodsPattern);
+        // Add the constructor according to the parser format:
+        matches.add(fullClassName + ".<init>()");
+        return matches;
     }
 }

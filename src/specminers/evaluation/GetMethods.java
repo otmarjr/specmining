@@ -79,7 +79,8 @@ public class GetMethods {
         for (File sourceFile : sourceFiles) {
             GetMethodsViaRegexExtractor extractor = new GetMethodsViaRegexExtractor(sourceFile);
 
-            Set<String> result = new HashSet<>(extractor.getReadOnlyMethods());
+            // Set<String> result = new HashSet<>(extractor.getReadOnlyMethods());
+            Set<String> result = new HashSet<>(extractor.getAllPublicMethods());
             
             if (outputDir != null && outputDir.exists()) {
                 File regexesFile;
