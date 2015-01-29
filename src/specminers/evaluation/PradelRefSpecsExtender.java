@@ -89,7 +89,7 @@ public class PradelRefSpecsExtender {
         for (File sourceFile : files) {
             GetMethodsViaRegexExtractor extractor = new GetMethodsViaRegexExtractor(sourceFile);
 
-            Set<String> result = new HashSet<>(extractor.getAllPublicMethods());
+            Set<String> result = new HashSet<>(extractor.getAllMethods());
             publicAPI.put(extractor.getFullClassName(), result);
         }
         

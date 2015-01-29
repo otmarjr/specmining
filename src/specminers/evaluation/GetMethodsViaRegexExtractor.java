@@ -13,6 +13,8 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import specminers.JavaFileParsingHelper;
 import specminers.StringHelper;
 
 /**
@@ -33,19 +35,18 @@ public class GetMethodsViaRegexExtractor {
 
     private String fullClassName;
     
-    public String getFullClassName() {
-        return this.fullClassName;
+    public String getFullClassName() throws IOException {
+        if (StringUtils.isBlank(fullClassName)){
+            fullClassName = JavaFileParsingHelper.getFullClassName(javaFile);
+        }
+        return fullClassName;
     }
     
-    private List<String> getMethodsViaRegex(String regex) throws IOException{
+    private List<String> getPublicMethodsViaRegex(String regex) throws IOException{
         List<String> matches = new LinkedList<>();
         List<String> fileLines = FileUtils.readLines(javaFile);
         
-        String packagePattern = "^package[\\s\\t]+([\\w\\.]+);";
-        
-        Optional<String> packageNameLine = fileLines.stream().filter(line -> line.trim().matches(packagePattern)).findFirst();
-        String packageName = StringHelper.extractSingleValueWithRegex(packageNameLine.orElse(""), packagePattern, 1);
-        this.fullClassName = "".equals(packageName) ? ""  : packageName + "." + javaFile.getName().replace(".java", "");
+        this.getFullClassName();
         
         fileLines.stream().filter((line) -> 
                 (line.trim().matches(regex) && line.contains("public")))
@@ -58,12 +59,12 @@ public class GetMethodsViaRegexExtractor {
     }
     public List<String> getReadOnlyMethods() throws IOException {
         String methodSigPattern = "^((public|private|protected|static|final|native|synchronized|abstract|threadsafe|transient)+\\s)+[\\$_\\w\\<\\>\\[\\]]*\\s+(get[\\$_\\w]+)\\([^\\)]*\\)?\\s*\\{?[^\\}]*\\}?.+$";
-        return getMethodsViaRegex(methodSigPattern);
+        return getPublicMethodsViaRegex(methodSigPattern);
     }
     
-    public List<String> getAllPublicMethods() throws IOException {
+    public List<String> getAllMethods() throws IOException {
         String allPublicMethodsPattern = "^((public|private|protected|static|final|native|synchronized|abstract|threadsafe|transient)+\\s)+[\\$_\\w\\<\\>\\[\\]]*\\s+([\\$_\\w]+)\\([^\\)]*\\)?\\s*\\{?[^\\}]*\\}?.+$";
-        List<String> matches = getMethodsViaRegex(allPublicMethodsPattern);
+        List<String> matches = getPublicMethodsViaRegex(allPublicMethodsPattern);
         // Add the constructor according to the parser format:
         matches.add(fullClassName + ".<init>()");
         return matches;

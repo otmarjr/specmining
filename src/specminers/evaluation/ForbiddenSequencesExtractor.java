@@ -6,8 +6,12 @@
 package specminers.evaluation;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import org.apache.commons.io.FileUtils;
 import specminers.ExecutionArgsHelper;
 
 /**
@@ -20,7 +24,7 @@ public class ForbiddenSequencesExtractor {
     private final static String HELP_OPTION = "-h";
     private final static String OUTPUT_OPTION = "-o";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
         if (options.containsKey(HELP_OPTION)) {
@@ -54,7 +58,20 @@ public class ForbiddenSequencesExtractor {
         return ok;
     }
 
-    private static void extractInvalidSequences(Map<String, String> options) {
+    
+    private static void extractInvalidSequences(Map<String, String> options) throws IOException {
+        File mopPackagesRootFolder = new File(options.get(INPUT_PATH_OPTION));
+        String[] extensions = new String[] {"mop"};
+        List<File> mopFiles = FileUtils.listFiles(mopPackagesRootFolder, extensions, true).stream().collect(Collectors.toList());
         
+        for (File file : mopFiles){
+            MopExtractor extractor = new MopExtractor(file);
+            
+            if (extractor.containsExtendedRegularExpression()){
+                String regex = extractor.getExtendedRegularExpression();
+                
+                System.out.println("Found regex " + regex + " on file " + file.getAbsolutePath());
+            }
+        }
     }
 }

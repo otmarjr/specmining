@@ -80,7 +80,7 @@ public class GetMethods {
             GetMethodsViaRegexExtractor extractor = new GetMethodsViaRegexExtractor(sourceFile);
 
             // Set<String> result = new HashSet<>(extractor.getReadOnlyMethods());
-            Set<String> result = new HashSet<>(extractor.getAllPublicMethods());
+            Set<String> result = new HashSet<>(extractor.getAllMethods());
             
             if (outputDir != null && outputDir.exists()) {
                 File regexesFile;
