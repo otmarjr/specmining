@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javamop.parser.main_parser.ParseException;
 import org.apache.commons.io.FileUtils;
 import specminers.ExecutionArgsHelper;
 
@@ -24,7 +25,7 @@ public class ForbiddenSequencesExtractor {
     private final static String HELP_OPTION = "-h";
     private final static String OUTPUT_OPTION = "-o";
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
         if (options.containsKey(HELP_OPTION)) {
@@ -59,7 +60,7 @@ public class ForbiddenSequencesExtractor {
     }
 
     
-    private static void extractInvalidSequences(Map<String, String> options) throws IOException {
+    private static void extractInvalidSequences(Map<String, String> options) throws IOException, ParseException {
         File mopPackagesRootFolder = new File(options.get(INPUT_PATH_OPTION));
         String[] extensions = new String[] {"mop"};
         List<File> mopFiles = FileUtils.listFiles(mopPackagesRootFolder, extensions, true).stream().collect(Collectors.toList());
@@ -70,7 +71,7 @@ public class ForbiddenSequencesExtractor {
             if (extractor.containsExtendedRegularExpression()){
                 String regex = extractor.getExtendedRegularExpression();
                 
-                System.out.println("Found regex " + regex + " on file " + file.getAbsolutePath());
+                System.out.println("Found regex " + regex + " expanded to " + extractor.getExpandedRegularExpression() + " for class " + extractor.getTargetClassName() + " on file " + file.getAbsolutePath());
             }
         }
     }
