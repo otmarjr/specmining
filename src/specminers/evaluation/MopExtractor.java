@@ -29,9 +29,11 @@ import javamop.parser.main_parser.ParseException;
  * @author Otmar
  */
 public class MopExtractor {
-    File mopFile;
-    
-    public MopExtractor(String mopFilePath){
+
+    public static final String MOP_FILES_EXTENSION = "mop";
+    private final File mopFile;
+
+    public MopExtractor(String mopFilePath) {
         this(new File(mopFilePath));
     }
 
@@ -41,12 +43,12 @@ public class MopExtractor {
 
     public boolean containsParseableSpec() {
         try {
-            if (null == getMOPPropertiesAndHandlers() || !(getMOPPropertiesAndHandlers().get(0).getProperty() instanceof FormulaExt)){
+            if (null == getMOPPropertiesAndHandlers() || !(getMOPPropertiesAndHandlers().get(0).getProperty() instanceof FormulaExt)) {
                 return false;
-}
-            
+            }
+
             FormulaExt formula = (FormulaExt) getMOPPropertiesAndHandlers().get(0).getProperty();
-            
+
             return formula.getType().equals("ere");
         } catch (ParseException ex) {
             Logger.getLogger(MopExtractor.class.getName()).log(Level.SEVERE, null, ex);
@@ -57,27 +59,29 @@ public class MopExtractor {
     // Since the library used to handle regexes only accepts single char
     // for transition's labels, it is necessary to map event names used
     // in mop regexes to a single char.
-    Map<Character, String> componentsMapping = new HashMap<>();
+    Map<Character, String> eventsMappingMapping = new HashMap<>();
 
     // Regex components;
     List<String> components;
 
-    private String convertWordRegexToSingleCharRegex(String originalRegex) {
-        this.components = Arrays.asList(originalRegex.split(" "));
+    // Original events corresponding to input alphabet of the original Mop regex
+    Set<String> events;
 
-        int currentCompIndex = 0;
+    private String convertWordRegexToSingleCharRegex(String originalRegex) throws ParseException {
+
+        this.components = Arrays.asList(originalRegex.split(" "));
+        this.events = getJavaMopSpec().getEvents().stream()
+                .map(ev -> ev.getId())
+                .collect(Collectors.toSet());
 
         char letter = 'a';
 
         String simpleCharAlphabetRegex = originalRegex;
 
-        while (currentCompIndex < components.size()) {
-            if (!componentsMapping.containsValue(components.get(currentCompIndex))) {
-                componentsMapping.put(letter, components.get(currentCompIndex));
-                simpleCharAlphabetRegex = simpleCharAlphabetRegex.replace(components.get(currentCompIndex), Character.toString(letter));
-                letter++;
-            }
-            currentCompIndex++;
+        for (String ev : this.events) {
+            eventsMappingMapping.put(letter, ev);
+            simpleCharAlphabetRegex = simpleCharAlphabetRegex.replace(ev, Character.toString(letter));
+            letter++;
         }
 
         simpleCharAlphabetRegex = simpleCharAlphabetRegex.replaceAll(" ", "");
@@ -85,7 +89,7 @@ public class MopExtractor {
 
     }
 
-    private List<String> getRegexFormulaExpansions(String formulaRegex) {
+    private List<String> getRegexFormulaExpansions(String formulaRegex) throws ParseException {
         String simplifiedRegex = convertWordRegexToSingleCharRegex(formulaRegex);
         Generex g = new Generex(simplifiedRegex);
 
@@ -94,11 +98,21 @@ public class MopExtractor {
         List<String> translatedSequence;
 
         translatedSequence = regexBasedSequence.stream().map(encodedSeq
-                -> encodedSeq.chars().mapToObj(i-> this.componentsMapping.get((char)i))
-                        .collect(Collectors.joining(" ")))
+                -> encodedSeq.chars().mapToObj(i -> this.eventsMappingMapping.get((char) i))
+                .collect(Collectors.joining(" ")))
                 .collect(Collectors.toList());
 
         return translatedSequence;
+    }
+
+    private List<String> removeRedundantSequences(List<String> potentiallyRedundant) {
+        // Keeps only the sequences which are superstrings of oter sequences.
+        return potentiallyRedundant.stream()
+                .filter(seq
+                        -> potentiallyRedundant
+                        .stream()
+                        .allMatch(seq2 -> seq.equals(seq2) || !seq.contains(seq2))
+                ).collect(Collectors.toList());
     }
 
     public List<String> getForbiddenSequences() throws ParseException {
@@ -109,8 +123,11 @@ public class MopExtractor {
             String formula = fext.getFormula(); // uniqueId of event may help in its expansion
             String parserRegex = convertWordRegexToSingleCharRegex(formula);
             forbidden.addAll(getRegexFormulaExpansions(parserRegex));
+            forbidden = removeRedundantSequences(forbidden);
+            forbidden = convertEventsToMethodSignatures(forbidden);
         }
 
+        
         return forbidden;
     }
 
@@ -134,5 +151,12 @@ public class MopExtractor {
 
     private MOPSpecFileExt getMOPSpec() throws ParseException {
         return JavaMOPParser.parse(this.mopFile);
+    }
+
+    private Map<String, String> correspondingMethodSignaturesOfEvents;
+    private List<String> convertEventsToMethodSignatures(List<String> forbidden) {
+         this.correspondingMethodSignaturesOfEvents = new HashMap<>();
+         
+         return forbidden;
     }
 }

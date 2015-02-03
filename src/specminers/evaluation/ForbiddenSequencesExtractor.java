@@ -63,7 +63,7 @@ public class ForbiddenSequencesExtractor {
 
     private static void extractInvalidSequences(Map<String, String> options) throws IOException, ParseException {
         File mopFilesFolder = new File(options.get(INPUT_PATH_OPTION));
-        String[] extensions = new String[]{"mop"};
+        String[] extensions = new String[]{MopExtractor.MOP_FILES_EXTENSION};
         List<File> files = FileUtils.listFiles(mopFilesFolder, extensions, true).stream()
                 .collect(Collectors.toList());
 
