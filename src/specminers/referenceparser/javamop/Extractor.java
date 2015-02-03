@@ -14,6 +14,10 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javamop.parser.astex.MOPSpecFileExt;
+import javamop.parser.astex.mopspec.FormulaExt;
+import javamop.parser.main_parser.JavaMOPParser;
+import javamop.parser.main_parser.ParseException;
 import javax.sql.CommonDataSource;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.io.FileUtils;
@@ -59,49 +63,61 @@ public class Extractor {
 
     }
 
-    public List<String> getSpecification() throws IOException {
+    public List<String> getSpecification() throws IOException, ParseException {
         if (specificationStatements == null) {
             loadSpecification();
         }
         return specificationStatements;
     }
 
-    private String expandExtendedRegularExpression(String ere, File specificationFile) throws IOException {
-       String contents = FileUtils.readFileToString(specificationFile);
-       
-       ere = ere.trim();
-       String componentsPattern = "\\(\\w+\\)|\\w+";
-       Matcher m = Pattern.compile(componentsPattern).matcher(ere);
+    private String expandExtendedRegularExpression(String ere, File specificationFile) throws IOException, ParseException {
+        String contents = FileUtils.readFileToString(specificationFile);
 
-       String aspectJExpression = "((execution)|(call)";
-       String aspectjAdvicePattern = aspectJExpression;
-       
-       while(m.lookingAt()){
-           
-           String component = ere.substring(m.start(),m.end());
-           String componentDefintionRegex = "\\t*(creation)?(\\s|\\t)+(event)(\\s|\\t)+" + component + aspectjAdvicePattern + "\\{(.+)\\}" ; // According to JavaMOP 4 syntax
-           Pattern p = Pattern.compile(componentDefintionRegex, Pattern.DOTALL);
-           Matcher definitionMatcher = p.matcher(contents);
-           
-           if (definitionMatcher.find()){
-               String definition = definitionMatcher.group(5) + definitionMatcher.group(6);
-               return definition;
-           }
-       }
-       
-       return ere;
+        MOPSpecFileExt spec = getJavaMOPSpec(specificationFile);
+
+        String strEvents = spec.getSpecs().get(0).getEventStr();
+        
+        if (spec.getSpecs().get(0).getPropertiesAndHandlers().get(0).getProperty() instanceof FormulaExt){
+            FormulaExt fext = (FormulaExt)spec.getSpecs().get(0).getPropertiesAndHandlers().get(0).getProperty();
+            String strFormula = fext.toString();
+            System.out.println(strFormula);
+        }
+        
+        if (1 > 0) {
+            return "";
+        }
+        ere = ere.trim();
+        String componentsPattern = "\\(\\w+\\)|\\w+";
+        Matcher m = Pattern.compile(componentsPattern).matcher(ere);
+
+        String aspectJExpression = "((execution)|(call))";
+        String aspectjAdvicePattern = aspectJExpression;
+
+        while (m.lookingAt()) {
+
+            String component = ere.substring(m.start(), m.end());
+            String componentDefintionRegex = "\\t*(creation)?[\\s\\t]+(event)[\\s|\\t]+" + component + aspectjAdvicePattern + "\\{(.+)\\}"; // According to JavaMOP 4 syntax
+            Pattern p = Pattern.compile(componentDefintionRegex, Pattern.DOTALL);
+            Matcher definitionMatcher = p.matcher(contents);
+
+            if (definitionMatcher.find()) {
+                String definition = definitionMatcher.group(5) + definitionMatcher.group(6);
+                return definition;
+            }
+        }
+
+        return ere;
     }
 
-    private List<String> extractSpecStatementsFromFile(File specificationFile) throws IOException {
+    private List<String> extractSpecStatementsFromFile(File specificationFile) throws IOException, ParseException {
         List<String> statements = new LinkedList<>();
         List<String> matchingLines = FileUtils.readLines(specificationFile).stream().filter(l -> ERE_PATTERN.matcher(l).matches()).collect(Collectors.toList());
 
         for (String matchingLine : matchingLines) {
             Matcher m = ERE_PATTERN.matcher(matchingLine);
-            if (m.matches()){
+            if (m.matches()) {
                 statements.add(expandExtendedRegularExpression(m.group(1), specificationFile));
-            }
-            else{
+            } else {
                 System.out.println(matchingLine + " does not really match the ERE pattern");
             }
         }
@@ -109,7 +125,15 @@ public class Extractor {
         return statements;
     }
 
-    private void loadSpecification() throws IOException {
+    private MOPSpecFileExt getJavaMOPSpec(String filePath) throws ParseException {
+        return getJavaMOPSpec(new File(filePath));
+    }
+
+    private MOPSpecFileExt getJavaMOPSpec(File mopFile) throws ParseException {
+        return JavaMOPParser.parse(mopFile);
+    }
+
+    private void loadSpecification() throws IOException, ParseException {
         this.loadExtendedRegularExpressionFiles();
         this.specificationStatements = new LinkedList<>();
         for (File specFile : this.extendedRegularExpressionFiles) {

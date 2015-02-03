@@ -5,6 +5,9 @@
  */
 package specminers;
 
+import com.mifmif.common.regex.Generex;
+import java.util.List;
+import java.util.Set;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -17,6 +20,15 @@ public class StringUtilsTest {
     public StringUtilsTest() {
     }
 
+    @Test 
+    public void testRegexExamples() {
+        String regex = "ab";
+        Generex gen = new Generex(regex);
+        Set<String> possibilites = gen.getAllMatchedStringsViaStatePermutations();
+        
+        assertTrue(!possibilites.isEmpty());
+        
+    }
     @Test
     public void testGenerateRegexToMatchInput() throws Exception {
         System.out.println("generateRegexToMatchInput");
