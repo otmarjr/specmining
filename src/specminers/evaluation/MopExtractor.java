@@ -7,22 +7,32 @@ package specminers.evaluation;
 
 import com.mifmif.common.regex.Generex;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javamop.parser.ast.aspectj.CombinedPointCut;
+import javamop.parser.ast.aspectj.MethodPointCut;
+import javamop.parser.ast.aspectj.PointCut;
+import javamop.parser.ast.aspectj.TargetPointCut;
 import javamop.parser.astex.MOPSpecFileExt;
+import javamop.parser.astex.mopspec.EventDefinitionExt;
 import javamop.parser.astex.mopspec.FormulaExt;
 import javamop.parser.astex.mopspec.JavaMOPSpecExt;
 import javamop.parser.astex.mopspec.PropertyAndHandlersExt;
 import javamop.parser.main_parser.JavaMOPParser;
 import javamop.parser.main_parser.ParseException;
+import org.apache.commons.io.FileUtils;
+import specminers.FileHelper;
+import specminers.StringHelper;
 
 /**
  *
@@ -127,7 +137,6 @@ public class MopExtractor {
             forbidden = convertEventsToMethodSignatures(forbidden);
         }
 
-        
         return forbidden;
     }
 
@@ -153,10 +162,98 @@ public class MopExtractor {
         return JavaMOPParser.parse(this.mopFile);
     }
 
-    private Map<String, String> correspondingMethodSignaturesOfEvents;
-    private List<String> convertEventsToMethodSignatures(List<String> forbidden) {
-         this.correspondingMethodSignaturesOfEvents = new HashMap<>();
-         
-         return forbidden;
+    private Map<String, List<String>> correspondingMethodSignaturesOfEvents;
+
+    private String getTestedClassPackage() {
+        String regex = "^import (java\\.\\w+)\\.\\*;$";
+        
+        try {
+            String matchingLine = FileHelper.getTrimmedFileLines(mopFile)
+                    .stream().filter(l -> l.matches(regex))
+                    .findFirst()
+                    .orElse("");
+            
+            return StringHelper.extractSingleValueWithRegex(matchingLine, regex, 1);
+        } catch (IOException ex) {
+            Logger.getLogger(MopExtractor.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+                
+    }
+    private String getFormattedMethodSignature(MethodPointCut methodPointCut){
+        return String.format("%s.%s.%s()" , getTestedClassPackage(),
+                    methodPointCut.getSignature().getOwner().getOp().replaceAll("[^A-Za-z0-9]", ""),
+                    methodPointCut.getSignature().getMemberName());
+    }
+    
+    private List<MethodPointCut> flattenCombinedPointCut(CombinedPointCut pointcut, List<MethodPointCut> flattendSoFar){
+        for (PointCut pc : pointcut.getPointcuts()){
+            if (pc instanceof CombinedPointCut){
+                flattenCombinedPointCut((CombinedPointCut)pc, flattendSoFar);
+            }
+            else {
+                if (pc instanceof MethodPointCut){
+                    flattendSoFar.add((MethodPointCut)pc);
+                }
+            }
+        }
+        
+        return flattendSoFar;
+    }
+    
+    private List<String> getCorrespondingMethodSignatureSequences(EventDefinitionExt event){
+        PointCut pc;
+        pc = event.getPointCut();
+        
+        List<String> methodSigs;
+        methodSigs = new LinkedList<>();
+        
+        if (pc instanceof CombinedPointCut){
+            CombinedPointCut cpc = (CombinedPointCut)pc;
+            
+            Optional<TargetPointCut> tpc;
+            tpc = cpc.getPointcuts().stream().filter(ppc -> ppc instanceof TargetPointCut)
+                    .map(ppc -> (TargetPointCut)ppc).findFirst();
+            
+            List<MethodPointCut> methodPointcuts = flattenCombinedPointCut(cpc, new LinkedList<>());
+            
+            
+            methodPointcuts.stream()
+                    .map(mpc -> getFormattedMethodSignature(mpc))
+                    .forEach(fullSig -> methodSigs.add(fullSig));
+        }
+        else{
+            if (pc instanceof MethodPointCut){
+                methodSigs.add(getFormattedMethodSignature((MethodPointCut)pc));
+            }
+        }
+        
+        return methodSigs;
+    }
+    private List<String> convertEventsToMethodSignatures(List<String> forbidden) throws ParseException {
+        if (this.correspondingMethodSignaturesOfEvents == null) {
+            this.correspondingMethodSignaturesOfEvents = new HashMap<>();
+            
+            Map<String, EventDefinitionExt> evs;
+            evs = getJavaMopSpec().getEvents().stream().collect(Collectors.toMap(ev -> ev.getId(), ev -> ev));
+            
+            for(String ev : evs.keySet()){
+                if (!this.correspondingMethodSignaturesOfEvents.containsKey(ev)){
+                    this.correspondingMethodSignaturesOfEvents.put(ev, new LinkedList<>());
+                }
+                
+                this.correspondingMethodSignaturesOfEvents.get(ev).addAll(getCorrespondingMethodSignatureSequences(evs.get(ev)));
+            }
+        }
+        
+        List<String> expandedForbiddenSequence;
+        expandedForbiddenSequence = new LinkedList<>();
+        
+        forbidden.stream().forEach((event) -> {
+            expandedForbiddenSequence.addAll(this.correspondingMethodSignaturesOfEvents.get(event));
+        });
+        
+        return expandedForbiddenSequence;
+                
     }
 }
