@@ -30,7 +30,6 @@ import javamop.parser.astex.mopspec.JavaMOPSpecExt;
 import javamop.parser.astex.mopspec.PropertyAndHandlersExt;
 import javamop.parser.main_parser.JavaMOPParser;
 import javamop.parser.main_parser.ParseException;
-import org.apache.commons.io.FileUtils;
 import specminers.FileHelper;
 import specminers.StringHelper;
 
@@ -181,9 +180,13 @@ public class MopExtractor {
                 
     }
     private String getFormattedMethodSignature(MethodPointCut methodPointCut){
+        String methodSignature = methodPointCut.getSignature().getMemberName();
+        if (methodSignature.equals("new")){
+            methodSignature = "<init>";
+        }
         return String.format("%s.%s.%s()" , getTestedClassPackage(),
                     methodPointCut.getSignature().getOwner().getOp().replaceAll("[^A-Za-z0-9]", ""),
-                    methodPointCut.getSignature().getMemberName());
+                    methodSignature);
     }
     
     private List<MethodPointCut> flattenCombinedPointCut(CombinedPointCut pointcut, List<MethodPointCut> flattendSoFar){
@@ -230,6 +233,17 @@ public class MopExtractor {
         
         return methodSigs;
     }
+    
+    private List<String> makeListsCartesianProduct(List<String> list1, List<String> list2){
+        List<String> output = new LinkedList<>();
+        
+        list1.stream().forEach((s) -> {
+            list2.stream().forEach((t) -> {
+                output.add(s + " " + t);
+            });
+        });
+        return output;
+    }
     private List<String> convertEventsToMethodSignatures(List<String> forbidden) throws ParseException {
         if (this.correspondingMethodSignaturesOfEvents == null) {
             this.correspondingMethodSignaturesOfEvents = new HashMap<>();
@@ -249,9 +263,18 @@ public class MopExtractor {
         List<String> expandedForbiddenSequence;
         expandedForbiddenSequence = new LinkedList<>();
         
-        forbidden.stream().forEach((event) -> {
-            expandedForbiddenSequence.addAll(this.correspondingMethodSignaturesOfEvents.get(event));
-        });
+        for(String seq : forbidden){
+            String[] forbEvents = seq.split("\\s");
+            
+            List<String> joinedList = this.correspondingMethodSignaturesOfEvents.get(forbEvents[0]);
+            
+            for (int i=1;i<forbEvents.length;i++){
+                List<String> currentList = this.correspondingMethodSignaturesOfEvents.get(forbEvents[i]);
+                joinedList = makeListsCartesianProduct(joinedList, currentList);
+            }
+            
+            expandedForbiddenSequence.addAll(joinedList);
+        }
         
         return expandedForbiddenSequence;
                 
