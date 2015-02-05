@@ -26,6 +26,7 @@ import javamop.parser.ast.aspectj.TargetPointCut;
 import javamop.parser.astex.MOPSpecFileExt;
 import javamop.parser.astex.mopspec.EventDefinitionExt;
 import javamop.parser.astex.mopspec.FormulaExt;
+import javamop.parser.astex.mopspec.HandlerExt;
 import javamop.parser.astex.mopspec.JavaMOPSpecExt;
 import javamop.parser.astex.mopspec.PropertyAndHandlersExt;
 import javamop.parser.main_parser.JavaMOPParser;
@@ -40,6 +41,7 @@ import specminers.StringHelper;
 public class MopExtractor {
 
     public static final String MOP_FILES_EXTENSION = "mop";
+    private static final String PARSEABLE_FORMULA_TYPE = "ere";
     private final File mopFile;
 
     public MopExtractor(String mopFilePath) {
@@ -58,7 +60,7 @@ public class MopExtractor {
 
             FormulaExt formula = (FormulaExt) getMOPPropertiesAndHandlers().get(0).getProperty();
 
-            return formula.getType().equals("ere");
+            return formula.getType().equals(PARSEABLE_FORMULA_TYPE);
         } catch (ParseException ex) {
             Logger.getLogger(MopExtractor.class.getName()).log(Level.SEVERE, null, ex);
             return false;
@@ -98,9 +100,17 @@ public class MopExtractor {
 
     }
 
+    private boolean isUsingFailHandler() throws ParseException{
+        List<HandlerExt> handlers = getMOPPropertiesAndHandlers()
+                .stream().flatMap(ph -> ph.getHandlerList().stream())
+                .collect(Collectors.toList());
+        
+        return handlers.stream().anyMatch(h -> h.getState().equals("fail"));
+    }
     private List<String> getRegexFormulaExpansions(String formulaRegex) throws ParseException {
         String simplifiedRegex = convertWordRegexToSingleCharRegex(formulaRegex);
-        Generex g = new Generex(simplifiedRegex);
+        boolean shouldGetRegexComplement = isUsingFailHandler();
+        Generex g = new Generex(simplifiedRegex,shouldGetRegexComplement);
 
         Set<String> regexBasedSequence = g.getAllMatchedStringsViaStatePermutations();
 
