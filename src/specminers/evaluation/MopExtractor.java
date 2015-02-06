@@ -80,7 +80,6 @@ public class MopExtractor {
 
     private String convertWordRegexToSingleCharRegex(String originalRegex) throws ParseException {
 
-        this.components = Arrays.asList(originalRegex.split(" "));
         this.events = getJavaMopSpec().getEvents().stream()
                 .map(ev -> ev.getId())
                 .collect(Collectors.toSet());
@@ -109,8 +108,7 @@ public class MopExtractor {
     }
     private List<String> getRegexFormulaExpansions(String formulaRegex) throws ParseException {
         String simplifiedRegex = convertWordRegexToSingleCharRegex(formulaRegex);
-        boolean shouldGetRegexComplement = isUsingFailHandler();
-        Generex g = new Generex(simplifiedRegex,shouldGetRegexComplement);
+        Generex g = new Generex(simplifiedRegex);
 
         Set<String> regexBasedSequence = g.getAllMatchedStringsViaStatePermutations();
 
@@ -134,16 +132,45 @@ public class MopExtractor {
                 ).collect(Collectors.toList());
     }
 
+    private String getRegex(FormulaExt fext) throws ParseException{
+        boolean shouldGetRegexComplement = isUsingFailHandler();
+
+        String regex = fext.getFormula();
+        this.components = Arrays.asList(regex.split(" "));
+        
+        if (shouldGetRegexComplement){
+            int pivotIndex = this.components.size()/2;
+            List<String> secondHalf = this.components.subList(pivotIndex, this.components.size());
+            List<String> firstHalf = this.components.subList(0, pivotIndex);
+            
+            List<String> invertedList = new LinkedList<>();
+            
+            // Invert the positions, but first, switching from * to + operator
+            // in order to assure the presence of a violation in the generated
+            // regular expression.
+            
+            for (String s : secondHalf){
+                invertedList.add(s.replace("*", ""));
+            }
+            
+            invertedList.addAll(firstHalf);
+            this.components = invertedList;
+            
+            regex = invertedList.stream().collect(Collectors.joining(" "));
+        }
+        
+        return regex;
+    }
     public List<String> getForbiddenSequences() throws ParseException {
         List<String> forbidden = new LinkedList<>();
         if (containsParseableSpec()) {
             JavaMOPSpecExt spec = getMOPSpec().getSpecs().get(0);
             FormulaExt fext = (FormulaExt) spec.getPropertiesAndHandlers().get(0).getProperty();
-            String formula = fext.getFormula(); // uniqueId of event may help in its expansion
+            String formula = getRegex(fext);
             String parserRegex = convertWordRegexToSingleCharRegex(formula);
             forbidden.addAll(getRegexFormulaExpansions(parserRegex));
-            forbidden = removeRedundantSequences(forbidden);
             forbidden = convertEventsToMethodSignatures(forbidden);
+            forbidden = removeRedundantSequences(forbidden);
         }
 
         return forbidden;
