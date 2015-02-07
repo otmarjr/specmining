@@ -136,94 +136,133 @@ public class MopExtractor {
                 ).collect(Collectors.toList());
     }
 
+    private String getRegularExpressionWithoutTransformation(String originalRegex) {
+        return originalRegex;
+    }
+
+    private String getRegexComplementWithParentherizedRegions(String originalRegex) {
+        String splitter = "\\([\\w\\s\\|]+\\)[\\*\\+]*";
+
+        Pattern p = Pattern.compile(splitter);
+        Matcher m = p.matcher(originalRegex);
+
+        List<String> groupedElements = new LinkedList<>();
+        List<Pair<Integer, Integer>> groupingPositions = new LinkedList();
+
+        while (m.find()) {
+            Pair<Integer, Integer> startEndPositions = Pair.of(m.start(), m.end());
+            String matching = originalRegex.substring(startEndPositions.getLeft(), startEndPositions.getRight());
+            groupedElements.add(matching);
+            groupingPositions.add(startEndPositions);
+        }
+
+        List<String> complementedElements = new LinkedList<>();
+        int currentGroup = 0;
+
+        for (int i = 0; i < originalRegex.length(); i++) {
+            if (currentGroup < groupingPositions.size() && i == groupingPositions.get(currentGroup).getLeft()) {
+                complementedElements.add(groupedElements.get(currentGroup));
+                i = groupingPositions.get(currentGroup).getRight();
+                currentGroup++;
+            } else {
+                int endOfCurrentToken = originalRegex.indexOf(" ", i);
+                if (endOfCurrentToken == -1) {
+                    endOfCurrentToken = originalRegex.length();
+                }
+
+                complementedElements.add(originalRegex.substring(i, endOfCurrentToken));
+                i = endOfCurrentToken;
+            }
+        }
+
+        List<String> invertedGroups = new LinkedList<>();
+
+        Map<String, String> groupInversions = new HashMap<>();
+        
+        for (String group : groupedElements) {
+            List<String> options = Arrays.asList(group.split("|"));
+            List<String> invertedOptions = new LinkedList<>();
+            
+            for (String option : options) {
+                List<String> optionComponents = Arrays.asList(option.split(" "));
+
+                int groupPositionInEntireRegex = complementedElements.indexOf(group);
+                
+                // Checks the inversion strategy: if there is an even
+                // number of elements, inverts by mixing elements after
+                // it on the middle. For odd number of items, elements
+                // after the parenthesis are placed before the option.
+                if (optionComponents.size() % 2 == 0) {
+                    // Checks if there are items behind to put in the middle
+                    if (groupPositionInEntireRegex > 0){
+                        String itemInFirstPosition = complementedElements.get(0);
+                        String optionsFirstHalf = optionComponents.subList(0, optionComponents.size()/2).stream().collect(Collectors.joining(""));
+                        String optionsSecondHalf = optionComponents.subList(optionComponents.size()/2,optionComponents.size()).stream().collect(Collectors.joining(""));
+                        
+                        invertedOptions.add(String.format("%s %s %s", optionsFirstHalf, itemInFirstPosition.replace("*", ""), optionsSecondHalf));
+                    }
+                    else{
+                        
+                    }
+                }
+            }
+        }
+        
+        String result = invertedGroups.stream().collect(Collectors.joining(" "));
+
+        return result;
+    }
+
+    private String getRegexComplement(String originalRegex) {
+        List<String> complementedElements = this.components;
+
+        int pivotIndex = complementedElements.size() / 2;
+        List<String> secondHalf = complementedElements.subList(pivotIndex, complementedElements.size());
+        List<String> firstHalf = complementedElements.subList(0, pivotIndex);
+
+        List<String> invertedList = new LinkedList<>();
+
+        // Invert the positions, but first, switching from * to + operator
+        // in order to assure the presence of a violation in the generated
+        // regular expression.
+        for (String s : secondHalf) {
+            invertedList.add(s.replace("*", ""));
+        }
+
+        invertedList.addAll(firstHalf.stream().map(s -> s.replace("*", "")).collect(Collectors.toList()));
+        this.components = invertedList;
+
+        String result = invertedList.stream().collect(Collectors.joining(" "));
+
+        return result;
+    }
+
+    private String getRegularExpressionWithComplement(String originalRegex) {
+        boolean containsParenthesis = originalRegex.contains("(");
+
+        RegexExtractionStrategy strategy = r -> getRegexComplement(r);
+
+        if (containsParenthesis) {
+            strategy = r -> getRegexComplementWithParentherizedRegions(r);
+        }
+
+        return strategy.getRegexComplement(originalRegex);
+    }
+
     private String getRegex(FormulaExt fext) throws ParseException {
         boolean shouldGetRegexComplement = isUsingFailHandler();
 
-        String regex = fext.getFormula();
+        String originalRegex = fext.getFormula();
 
-        this.components = Arrays.asList(regex.split(" "));
+        this.components = Arrays.asList(originalRegex.split(" "));
+
+        RegexExtractionStrategy strategy = r -> getRegularExpressionWithoutTransformation(r);
 
         if (shouldGetRegexComplement) {
-
-            List<String> complementedElements = this.components;
-
-            if (regex.contains("(")) {
-                String splitter = "\\([\\w\\s\\|]+\\)[\\*\\+]*";
-
-                Pattern p = Pattern.compile(splitter);
-                Matcher m = p.matcher(regex);
-
-                List<String> groupedElements = new LinkedList<>();
-                List<Pair<Integer, Integer>> groupingPositions = new LinkedList();
-
-                while (m.find()) {
-                    Pair<Integer, Integer> startEndPositions = Pair.of(m.start(), m.end());
-                    String matching = regex.substring(startEndPositions.getLeft(), startEndPositions.getRight());
-                    groupedElements.add(matching);
-                    groupingPositions.add(startEndPositions);
-                }
-
-                complementedElements = new LinkedList<>();
-                int currentGroup = 0;
-
-                for (int i = 0; i < regex.length(); i++) {
-                    if (currentGroup < groupingPositions.size() && i == groupingPositions.get(currentGroup).getLeft()) {
-                        complementedElements.add(groupedElements.get(currentGroup));
-                        i = groupingPositions.get(currentGroup).getRight();
-                        currentGroup++;
-                    } else {
-                        int endOfCurrentToken = regex.indexOf(" ", i);
-                        if (endOfCurrentToken == -1) {
-                            endOfCurrentToken = regex.length();
-                        }
-
-                        complementedElements.add(regex.substring(i, endOfCurrentToken));
-                        i = endOfCurrentToken;
-                    }
-                }
-                
-               List<String> invertedGroups = new LinkedList<>();
-               
-               for (String group : groupedElements){
-                   List<String> options = Arrays.asList(group.split("|"));
-                   
-                   for (String option : options){
-                       List<String> optionComponents = Arrays.asList(option.split(" "));
-                       
-                       // Checks the inversion strategy: if there is an even
-                       // number of elements, inverts by mixing elements after
-                       // it on the middle. For odd number of items, elements
-                       // after the parenthesis are placed before the option.
-                       
-                       if (optionComponents.size()%2 ==0){
-                           
-                       }
-                   }
-               }
-                
-            } else {
-                int pivotIndex = complementedElements.size() / 2;
-                List<String> secondHalf = complementedElements.subList(pivotIndex, complementedElements.size());
-                List<String> firstHalf = complementedElements.subList(0, pivotIndex);
-
-                List<String> invertedList = new LinkedList<>();
-
-            // Invert the positions, but first, switching from * to + operator
-                // in order to assure the presence of a violation in the generated
-                // regular expression.
-                for (String s : secondHalf) {
-                    invertedList.add(s.replace("*", ""));
-                }
-
-                invertedList.addAll(firstHalf.stream().map(s -> s.replace("*", "")).collect(Collectors.toList()));
-                this.components = invertedList;
-
-                regex = invertedList.stream().collect(Collectors.joining(" "));
-            }
-
+            strategy = r -> getRegularExpressionWithComplement(r);
         }
 
-        return regex;
+        return strategy.getRegexComplement(originalRegex);
     }
 
     public List<String> getForbiddenSequences() throws ParseException {
