@@ -17,6 +17,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javamop.parser.ast.aspectj.CombinedPointCut;
@@ -31,6 +33,7 @@ import javamop.parser.astex.mopspec.JavaMOPSpecExt;
 import javamop.parser.astex.mopspec.PropertyAndHandlersExt;
 import javamop.parser.main_parser.JavaMOPParser;
 import javamop.parser.main_parser.ParseException;
+import org.apache.commons.lang3.tuple.Pair;
 import specminers.FileHelper;
 import specminers.StringHelper;
 
@@ -80,7 +83,6 @@ public class MopExtractor {
 
     private String convertWordRegexToSingleCharRegex(String originalRegex) throws ParseException {
 
-        this.components = Arrays.asList(originalRegex.split(" "));
         this.events = getJavaMopSpec().getEvents().stream()
                 .map(ev -> ev.getId())
                 .collect(Collectors.toSet());
@@ -100,17 +102,17 @@ public class MopExtractor {
 
     }
 
-    private boolean isUsingFailHandler() throws ParseException{
+    private boolean isUsingFailHandler() throws ParseException {
         List<HandlerExt> handlers = getMOPPropertiesAndHandlers()
                 .stream().flatMap(ph -> ph.getHandlerList().stream())
                 .collect(Collectors.toList());
-        
+
         return handlers.stream().anyMatch(h -> h.getState().equals("fail"));
     }
+
     private List<String> getRegexFormulaExpansions(String formulaRegex) throws ParseException {
         String simplifiedRegex = convertWordRegexToSingleCharRegex(formulaRegex);
-        boolean shouldGetRegexComplement = isUsingFailHandler();
-        Generex g = new Generex(simplifiedRegex,shouldGetRegexComplement);
+        Generex g = new Generex(simplifiedRegex);
 
         Set<String> regexBasedSequence = g.getAllMatchedStringsViaStatePermutations();
 
@@ -134,16 +136,145 @@ public class MopExtractor {
                 ).collect(Collectors.toList());
     }
 
+    private String getRegularExpressionWithoutTransformation(String originalRegex) {
+        return originalRegex;
+    }
+
+    private String getRegexComplementWithParentherizedRegions(String originalRegex) {
+        String splitter = "\\([\\w\\s\\|]+\\)[\\*\\+]*";
+
+        Pattern p = Pattern.compile(splitter);
+        Matcher m = p.matcher(originalRegex);
+
+        List<String> groupedElements = new LinkedList<>();
+        List<Pair<Integer, Integer>> groupingPositions = new LinkedList();
+
+        while (m.find()) {
+            Pair<Integer, Integer> startEndPositions = Pair.of(m.start(), m.end());
+            String matching = originalRegex.substring(startEndPositions.getLeft(), startEndPositions.getRight());
+            groupedElements.add(matching);
+            groupingPositions.add(startEndPositions);
+        }
+
+        List<String> complementedElements = new LinkedList<>();
+        int currentGroup = 0;
+
+        for (int i = 0; i < originalRegex.length(); i++) {
+            if (currentGroup < groupingPositions.size() && i == groupingPositions.get(currentGroup).getLeft()) {
+                complementedElements.add(groupedElements.get(currentGroup));
+                i = groupingPositions.get(currentGroup).getRight();
+                currentGroup++;
+            } else {
+                int endOfCurrentToken = originalRegex.indexOf(" ", i);
+                if (endOfCurrentToken == -1) {
+                    endOfCurrentToken = originalRegex.length();
+                }
+
+                complementedElements.add(originalRegex.substring(i, endOfCurrentToken));
+                i = endOfCurrentToken;
+            }
+        }
+
+        List<String> invertedGroups = new LinkedList<>();
+
+        Map<String, String> groupInversions = new HashMap<>();
+        
+        for (String group : groupedElements) {
+            List<String> options = Arrays.asList(group.split("|"));
+            List<String> invertedOptions = new LinkedList<>();
+            
+            for (String option : options) {
+                List<String> optionComponents = Arrays.asList(option.split(" "));
+
+                int groupPositionInEntireRegex = complementedElements.indexOf(group);
+                
+                // Checks the inversion strategy: if there is an even
+                // number of elements, inverts by mixing elements after
+                // it on the middle. For odd number of items, elements
+                // after the parenthesis are placed before the option.
+                if (optionComponents.size() % 2 == 0) {
+                    // Checks if there are items behind to put in the middle
+                    if (groupPositionInEntireRegex > 0){
+                        String itemInFirstPosition = complementedElements.get(0);
+                        String optionsFirstHalf = optionComponents.subList(0, optionComponents.size()/2).stream().collect(Collectors.joining(""));
+                        String optionsSecondHalf = optionComponents.subList(optionComponents.size()/2,optionComponents.size()).stream().collect(Collectors.joining(""));
+                        
+                        invertedOptions.add(String.format("%s %s %s", optionsFirstHalf, itemInFirstPosition.replace("*", ""), optionsSecondHalf));
+                    }
+                    else{
+                        
+                    }
+                }
+            }
+        }
+        
+        String result = invertedGroups.stream().collect(Collectors.joining(" "));
+
+        return result;
+    }
+
+    private String getRegexComplement(String originalRegex) {
+        List<String> complementedElements = this.components;
+
+        int pivotIndex = complementedElements.size() / 2;
+        List<String> secondHalf = complementedElements.subList(pivotIndex, complementedElements.size());
+        List<String> firstHalf = complementedElements.subList(0, pivotIndex);
+
+        List<String> invertedList = new LinkedList<>();
+
+        // Invert the positions, but first, switching from * to + operator
+        // in order to assure the presence of a violation in the generated
+        // regular expression.
+        for (String s : secondHalf) {
+            invertedList.add(s.replace("*", ""));
+        }
+
+        invertedList.addAll(firstHalf.stream().map(s -> s.replace("*", "")).collect(Collectors.toList()));
+        this.components = invertedList;
+
+        String result = invertedList.stream().collect(Collectors.joining(" "));
+
+        return result;
+    }
+
+    private String getRegularExpressionWithComplement(String originalRegex) {
+        boolean containsParenthesis = originalRegex.contains("(");
+
+        RegexExtractionStrategy strategy = r -> getRegexComplement(r);
+
+        if (containsParenthesis) {
+            strategy = r -> getRegexComplementWithParentherizedRegions(r);
+        }
+
+        return strategy.getRegexComplement(originalRegex);
+    }
+
+    private String getRegex(FormulaExt fext) throws ParseException {
+        boolean shouldGetRegexComplement = isUsingFailHandler();
+
+        String originalRegex = fext.getFormula();
+
+        this.components = Arrays.asList(originalRegex.split(" "));
+
+        RegexExtractionStrategy strategy = r -> getRegularExpressionWithoutTransformation(r);
+
+        if (shouldGetRegexComplement) {
+            strategy = r -> getRegularExpressionWithComplement(r);
+        }
+
+        return strategy.getRegexComplement(originalRegex);
+    }
+
     public List<String> getForbiddenSequences() throws ParseException {
         List<String> forbidden = new LinkedList<>();
         if (containsParseableSpec()) {
             JavaMOPSpecExt spec = getMOPSpec().getSpecs().get(0);
             FormulaExt fext = (FormulaExt) spec.getPropertiesAndHandlers().get(0).getProperty();
-            String formula = fext.getFormula(); // uniqueId of event may help in its expansion
+            String formula = getRegex(fext);
             String parserRegex = convertWordRegexToSingleCharRegex(formula);
             forbidden.addAll(getRegexFormulaExpansions(parserRegex));
-            forbidden = removeRedundantSequences(forbidden);
             forbidden = convertEventsToMethodSignatures(forbidden);
+            forbidden = removeRedundantSequences(forbidden);
         }
 
         return forbidden;
@@ -175,78 +306,76 @@ public class MopExtractor {
 
     private String getTestedClassPackage() {
         String regex = "^import (java\\.\\w+)\\.\\*;$";
-        
+
         try {
             String matchingLine = FileHelper.getTrimmedFileLines(mopFile)
                     .stream().filter(l -> l.matches(regex))
                     .findFirst()
                     .orElse("");
-            
+
             return StringHelper.extractSingleValueWithRegex(matchingLine, regex, 1);
         } catch (IOException ex) {
             Logger.getLogger(MopExtractor.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
-                
+
     }
-    private String getFormattedMethodSignature(MethodPointCut methodPointCut){
+
+    private String getFormattedMethodSignature(MethodPointCut methodPointCut) {
         String methodSignature = methodPointCut.getSignature().getMemberName();
-        if (methodSignature.equals("new")){
+        if (methodSignature.equals("new")) {
             methodSignature = "<init>";
         }
-        return String.format("%s.%s.%s()" , getTestedClassPackage(),
-                    methodPointCut.getSignature().getOwner().getOp().replaceAll("[^A-Za-z0-9]", ""),
-                    methodSignature);
+        return String.format("%s.%s.%s()", getTestedClassPackage(),
+                methodPointCut.getSignature().getOwner().getOp().replaceAll("[^A-Za-z0-9]", ""),
+                methodSignature);
     }
-    
-    private List<MethodPointCut> flattenCombinedPointCut(CombinedPointCut pointcut, List<MethodPointCut> flattendSoFar){
-        for (PointCut pc : pointcut.getPointcuts()){
-            if (pc instanceof CombinedPointCut){
-                flattenCombinedPointCut((CombinedPointCut)pc, flattendSoFar);
-            }
-            else {
-                if (pc instanceof MethodPointCut){
-                    flattendSoFar.add((MethodPointCut)pc);
+
+    private List<MethodPointCut> flattenCombinedPointCut(CombinedPointCut pointcut, List<MethodPointCut> flattendSoFar) {
+        for (PointCut pc : pointcut.getPointcuts()) {
+            if (pc instanceof CombinedPointCut) {
+                flattenCombinedPointCut((CombinedPointCut) pc, flattendSoFar);
+            } else {
+                if (pc instanceof MethodPointCut) {
+                    flattendSoFar.add((MethodPointCut) pc);
                 }
             }
         }
-        
+
         return flattendSoFar;
     }
-    
-    private List<String> getCorrespondingMethodSignatureSequences(EventDefinitionExt event){
+
+    private List<String> getCorrespondingMethodSignatureSequences(EventDefinitionExt event) {
         PointCut pc;
         pc = event.getPointCut();
-        
+
         List<String> methodSigs;
         methodSigs = new LinkedList<>();
-        
-        if (pc instanceof CombinedPointCut){
-            CombinedPointCut cpc = (CombinedPointCut)pc;
-            
+
+        if (pc instanceof CombinedPointCut) {
+            CombinedPointCut cpc = (CombinedPointCut) pc;
+
             Optional<TargetPointCut> tpc;
             tpc = cpc.getPointcuts().stream().filter(ppc -> ppc instanceof TargetPointCut)
-                    .map(ppc -> (TargetPointCut)ppc).findFirst();
-            
+                    .map(ppc -> (TargetPointCut) ppc).findFirst();
+
             List<MethodPointCut> methodPointcuts = flattenCombinedPointCut(cpc, new LinkedList<>());
-            
-            
+
             methodPointcuts.stream()
                     .map(mpc -> getFormattedMethodSignature(mpc))
                     .forEach(fullSig -> methodSigs.add(fullSig));
-        }
-        else{
-            if (pc instanceof MethodPointCut){
-                methodSigs.add(getFormattedMethodSignature((MethodPointCut)pc));
+        } else {
+            if (pc instanceof MethodPointCut) {
+                methodSigs.add(getFormattedMethodSignature((MethodPointCut) pc));
             }
         }
-        
+
         return methodSigs;
     }
-    
-    private List<String> makeListsCartesianProduct(List<String> list1, List<String> list2){
+
+    private List<String> makeListsCartesianProduct(List<String> list1, List<String> list2) {
         List<String> output = new LinkedList<>();
-        
+
         list1.stream().forEach((s) -> {
             list2.stream().forEach((t) -> {
                 output.add(s + " " + t);
@@ -254,39 +383,40 @@ public class MopExtractor {
         });
         return output;
     }
+
     private List<String> convertEventsToMethodSignatures(List<String> forbidden) throws ParseException {
         if (this.correspondingMethodSignaturesOfEvents == null) {
             this.correspondingMethodSignaturesOfEvents = new HashMap<>();
-            
+
             Map<String, EventDefinitionExt> evs;
             evs = getJavaMopSpec().getEvents().stream().collect(Collectors.toMap(ev -> ev.getId(), ev -> ev));
-            
-            for(String ev : evs.keySet()){
-                if (!this.correspondingMethodSignaturesOfEvents.containsKey(ev)){
+
+            for (String ev : evs.keySet()) {
+                if (!this.correspondingMethodSignaturesOfEvents.containsKey(ev)) {
                     this.correspondingMethodSignaturesOfEvents.put(ev, new LinkedList<>());
                 }
-                
+
                 this.correspondingMethodSignaturesOfEvents.get(ev).addAll(getCorrespondingMethodSignatureSequences(evs.get(ev)));
             }
         }
-        
+
         List<String> expandedForbiddenSequence;
         expandedForbiddenSequence = new LinkedList<>();
-        
-        for(String seq : forbidden){
+
+        for (String seq : forbidden) {
             String[] forbEvents = seq.split("\\s");
-            
+
             List<String> joinedList = this.correspondingMethodSignaturesOfEvents.get(forbEvents[0]);
-            
-            for (int i=1;i<forbEvents.length;i++){
+
+            for (int i = 1; i < forbEvents.length; i++) {
                 List<String> currentList = this.correspondingMethodSignaturesOfEvents.get(forbEvents[i]);
                 joinedList = makeListsCartesianProduct(joinedList, currentList);
             }
-            
+
             expandedForbiddenSequence.addAll(joinedList);
         }
-        
+
         return expandedForbiddenSequence;
-                
+
     }
 }
