@@ -175,46 +175,78 @@ public class MopExtractor {
             }
         }
 
-        List<String> invertedGroups = new LinkedList<>();
-
         Map<String, String> groupInversions = new HashMap<>();
-        
-        for (String group : groupedElements) {
-            List<String> options = Arrays.asList(group.split("|"));
-            List<String> invertedOptions = new LinkedList<>();
-            
-            for (String option : options) {
-                List<String> optionComponents = Arrays.asList(option.split(" "));
 
-                int groupPositionInEntireRegex = complementedElements.indexOf(group);
-                
-                // Checks the inversion strategy: if there is an even
-                // number of elements, inverts by mixing elements after
-                // it on the middle. For odd number of items, elements
-                // after the parenthesis are placed before the option.
-                if (optionComponents.size() % 2 == 0) {
-                    // Checks if there are items behind to put in the middle
-                    if (groupPositionInEntireRegex > 0){
-                        String itemInFirstPosition = complementedElements.get(0);
-                        String optionsFirstHalf = optionComponents.subList(0, optionComponents.size()/2).stream().collect(Collectors.joining(""));
-                        String optionsSecondHalf = optionComponents.subList(optionComponents.size()/2,optionComponents.size()).stream().collect(Collectors.joining(""));
-                        
-                        invertedOptions.add(String.format("%s %s %s", optionsFirstHalf, itemInFirstPosition.replace("*", ""), optionsSecondHalf));
+        for (String group : groupedElements) {
+
+            int groupIndex = complementedElements.indexOf(group);
+            boolean thereAreElementsBeforeGroup = groupIndex > 0;
+            boolean thereAreElementsAfterGroup = groupIndex < complementedElements.size() - 1;
+
+            String mixElement;
+
+            if (thereAreElementsBeforeGroup) {
+                mixElement = complementedElements.get(groupIndex - 1).replace("*", "");
+            } else {
+                assert thereAreElementsAfterGroup;
+                mixElement = complementedElements.get(groupIndex + 1).replace("*", "");
+            }
+
+            List<String> options = Arrays.asList(group.split("\\|"));
+            List<String> invertedOptions = new LinkedList<>();
+
+            for (String option : options) {
+                List<String> optionComponents = Arrays.asList(option.split(" "))
+                        .stream().filter(s -> s.trim().length() > 0)
+                        .collect(Collectors.toList());
+                List<String> invertedOptionComponents = new LinkedList<>();
+
+                if (thereAreElementsBeforeGroup) {
+                    String suffix = "";
+                    if (optionComponents.get(0).contains(")")){
+                        suffix = optionComponents.get(0).substring(optionComponents.get(0).indexOf(")"));
                     }
-                    else{
-                        
-                    }
+                    invertedOptionComponents.add(optionComponents.get(0).replace(")", "").replace("*", "").replace("+", ""));
+                    invertedOptionComponents.add(mixElement + suffix);
                 }
+                else{
+                    String preamble = optionComponents.get(0).contains("(") ? "(" : "";
+                    
+                    invertedOptionComponents.add(preamble + mixElement);
+                    invertedOptionComponents.add(optionComponents.get(0).replace("(", ""));
+                }
+                
+                invertedOptionComponents.addAll(optionComponents.subList(1, optionComponents.size()));
+                String invertedOption = invertedOptionComponents.stream()
+                        .collect(Collectors.joining(" "));
+
+                invertedOptions.add(invertedOption);
+            }
+
+            String invertedGroup = invertedOptions.stream()
+                    .collect(Collectors.joining("|"));
+
+            groupInversions.put(group, invertedGroup);
+        }
+
+        List<String> complementedInvertedElements = new LinkedList<>();
+        currentGroup = 0;
+
+        for (String complement : complementedElements) {
+            if (groupedElements.contains(complement)) {
+                complementedInvertedElements.add(groupInversions.get(complement));
+            } else {
+                complementedInvertedElements.add(complement);
             }
         }
-        
-        String result = invertedGroups.stream().collect(Collectors.joining(" "));
+
+        String result = complementedInvertedElements.stream().collect(Collectors.joining(" "));
 
         return result;
     }
 
     private String getRegexComplement(String originalRegex) {
-        List<String> complementedElements = this.components;
+        List<String> complementedElements = Arrays.asList(originalRegex.split(" "));
 
         int pivotIndex = complementedElements.size() / 2;
         List<String> secondHalf = complementedElements.subList(pivotIndex, complementedElements.size());
