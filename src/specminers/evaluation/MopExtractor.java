@@ -278,7 +278,7 @@ public class MopExtractor {
             strategy = r -> getRegexComplementWithParentherizedRegions(r);
         }
 
-        return strategy.getRegexComplement(originalRegex);
+        return strategy.getRegexComplement(originalRegex).replace(originalRegex, originalRegex);
     }
 
     private String getRegex(FormulaExt fext) throws ParseException {
@@ -306,7 +306,7 @@ public class MopExtractor {
             String parserRegex = convertWordRegexToSingleCharRegex(formula);
             forbidden.addAll(getRegexFormulaExpansions(parserRegex));
             forbidden = convertEventsToMethodSignatures(forbidden);
-            forbidden = removeRedundantSequences(forbidden);
+            // forbidden = removeRedundantSequences(forbidden);
         }
 
         return forbidden;

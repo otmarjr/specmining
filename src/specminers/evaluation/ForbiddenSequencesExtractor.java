@@ -73,7 +73,11 @@ public class ForbiddenSequencesExtractor {
             MopExtractor extractor = new MopExtractor(f);
 
             if (extractor.containsParseableSpec()) {
-                forbiddenSequences.addAll(extractor.getForbiddenSequences());
+                List<String> newLines = extractor.getForbiddenSequences();
+                newLines = newLines.stream().map(l -> l + "\t\t--File: " + f.getAbsolutePath())
+                        .collect(Collectors.toList());
+                forbiddenSequences.addAll(newLines);
+                
             }
         }
 
