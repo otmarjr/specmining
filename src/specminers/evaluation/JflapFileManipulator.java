@@ -9,8 +9,12 @@ import automata.State;
 import automata.Transition;
 import automata.fsa.FSATransition;
 import automata.fsa.FiniteStateAutomaton;
+import dk.brics.automaton.RegExp;
 import file.XMLCodec;
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,6 +57,13 @@ public class JflapFileManipulator {
         return "";
     }
 
+    public Set<String> getAllTransitionLabels(){
+        this.parseAutomaton();
+        return Arrays.stream(this.automaton.getFSATransitions())
+                .map(fsat -> fsat.getLabel())
+                .collect(Collectors.toSet());
+    }
+    
     public void includeTransitions(Map<String, Set<String>> publicAPI, boolean restrictOnlyToClassMethods) {
         this.parseAutomaton();
         if (restrictOnlyToClassMethods) {
@@ -68,16 +79,16 @@ public class JflapFileManipulator {
         }
     }
 
-    private List<FSATransition> getFSATransitionsFromState(State st) {
+    private Set<FSATransition> getFSATransitionsFromState(State st) {
         return Stream.of(automaton.getFSATransitions()).filter(t -> t.getFromState().equals(st))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     private void addTransitionsFromClass(String className, Set<String> transitions) {
         if (transitions != null) {
             for (State st : this.automaton.getStates()) {
                 for (String methodSig : transitions) {
-                    List<FSATransition> acceptedMethodSigs = getFSATransitionsFromState(st);
+                    Set<FSATransition> acceptedMethodSigs = getFSATransitionsFromState(st);
 
                     if (!acceptedMethodSigs.stream().anyMatch(t -> t.getLabel().equalsIgnoreCase(methodSig))) {
                         FSATransition fsaT = new FSATransition(st, st, methodSig);
@@ -91,5 +102,54 @@ public class JflapFileManipulator {
     public void saveToFile(String targetPath) {
         XMLCodec jffCodec = new XMLCodec();
         jffCodec.encode(this.automaton, new File(targetPath), null);
+    }
+
+    Map<String,Character> labelsMappingJffToDK;
+    Map<Character,String> labelsDkLabelToJffLabel;
+    
+    
+    public void loadJffLabelsMapToChars(){
+        Character currentChar = 'a';
+        this.labelsDkLabelToJffLabel = new HashMap<>();
+        this.labelsMappingJffToDK = new HashMap<>();
+        
+        for (String l : this.getAllTransitionLabels()) {
+            labelsMappingJffToDK.put(l, currentChar);
+            labelsDkLabelToJffLabel.put(currentChar, l);
+            currentChar++;
+        }
+    }
+    public void removeInvalidSequence(List<String> forbiddenSequences) {
+        this.loadJffLabelsMapToChars();
+        JflapToDkBricsTwoWayAutomatonConverter converter = new JflapToDkBricsTwoWayAutomatonConverter(automaton);
+        dk.brics.automaton.Automaton dkAut = converter.convertToDkBricsAutomaton(labelsMappingJffToDK);
+        
+        
+        int lastStartIndex =0;
+        Set<String> encodedForbiddenSeqs = new HashSet<>();
+        
+        for (String seq : forbiddenSequences){
+            String sequenceEncodeAsCharsPerMethodSignature = "";
+            for (int i=0;i<seq.length();i++){
+                if (seq.charAt(i) == ')'){
+                    String lastSig = seq.substring(lastStartIndex, i+1);
+                    Character c = this.labelsMappingJffToDK.get(lastSig);
+                    sequenceEncodeAsCharsPerMethodSignature+= Character.toString(c);
+                    lastStartIndex = i+1;
+                }
+            }
+            encodedForbiddenSeqs.add(sequenceEncodeAsCharsPerMethodSignature);
+        }
+        
+        
+        for (String encForb : encodedForbiddenSeqs){
+            String forbiddenAsRegex = String.format("%s %s %s", "[a-zA-Z]*", encForb, "[a-zA-Z]*");
+            RegExp forbRegex = new RegExp(forbiddenAsRegex);
+            dk.brics.automaton.Automaton forbAut = forbRegex.toAutomaton();
+            dkAut = dkAut.minus(forbAut);
+        }
+        
+        FiniteStateAutomaton prunedFSA = converter.convertToJFlapFSA(dkAut, labelsDkLabelToJffLabel);
+        this.automaton = prunedFSA;
     }
 }

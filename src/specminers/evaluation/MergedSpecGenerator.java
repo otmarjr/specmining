@@ -11,10 +11,12 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javamop.parser.main_parser.ParseException;
 import org.apache.commons.io.FileUtils;
 import specminers.ExecutionArgsHelper;
 
@@ -29,7 +31,7 @@ public class MergedSpecGenerator {
     private final static String OUTPUT_OPTION = "-o";
     
     
-    public static void main(String[] args) throws IOException{
+    public static void main(String[] args) throws IOException, ParseException{
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
         if (options.containsKey(HELP_OPTION)) {
@@ -95,11 +97,28 @@ public class MergedSpecGenerator {
         
         return publicAPI;
     }
-    private static void extendedOriginalSpecification(Map<String, String> options)  throws IOException {
+    private static void extendedOriginalSpecification(Map<String, String> options)  throws IOException, ParseException {
         Map<String, Set<String>> publicAPI = getClassesPublicMethods(options.get(MOP_FILES_CODE_PATH_OPTION));
         
+        File mopFilesFolder = new File(options.get(MOP_FILES_CODE_PATH_OPTION));
+        String[] extensions = new String[]{MopExtractor.MOP_FILES_EXTENSION};
+        List<File> files = FileUtils.listFiles(mopFilesFolder, extensions, true).stream()
+                .collect(Collectors.toList());
+
+        List<String> forbiddenSequences = new LinkedList<>();
+
+        for (File f : files) {
+            MopExtractor extractor = new MopExtractor(f);
+
+            if (extractor.containsParseableSpec()) {
+                List<String> newLines = extractor.getForbiddenSequences();
+                forbiddenSequences.addAll(newLines);
+                
+            }
+        }
+        
         File originalSpecsFolder = new File(options.get(JFLAP_PATH_OPTION));
-        String[] extensions = new String[]{"jff"};
+        extensions = new String[]{"jff"};
         File outputDir = null;
 
         if (options.containsKey(OUTPUT_OPTION)) {
@@ -111,8 +130,10 @@ public class MergedSpecGenerator {
         for (File file : originalSpecFiles) {
             JflapFileManipulator jffManipulator = new JflapFileManipulator(file);
             jffManipulator.includeTransitions(publicAPI, false);
+            jffManipulator.removeInvalidSequence(forbiddenSequences);
             String extendedSpecPath = Paths.get(outputDir.getPath(), file.getName().replace(".jff", "_package_extended.jff")).toFile().getAbsolutePath();
             jffManipulator.saveToFile(extendedSpecPath);
         }
     }
+    
 }
