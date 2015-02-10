@@ -66,7 +66,7 @@ public class GetMethodsViaRegexExtractor {
     }
 
     public String getBaseClass() throws IOException {
-        String extendsPattern = "[\\s\\t]+extends ([A-Z_]($[A-Z_]|[\\w_])*)";
+        String extendsPattern = "[\\s\\t]+extends[\\s\\t]([A-Z_]($[A-Z_]|[\\w_])*)";
 
         List<String> fileTrimmedLines = FileHelper.getTrimmedFileLines(javaFile);
         Pattern p = Pattern.compile(extendsPattern);
@@ -77,8 +77,10 @@ public class GetMethodsViaRegexExtractor {
 
         if (baseClassDeclaration.isPresent()) {
             Matcher m = p.matcher(baseClassDeclaration.get());
-            String baseClass = baseClassDeclaration.get().substring(m.start(1), m.end(1));
-            return baseClass;
+            if (m.find()) {
+                String baseClass = m.group(1);
+                return baseClass;
+            }
         }
         return null;
     }

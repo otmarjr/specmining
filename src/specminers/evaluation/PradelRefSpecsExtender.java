@@ -98,8 +98,8 @@ public class PradelRefSpecsExtender {
             publicAPI.put(extractor.getFullClassName(), result);
             
             String baseClass = extractor.getBaseClass();
-            if (baseClass != null && !baseClass.trim().equals("")){
-                Optional<File> baseClassFile = files.stream().filter(f -> f.getName().contains(baseClass)).findFirst();
+            if (baseClass != null){
+                Optional<File> baseClassFile = files.stream().filter(f -> f.getName().equals(baseClass+ ".java")).findFirst();
                 if (baseClassFile.isPresent()){
                     classesParents.put(extractor.getFullClassName(), JavaFileParsingHelper.getFullClassName(baseClassFile.get()));
                 }
