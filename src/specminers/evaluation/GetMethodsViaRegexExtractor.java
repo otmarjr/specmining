@@ -86,7 +86,7 @@ public class GetMethodsViaRegexExtractor {
     }
 
     public List<String> getAllMethods() throws IOException {
-        String allPublicMethodsPattern = "^((public|private|protected|static|final|native|synchronized|abstract|threadsafe|transient)+\\s)+[\\$_\\w\\<\\>\\[\\]]*\\s+([\\$_\\w]+)\\([^\\)]*\\)?\\s*\\{?[^\\}]*\\}?.+$";
+        String allPublicMethodsPattern = "^((public|private|protected|static|final|native|synchronized|abstract|threadsafe|transient)+[\\s\\t]+)+[\\$_\\w\\<\\>\\[\\]]*\\s+([\\$_\\w]+)[\\t\\s]*\\([^\\)]*\\)?\\s*\\{?[^\\}]*\\}?.+$";
         List<String> matches = getPublicMethodsViaRegex(allPublicMethodsPattern);
         // Add the constructor according to the parser format:
         matches.add(fullClassName + ".<init>()");
