@@ -10,10 +10,12 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import specminers.FileHelper;
 import specminers.JavaFileParsingHelper;
 import specminers.StringHelper;
 
@@ -62,6 +64,21 @@ public class GetMethodsViaRegexExtractor {
         return getPublicMethodsViaRegex(methodSigPattern);
     }
     
+    public String getBaseClass() throws IOException {
+        String extendsPattern = "[\\s\\t]+extends ([A-Z_]($[A-Z_]|[\\w_])*)";
+        
+        List<String> fileTrimmedLines = FileHelper.getTrimmedFileLines(javaFile);
+        Pattern p = Pattern.compile(extendsPattern);
+        Optional<String> baseClassDeclaration = fileTrimmedLines.stream().filter(l -> {
+            Matcher m = p.matcher(l);
+            return m.find();
+        }).findFirst();
+        
+        if (baseClassDeclaration.isPresent()){
+            return StringHelper.extractSingleValueWithRegex(baseClassDeclaration.get(), extendsPattern, 1);
+        }
+        return null;
+    }
     public List<String> getAllMethods() throws IOException {
         String allPublicMethodsPattern = "^((public|private|protected|static|final|native|synchronized|abstract|threadsafe|transient)+\\s)+[\\$_\\w\\<\\>\\[\\]]*\\s+([\\$_\\w]+)\\([^\\)]*\\)?\\s*\\{?[^\\}]*\\}?.+$";
         List<String> matches = getPublicMethodsViaRegex(allPublicMethodsPattern);

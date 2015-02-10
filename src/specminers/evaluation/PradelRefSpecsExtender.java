@@ -30,6 +30,7 @@ public class PradelRefSpecsExtender {
     
     
     public static void main(String[] args) throws IOException{
+        // Sample execution args: -m "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\annotated-java-api\properties\java\net" -s "E:\openjdk-6-src-b33-14_oct_2014.tar\jdk\src\share\classes\java\net" -j "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap_extended2\net"
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
         if (options.containsKey(HELP_OPTION)) {
@@ -79,7 +80,7 @@ public class PradelRefSpecsExtender {
         return ok;
     }
 
-    private static Map<String, Set<String>> getClassesPublicMethods(String sourceCodeRootPath) throws IOException {
+    static Map<String, Set<String>> getClassesPublicMethods(String sourceCodeRootPath) throws IOException {
         Map<String, Set<String>> publicAPI = new HashMap<>();
         File javaFilesFolder = new File(sourceCodeRootPath);
         String[] extensions = new String[]{"java"};

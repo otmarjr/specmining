@@ -34,11 +34,13 @@ public class MergedSpecGenerator {
     public static void main(String[] args) throws IOException, ParseException{
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
+        // Sample run args: -m "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\annotated-java-api\properties\java\net" -j "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap_extended\net" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap_pruned\net"
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
                     "In order to execute this program options:",
-                    "-j <PATH> : Where to recursivelly search for jflap files equivalent to Pradel's reference automata.",
+                    "-j <PATH> : Where to recursivelly search for jflap files equivalent to Pradel's reference automata extended with public API.",
                     "-m <PATH> : Folder where source code corresponding to mop files containing forbidden method sequences.",
+                    "-s <PATH> : Folder containing teste classes source code.",
                     "-o <PATH> : Folder where automata with extended transitions will be saved."
             ));
         }
@@ -81,24 +83,7 @@ public class MergedSpecGenerator {
         return ok;
     }
 
-    private static Map<String, Set<String>> getClassesPublicMethods(String sourceCodeRootPath) throws IOException {
-        Map<String, Set<String>> publicAPI = new HashMap<>();
-        File javaFilesFolder = new File(sourceCodeRootPath);
-        String[] extensions = new String[]{"java"};
-        
-        List<File> files = FileUtils.listFiles(javaFilesFolder, extensions, true).stream().collect(Collectors.toList());
-        
-        for (File sourceFile : files) {
-            GetMethodsViaRegexExtractor extractor = new GetMethodsViaRegexExtractor(sourceFile);
-
-            Set<String> result = new HashSet<>(extractor.getAllMethods());
-            publicAPI.put(extractor.getFullClassName(), result);
-        }
-        
-        return publicAPI;
-    }
     private static void extendedOriginalSpecification(Map<String, String> options)  throws IOException, ParseException {
-        Map<String, Set<String>> publicAPI = getClassesPublicMethods(options.get(MOP_FILES_CODE_PATH_OPTION));
         
         File mopFilesFolder = new File(options.get(MOP_FILES_CODE_PATH_OPTION));
         String[] extensions = new String[]{MopExtractor.MOP_FILES_EXTENSION};
@@ -129,7 +114,6 @@ public class MergedSpecGenerator {
 
         for (File file : originalSpecFiles) {
             JflapFileManipulator jffManipulator = new JflapFileManipulator(file);
-            jffManipulator.includeTransitions(publicAPI, false);
             jffManipulator.removeInvalidSequence(forbiddenSequences);
             String extendedSpecPath = Paths.get(outputDir.getPath(), file.getName().replace(".jff", "_package_extended.jff")).toFile().getAbsolutePath();
             jffManipulator.saveToFile(extendedSpecPath);
