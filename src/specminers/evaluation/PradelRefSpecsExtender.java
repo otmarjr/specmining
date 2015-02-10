@@ -13,10 +13,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import specminers.ExecutionArgsHelper;
+import specminers.JavaFileParsingHelper;
 
 /**
  *
@@ -30,7 +32,8 @@ public class PradelRefSpecsExtender {
     
     
     public static void main(String[] args) throws IOException{
-        // Sample execution args: -m "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\annotated-java-api\properties\java\net" -s "E:\openjdk-6-src-b33-14_oct_2014.tar\jdk\src\share\classes\java\net" -j "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap_extended2\net"
+        // Sample execution args:  -s "E:\openjdk-6-src-b33-14_oct_2014.tar\jdk\src\share\classes\java\net" -j "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap_extended2\net"
+        // or -s "/Users/otmarpereira/Documents/openjdk6-b33/jdk/src/share/classes/java/net/" -j "/Users/otmarpereira/Documents/mute_dataset/specs/jflap/net" -o "/Users/otmarpereira/Documents/mute_dataset/specs/jflap_extended/net"
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
         if (options.containsKey(HELP_OPTION)) {
@@ -86,13 +89,31 @@ public class PradelRefSpecsExtender {
         String[] extensions = new String[]{"java"};
         
         List<File> files = FileUtils.listFiles(javaFilesFolder, extensions, true).stream().collect(Collectors.toList());
+        Map<String, String> classesParents = new HashMap<>();
         
         for (File sourceFile : files) {
             GetMethodsViaRegexExtractor extractor = new GetMethodsViaRegexExtractor(sourceFile);
 
             Set<String> result = new HashSet<>(extractor.getAllMethods());
             publicAPI.put(extractor.getFullClassName(), result);
+            
+            String baseClass = extractor.getBaseClass();
+            if (baseClass != null && !baseClass.trim().equals("")){
+                Optional<File> baseClassFile = files.stream().filter(f -> f.getName().contains(baseClass)).findFirst();
+                if (baseClassFile.isPresent()){
+                    classesParents.put(extractor.getFullClassName(), JavaFileParsingHelper.getFullClassName(baseClassFile.get()));
+                }
+            }
         }
+        
+        classesParents.keySet().stream().forEach((childClass) -> {
+            String parentClass = classesParents.get(childClass);
+            Set<String> inheritedMethods = publicAPI.get(parentClass);
+            inheritedMethods = inheritedMethods.stream().map(sig -> sig.replace(parentClass, childClass))
+                    .collect(Collectors.toSet());
+            publicAPI.get(childClass).addAll(inheritedMethods);
+        });
+        
         
         return publicAPI;
     }

@@ -36,22 +36,22 @@ public class GetMethodsViaRegexExtractor {
     }
 
     private String fullClassName;
-    
+
     public String getFullClassName() throws IOException {
-        if (StringUtils.isBlank(fullClassName)){
+        if (StringUtils.isBlank(fullClassName)) {
             fullClassName = JavaFileParsingHelper.getFullClassName(javaFile);
         }
         return fullClassName;
     }
-    
-    private List<String> getPublicMethodsViaRegex(String regex) throws IOException{
+
+    private List<String> getPublicMethodsViaRegex(String regex) throws IOException {
         List<String> matches = new LinkedList<>();
         List<String> fileLines = FileUtils.readLines(javaFile);
-        
+
         this.getFullClassName();
-        
-        fileLines.stream().filter((line) -> 
-                (line.trim().matches(regex) && line.contains("public")))
+
+        fileLines.stream().filter((line)
+                -> (line.trim().matches(regex) && line.contains("public")))
                 .map((line) -> this.fullClassName + "." + StringHelper.extractSingleValueWithRegex(line, regex, 3) + "()")
                 .forEach((matching) -> {
                     matches.add(matching);
@@ -59,26 +59,30 @@ public class GetMethodsViaRegexExtractor {
 
         return matches;
     }
+
     public List<String> getReadOnlyMethods() throws IOException {
         String methodSigPattern = "^((public|private|protected|static|final|native|synchronized|abstract|threadsafe|transient)+\\s)+[\\$_\\w\\<\\>\\[\\]]*\\s+(get[\\$_\\w]+)\\([^\\)]*\\)?\\s*\\{?[^\\}]*\\}?.+$";
         return getPublicMethodsViaRegex(methodSigPattern);
     }
-    
+
     public String getBaseClass() throws IOException {
         String extendsPattern = "[\\s\\t]+extends ([A-Z_]($[A-Z_]|[\\w_])*)";
-        
+
         List<String> fileTrimmedLines = FileHelper.getTrimmedFileLines(javaFile);
         Pattern p = Pattern.compile(extendsPattern);
         Optional<String> baseClassDeclaration = fileTrimmedLines.stream().filter(l -> {
             Matcher m = p.matcher(l);
             return m.find();
         }).findFirst();
-        
-        if (baseClassDeclaration.isPresent()){
-            return StringHelper.extractSingleValueWithRegex(baseClassDeclaration.get(), extendsPattern, 1);
+
+        if (baseClassDeclaration.isPresent()) {
+            Matcher m = p.matcher(baseClassDeclaration.get());
+            String baseClass = baseClassDeclaration.get().substring(m.start(1), m.end(1));
+            return baseClass;
         }
         return null;
     }
+
     public List<String> getAllMethods() throws IOException {
         String allPublicMethodsPattern = "^((public|private|protected|static|final|native|synchronized|abstract|threadsafe|transient)+\\s)+[\\$_\\w\\<\\>\\[\\]]*\\s+([\\$_\\w]+)\\([^\\)]*\\)?\\s*\\{?[^\\}]*\\}?.+$";
         List<String> matches = getPublicMethodsViaRegex(allPublicMethodsPattern);

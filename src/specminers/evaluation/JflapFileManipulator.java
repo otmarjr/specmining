@@ -119,7 +119,7 @@ public class JflapFileManipulator {
             currentChar++;
         }
     }
-    public void removeInvalidSequence(List<String> forbiddenSequences) {
+    public void removeInvalidSequences(List<String> forbiddenSequences) {
         this.loadJffLabelsMapToChars();
         JflapToDkBricsTwoWayAutomatonConverter converter = new JflapToDkBricsTwoWayAutomatonConverter(automaton);
         dk.brics.automaton.Automaton dkAut = converter.convertToDkBricsAutomaton(labelsMappingJffToDK);
@@ -141,9 +141,13 @@ public class JflapFileManipulator {
             encodedForbiddenSeqs.add(sequenceEncodeAsCharsPerMethodSignature);
         }
         
+        char lastChar = this.labelsDkLabelToJffLabel.keySet().stream()
+                .sorted()
+                .collect(Collectors.toList())
+                .get(this.labelsDkLabelToJffLabel.size()-1);
         
         for (String encForb : encodedForbiddenSeqs){
-            String forbiddenAsRegex = String.format("%s %s %s", "[a-zA-Z]*", encForb, "[a-zA-Z]*");
+            String forbiddenAsRegex = String.format("%s %s %s", "[a-"+lastChar+"]*", encForb, "[a-"+lastChar+"]*");
             RegExp forbRegex = new RegExp(forbiddenAsRegex);
             dk.brics.automaton.Automaton forbAut = forbRegex.toAutomaton();
             dkAut = dkAut.minus(forbAut);
