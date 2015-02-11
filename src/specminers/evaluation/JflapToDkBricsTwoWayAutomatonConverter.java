@@ -8,6 +8,7 @@ package specminers.evaluation;
 import automata.State;
 import automata.fsa.FSATransition;
 import automata.fsa.FiniteStateAutomaton;
+import com.sun.javafx.scene.paint.GradientUtils;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.Transition;
 import java.util.Arrays;
@@ -96,7 +97,8 @@ public class JflapToDkBricsTwoWayAutomatonConverter {
         // Add all the states!
         int id = 0;
         for (dk.brics.automaton.State s : automaton.getStates()) {
-            statesMapping.put(s, new State(id++, null, fsa));
+            statesMapping.put(s, fsa.createStateWithId(new java.awt.Point(id,id), id));
+            id++;
 
             if (automaton.getInitialState() == s) {
                 fsa.setInitialState(statesMapping.get(s));
@@ -115,7 +117,7 @@ public class JflapToDkBricsTwoWayAutomatonConverter {
 
             if (dkFinalStates.contains(dkState)) {
                 fsa.addFinalState(jffState);
-            } 
+            }
             
             Set<dk.brics.automaton.Transition> outwardTransitions = dkState.getTransitions();
 

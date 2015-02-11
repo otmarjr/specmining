@@ -35,7 +35,7 @@ public class MergedSpecGenerator {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
         // Sample run args: -m "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\annotated-java-api\properties\java\net" -j "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap_extended\net" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap_pruned\net"
-        // or  -m "/Users/otmarpereira/Downloads/net/" -j "/Users/otmarpereira/Downloads/jflap_extended/net" -o "/Users/otmarpereira/Documents/mute_dataset/specs/jflap_pruned/net"
+        // or  -m "/Users/otmarpereira/Documents/mute_dataset/annotated-java-api/properties/java/util" -j "/Users/otmarpereira/Downloads/jflap_extended 2/util" -o "/Users/otmarpereira/Documents/mute_dataset/specs/jflap_pruned/util"
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
                     "In order to execute this program options:",
@@ -116,7 +116,7 @@ public class MergedSpecGenerator {
         for (File file : originalSpecFiles) {
             JflapFileManipulator jffManipulator = new JflapFileManipulator(file);
             jffManipulator.removeInvalidSequences(forbiddenSequences);
-            String extendedSpecPath = Paths.get(outputDir.getPath(), file.getName().replace(".jff", "_package_extended.jff")).toFile().getAbsolutePath();
+            String extendedSpecPath = Paths.get(outputDir.getPath(), file.getName().replace(".jff", "_package_full_merged_spec.jff")).toFile().getAbsolutePath();
             jffManipulator.saveToFile(extendedSpecPath);
         }
     }

@@ -112,6 +112,15 @@ public class MopExtractor {
 
     private List<String> getRegexFormulaExpansions(String formulaRegex) throws ParseException {
         String simplifiedRegex = convertWordRegexToSingleCharRegex(formulaRegex);
+
+                try{
+        Generex g2 = new Generex(simplifiedRegex);
+        }
+        catch (IllegalArgumentException iex){
+            System.out.println("Regex " + formulaRegex + " is problematic!");
+        }
+
+                
         Generex g = new Generex(simplifiedRegex);
 
         Set<String> regexBasedSequence = g.getAllMatchedStringsViaStatePermutations();
