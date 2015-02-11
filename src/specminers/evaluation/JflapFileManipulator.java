@@ -125,14 +125,14 @@ public class JflapFileManipulator {
         dk.brics.automaton.Automaton dkAut = converter.convertToDkBricsAutomaton(labelsMappingJffToDK);
         
         
-        int lastStartIndex =0;
         Set<String> encodedForbiddenSeqs = new HashSet<>();
         
         for (String seq : forbiddenSequences){
             String sequenceEncodeAsCharsPerMethodSignature = "";
+            int lastStartIndex =0;
             for (int i=0;i<seq.length();i++){
                 if (seq.charAt(i) == ')'){
-                    String lastSig = seq.substring(lastStartIndex, i+1);
+                    String lastSig = seq.substring(lastStartIndex, i+1).trim();
                     Character c = this.labelsMappingJffToDK.get(lastSig);
                     sequenceEncodeAsCharsPerMethodSignature+= Character.toString(c);
                     lastStartIndex = i+1;
