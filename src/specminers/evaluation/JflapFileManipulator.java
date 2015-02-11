@@ -9,17 +9,28 @@ import automata.State;
 import automata.Transition;
 import automata.fsa.FSATransition;
 import automata.fsa.FiniteStateAutomaton;
+import com.google.common.base.Predicates;
 import dk.brics.automaton.RegExp;
 import file.XMLCodec;
 import java.io.File;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.reflections.ReflectionUtils;
+import static org.reflections.ReflectionUtils.withModifier;
+import static org.reflections.ReflectionUtils.withParametersCount;
+import static org.reflections.ReflectionUtils.withPrefix;
+import org.reflections.Reflections;
 
 /**
  *
@@ -57,13 +68,13 @@ public class JflapFileManipulator {
         return "";
     }
 
-    public Set<String> getAllTransitionLabels(){
+    public Set<String> getAllTransitionLabels() {
         this.parseAutomaton();
         return Arrays.stream(this.automaton.getFSATransitions())
                 .map(fsat -> fsat.getLabel())
                 .collect(Collectors.toSet());
     }
-    
+
     public void includeTransitions(Map<String, Set<String>> publicAPI, boolean restrictOnlyToClassMethods) {
         this.parseAutomaton();
         if (restrictOnlyToClassMethods) {
@@ -104,55 +115,156 @@ public class JflapFileManipulator {
         jffCodec.encode(this.automaton, new File(targetPath), null);
     }
 
-    Map<String,Character> labelsMappingJffToDK;
-    Map<Character,String> labelsDkLabelToJffLabel;
-    
-    
-    public void loadJffLabelsMapToChars(){
+    Map<String, Character> labelsMappingJffToDK;
+    Map<Character, String> labelsDkLabelToJffLabel;
+
+    public void loadJffLabelsMapToChars() {
         Character currentChar = 'a';
         this.labelsDkLabelToJffLabel = new HashMap<>();
         this.labelsMappingJffToDK = new HashMap<>();
-        
+
         for (String l : this.getAllTransitionLabels()) {
             labelsMappingJffToDK.put(l, currentChar);
             labelsDkLabelToJffLabel.put(currentChar, l);
             currentChar++;
         }
     }
+
+    private Set<String> getAllMethodsFromClass(String fullClassName) {
+        Set<String> classMethods = this.getAllTransitionLabels()
+                .stream().filter(l -> l.startsWith(fullClassName))
+                .collect(Collectors.toSet());
+
+        return classMethods;
+    }
+
+    private Set<String> getAllExpansionsForSequenceWithStarWildcard(String sequence) {
+        Set<String> expansions = new HashSet<>();
+
+        int wildcardIndex = sequence.indexOf("*");
+        int endIndexPreviousMethod = sequence.substring(0, wildcardIndex - 1).lastIndexOf(")");
+        String beforeWildcardMethod = sequence.substring(0, endIndexPreviousMethod + 1);
+        String afterWildcard = "";
+
+        if (wildcardIndex < sequence.length() - 1) {
+            afterWildcard = sequence.substring(wildcardIndex + 1);
+        }
+
+        String wildcardExpresion = sequence.substring(endIndexPreviousMethod + 1, wildcardIndex + 1).trim();
+        String className = wildcardExpresion.replace(".*", "");
+        
+        try {
+            Class<?> cls = Class.forName(className);
+            //List<Method> classMethods = Arrays.asList(cls.getMethods());
+            Set<Method> classMethods = ReflectionUtils.getAllMethods(cls, Predicates.not(withModifier(Modifier.PRIVATE)));
+
+            for (Method m : classMethods) {
+                String expansion = String.format("%s%s%s", beforeWildcardMethod, m.getClass().getName() + "." + m.getName(), afterWildcard);
+                expansions.add(expansion);
+            }
+
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(JflapFileManipulator.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return expansions;
+    }
+
+    private Set<String> getAllExpansionsForSequenceWithSubtypesWildcard(String sequence) {
+        Set<String> expansions = new HashSet<>();
+
+        int wildcardIndex = sequence.indexOf("+");
+        int endIndexPreviousMethod = sequence.substring(0, wildcardIndex - 1).lastIndexOf(")");
+        String beforeWildcardMethod = sequence.substring(0, endIndexPreviousMethod + 1);
+        String afterWildcard = "";
+
+        if (wildcardIndex < sequence.length() - 1) {
+            afterWildcard = sequence.substring(wildcardIndex + 1);
+        }
+
+        String wildcardExpresion = sequence.substring(endIndexPreviousMethod + 1, wildcardIndex + 1).trim();
+        try {
+            String baseClassName = wildcardExpresion.replace("+", "");
+            Class<?> cls = Class.forName(baseClassName);
+            Reflections reflections = new Reflections(baseClassName);
+            Set subTypes = reflections.getSubTypesOf(cls.getClass());
+            
+            for (Object t : subTypes) {
+                Class<?> type = (Class<?>)t;
+                String expansion = String.format("%s%s%s", beforeWildcardMethod, type.getName(), afterWildcard);
+                expansions.add(expansion);
+            }
+
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(JflapFileManipulator.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return expansions;
+    }
+
+    private List<String> expandForbiddenSequencesWithWildCards(List<String> forbiddenSequences) {
+        List<String> expanded = new LinkedList<>();
+
+        final String allSubtypesWildCard = "+";
+        
+        List<String> forbiddenWithExpandedSubtypes = new LinkedList<>();
+        
+        for (String seq : forbiddenSequences) {
+            if (!seq.contains(allSubtypesWildCard)) {
+                forbiddenWithExpandedSubtypes.add(seq);
+            } else {
+                forbiddenWithExpandedSubtypes.addAll(getAllExpansionsForSequenceWithSubtypesWildcard(seq));
+            }
+        }
+        
+        
+        final String starWildCard = "*";
+
+        for (String seq : forbiddenWithExpandedSubtypes) {
+            if (!seq.contains(starWildCard)) {
+                expanded.add(seq);
+            } else {
+                expanded.addAll(getAllExpansionsForSequenceWithStarWildcard(seq));
+            }
+        }
+
+        return expanded;
+    }
+
     public void removeInvalidSequences(List<String> forbiddenSequences) {
         this.loadJffLabelsMapToChars();
         JflapToDkBricsTwoWayAutomatonConverter converter = new JflapToDkBricsTwoWayAutomatonConverter(automaton);
         dk.brics.automaton.Automaton dkAut = converter.convertToDkBricsAutomaton(labelsMappingJffToDK);
-        
-        
+
+        forbiddenSequences = expandForbiddenSequencesWithWildCards(forbiddenSequences);
         Set<String> encodedForbiddenSeqs = new HashSet<>();
-        
-        for (String seq : forbiddenSequences){
+
+        for (String seq : forbiddenSequences) {
             String sequenceEncodeAsCharsPerMethodSignature = "";
-            int lastStartIndex =0;
-            for (int i=0;i<seq.length();i++){
-                if (seq.charAt(i) == ')'){
-                    String lastSig = seq.substring(lastStartIndex, i+1).trim();
+            int lastStartIndex = 0;
+            for (int i = 0; i < seq.length(); i++) {
+                if (seq.charAt(i) == ')') {
+                    String lastSig = seq.substring(lastStartIndex, i + 1).trim();
                     Character c = this.labelsMappingJffToDK.get(lastSig);
-                    sequenceEncodeAsCharsPerMethodSignature+= Character.toString(c);
-                    lastStartIndex = i+1;
+                    sequenceEncodeAsCharsPerMethodSignature += Character.toString(c);
+                    lastStartIndex = i + 1;
                 }
             }
             encodedForbiddenSeqs.add(sequenceEncodeAsCharsPerMethodSignature);
         }
-        
+
         char lastChar = this.labelsDkLabelToJffLabel.keySet().stream()
                 .sorted()
                 .collect(Collectors.toList())
-                .get(this.labelsDkLabelToJffLabel.size()-1);
-        
-        for (String encForb : encodedForbiddenSeqs){
-            String forbiddenAsRegex = String.format("%s %s %s", "[a-"+lastChar+"]*", encForb, "[a-"+lastChar+"]*");
+                .get(this.labelsDkLabelToJffLabel.size() - 1);
+
+        for (String encForb : encodedForbiddenSeqs) {
+            String forbiddenAsRegex = String.format("%s %s %s", "[a-" + lastChar + "]*", encForb, "[a-" + lastChar + "]*");
             RegExp forbRegex = new RegExp(forbiddenAsRegex);
             dk.brics.automaton.Automaton forbAut = forbRegex.toAutomaton();
             dkAut = dkAut.minus(forbAut);
         }
-        
+
         FiniteStateAutomaton prunedFSA = converter.convertToJFlapFSA(dkAut, labelsDkLabelToJffLabel);
         this.automaton = prunedFSA;
     }
