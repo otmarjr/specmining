@@ -51,7 +51,7 @@ public class GetMethodsViaRegexExtractor {
         this.getFullClassName();
 
         fileLines.stream().filter((line)
-                -> (line.trim().matches(regex) && line.contains("public")))
+                -> (line.trim().matches(regex) && !line.contains("private")))
                 .map((line) -> this.fullClassName + "." + StringHelper.extractSingleValueWithRegex(line, regex, 3) + "()")
                 .forEach((matching) -> {
                     matches.add(matching);
