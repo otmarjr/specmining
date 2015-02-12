@@ -5,16 +5,29 @@
  */
 package specminers.evaluation;
 
+import com.google.common.reflect.ClassPath;
 import com.mifmif.common.regex.Generex;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.JarURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Vector;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -34,8 +47,15 @@ import javamop.parser.astex.mopspec.PropertyAndHandlersExt;
 import javamop.parser.main_parser.JavaMOPParser;
 import javamop.parser.main_parser.ParseException;
 import org.apache.commons.lang3.tuple.Pair;
+import org.reflections.Reflections;
+import org.reflections.scanners.ResourcesScanner;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 import specminers.FileHelper;
 import specminers.StringHelper;
+import sun.net.www.protocol.file.FileURLConnection;
 
 /**
  *
@@ -113,14 +133,12 @@ public class MopExtractor {
     private List<String> getRegexFormulaExpansions(String formulaRegex) throws ParseException {
         String simplifiedRegex = convertWordRegexToSingleCharRegex(formulaRegex);
 
-                try{
-        Generex g2 = new Generex(simplifiedRegex);
-        }
-        catch (IllegalArgumentException iex){
+        try {
+            Generex g2 = new Generex(simplifiedRegex);
+        } catch (IllegalArgumentException iex) {
             System.out.println("Regex " + formulaRegex + " is problematic!");
         }
 
-                
         Generex g = new Generex(simplifiedRegex);
 
         Set<String> regexBasedSequence = g.getAllMatchedStringsViaStatePermutations();
@@ -212,19 +230,18 @@ public class MopExtractor {
 
                 if (thereAreElementsBeforeGroup) {
                     String suffix = "";
-                    if (optionComponents.get(0).contains(")")){
+                    if (optionComponents.get(0).contains(")")) {
                         suffix = optionComponents.get(0).substring(optionComponents.get(0).indexOf(")"));
                     }
                     invertedOptionComponents.add(optionComponents.get(0).replace(")", "").replace("*", "").replace("+", ""));
                     invertedOptionComponents.add(mixElement + suffix);
-                }
-                else{
+                } else {
                     String preamble = optionComponents.get(0).contains("(") ? "(" : "";
-                    
+
                     invertedOptionComponents.add(preamble + mixElement);
                     invertedOptionComponents.add(optionComponents.get(0).replace("(", ""));
                 }
-                
+
                 invertedOptionComponents.addAll(optionComponents.subList(1, optionComponents.size()));
                 String invertedOption = invertedOptionComponents.stream()
                         .collect(Collectors.joining(" "));
@@ -362,13 +379,43 @@ public class MopExtractor {
 
     }
 
+    Map<String, String> simpleClassNamePackages;
+    
+    private void discoverClassPackage(String simpleClassName) {
+        if (simpleClassNamePackages == null) {
+            simpleClassNamePackages = new HashMap<>();
+        }
+
+        if (!simpleClassNamePackages.containsKey(simpleClassName)){
+            final Set<String> candidates = new HashSet<String>(){{
+                add("java.util");
+                add("java.net");
+                add("java.io");
+            }};
+            
+            for (String c : candidates){
+                String fullName = c + "." + simpleClassName;
+                try {
+                    Class.forName(fullName);
+                    simpleClassNamePackages.put(simpleClassName, fullName);
+                } catch (ClassNotFoundException ex) {
+                }
+            }
+        }        
+    }
+
+    private String getFullClassName(String className) {
+        this.discoverClassPackage(className);
+        return simpleClassNamePackages.get(className);
+    }
+
     private String getFormattedMethodSignature(MethodPointCut methodPointCut) {
         String methodSignature = methodPointCut.getSignature().getMemberName();
         if (methodSignature.equals("new")) {
             methodSignature = "<init>";
         }
-        return String.format("%s.%s.%s()", getTestedClassPackage(),
-                methodPointCut.getSignature().getOwner().getOp().replaceAll("[^A-Za-z0-9]", ""),
+
+        return String.format("%s.%s()", getFullClassName(methodPointCut.getSignature().getOwner().getOp().replaceAll("[^A-Za-z0-9]", "")),
                 methodSignature);
     }
 
