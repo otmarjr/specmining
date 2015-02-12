@@ -151,16 +151,20 @@ public class JflapFileManipulator {
         }
 
         String wildcardExpresion = sequence.substring(endIndexPreviousMethod + 1, wildcardIndex + 1).trim();
-        String className = wildcardExpresion.replace(".*", "");
-        
+        String classWildcard = wildcardExpresion.substring(wildcardExpresion.lastIndexOf("."));
+        String className = wildcardExpresion.replace(classWildcard, "");
+
+        String classWildCardRegex = "^" + classWildcard.replace(".", "").replace("*", ".+") + "$";
         try {
             Class<?> cls = Class.forName(className);
             //List<Method> classMethods = Arrays.asList(cls.getMethods());
             Set<Method> classMethods = ReflectionUtils.getAllMethods(cls, Predicates.not(withModifier(Modifier.PRIVATE)));
 
             for (Method m : classMethods) {
-                String expansion = String.format("%s%s%s", beforeWildcardMethod, m.getClass().getName() + "." + m.getName(), afterWildcard);
-                expansions.add(expansion);
+                if (m.getName().matches(classWildCardRegex)) {
+                    String expansion = String.format("%s%s%s", beforeWildcardMethod, className + "." + m.getName(), afterWildcard);
+                    expansions.add(expansion);
+                }
             }
 
         } catch (ClassNotFoundException ex) {
@@ -189,11 +193,15 @@ public class JflapFileManipulator {
             Class<?> cls = Class.forName(baseClassName);
             Reflections reflections = new Reflections(baseClassName);
             Set subTypes = reflections.getSubTypesOf(cls.getClass());
-            
+
             for (Object t : subTypes) {
-                Class<?> type = (Class<?>)t;
-                String expansion = String.format("%s%s%s", beforeWildcardMethod, type.getName(), afterWildcard);
-                expansions.add(expansion);
+                Class<?> type = (Class<?>) t;
+                String className = t.getClass().getName();
+
+                if (className.startsWith("java.util") || className.startsWith("java.io") || className.startsWith("java.net")) {
+                    String expansion = String.format("%s%s%s", beforeWildcardMethod, type.getName(), afterWildcard);
+                    expansions.add(expansion);
+                }
             }
 
         } catch (ClassNotFoundException ex) {
@@ -207,9 +215,9 @@ public class JflapFileManipulator {
         List<String> expanded = new LinkedList<>();
 
         final String allSubtypesWildCard = "+";
-        
+
         List<String> forbiddenWithExpandedSubtypes = new LinkedList<>();
-        
+
         for (String seq : forbiddenSequences) {
             if (!seq.contains(allSubtypesWildCard)) {
                 forbiddenWithExpandedSubtypes.add(seq);
@@ -217,15 +225,15 @@ public class JflapFileManipulator {
                 forbiddenWithExpandedSubtypes.addAll(getAllExpansionsForSequenceWithSubtypesWildcard(seq));
             }
         }
-        
-        
+
         final String starWildCard = "*";
 
         for (String seq : forbiddenWithExpandedSubtypes) {
             if (!seq.contains(starWildCard)) {
                 expanded.add(seq);
             } else {
-                expanded.addAll(getAllExpansionsForSequenceWithStarWildcard(seq));
+                Set<String> allExps = getAllExpansionsForSequenceWithStarWildcard(seq);
+                expanded.addAll(allExps);
             }
         }
 
@@ -237,10 +245,10 @@ public class JflapFileManipulator {
         JflapToDkBricsTwoWayAutomatonConverter converter = new JflapToDkBricsTwoWayAutomatonConverter(automaton);
         dk.brics.automaton.Automaton dkAut = converter.convertToDkBricsAutomaton(labelsMappingJffToDK);
 
-        forbiddenSequences = expandForbiddenSequencesWithWildCards(forbiddenSequences);
+        List<String> expandedForbiddenSeqs = expandForbiddenSequencesWithWildCards(forbiddenSequences);
         Set<String> encodedForbiddenSeqs = new HashSet<>();
 
-        for (String seq : forbiddenSequences) {
+        for (String seq : expandedForbiddenSeqs) {
             String sequenceEncodeAsCharsPerMethodSignature = "";
             int lastStartIndex = 0;
             for (int i = 0; i < seq.length(); i++) {
