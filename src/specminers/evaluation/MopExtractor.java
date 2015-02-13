@@ -5,6 +5,7 @@
  */
 package specminers.evaluation;
 
+import com.google.common.collect.Lists;
 import com.google.common.reflect.ClassPath;
 import com.mifmif.common.regex.Generex;
 import java.io.File;
@@ -168,7 +169,7 @@ public class MopExtractor {
     }
 
     private String getRegexComplementWithParentherizedRegions(String originalRegex) {
-        String splitter = "\\([\\w\\s\\|]+\\)[\\*\\+]*";
+        String splitter = "\\([\\w\\s\\|\\+\\*]+\\)[\\*\\+]*";
 
         Pattern p = Pattern.compile(splitter);
         Matcher m = p.matcher(originalRegex);
@@ -215,8 +216,11 @@ public class MopExtractor {
             if (thereAreElementsBeforeGroup) {
                 mixElement = complementedElements.get(groupIndex - 1).replace("*", "");
             } else {
-                assert thereAreElementsAfterGroup;
-                mixElement = complementedElements.get(groupIndex + 1).replace("*", "");
+                if (thereAreElementsAfterGroup) {
+                    mixElement = complementedElements.get(groupIndex + 1).replace("*", "");
+                } else {
+                    mixElement = "";
+                }
             }
 
             List<String> options = Arrays.asList(group.split("\\|"));
@@ -236,17 +240,36 @@ public class MopExtractor {
                     invertedOptionComponents.add(optionComponents.get(0).replace(")", "").replace("*", "").replace("+", ""));
                     invertedOptionComponents.add(mixElement + suffix);
                 } else {
-                    String preamble = optionComponents.get(0).contains("(") ? "(" : "";
+                    if (thereAreElementsAfterGroup) {
+                        String preamble = optionComponents.get(0).contains("(") ? "(" : "";
 
-                    invertedOptionComponents.add(preamble + mixElement);
-                    invertedOptionComponents.add(optionComponents.get(0).replace("(", ""));
+                        invertedOptionComponents.add(preamble + mixElement);
+                        invertedOptionComponents.add(optionComponents.get(0).replace("(", ""));
+                    }
                 }
 
-                invertedOptionComponents.addAll(optionComponents.subList(1, optionComponents.size()));
-                String invertedOption = invertedOptionComponents.stream()
-                        .collect(Collectors.joining(" "));
+                if (thereAreElementsAfterGroup || thereAreElementsBeforeGroup) {
+                    invertedOptionComponents.addAll(optionComponents.subList(1, optionComponents.size()));
+                    String invertedOption = invertedOptionComponents.stream()
+                            .collect(Collectors.joining(" "));
 
-                invertedOptions.add(invertedOption);
+                    invertedOptions.add(invertedOption);
+                }
+                else {
+                    List<String> inversionSample = optionComponents.stream()
+                            .map(c -> c.replace("+", "").replace("*", ""))
+                            .collect(Collectors.toList());
+                    inversionSample = Lists.reverse(inversionSample);
+                    inversionSample.set(0, "(" + inversionSample.get(0).replace(")", ""));
+                    inversionSample.set(inversionSample.size()-1, inversionSample.get(inversionSample.size()-1).replace("(", "") + ")");
+                    
+                    invertedOptionComponents.addAll(inversionSample);
+                    
+                    String invertedOption = invertedOptionComponents.stream()
+                            .collect(Collectors.joining(" "));
+
+                    invertedOptions.add(invertedOption);
+                }
             }
 
             String invertedGroup = invertedOptions.stream()
@@ -310,8 +333,9 @@ public class MopExtractor {
     private String getRegex(FormulaExt fext) throws ParseException {
         boolean shouldGetRegexComplement = isUsingFailHandler();
 
-        String originalRegex = fext.getFormula();
+        String originalRegex = fext.getFormula().replace(" | epsilon)", ")").trim();
 
+        originalRegex = originalRegex.replaceAll("\\((\\w+)\\)", "$1");
         this.components = Arrays.asList(originalRegex.split(" "));
 
         RegexExtractionStrategy strategy = r -> getRegularExpressionWithoutTransformation(r);
@@ -380,20 +404,22 @@ public class MopExtractor {
     }
 
     Map<String, String> simpleClassNamePackages;
-    
+
     private void discoverClassPackage(String simpleClassName) {
         if (simpleClassNamePackages == null) {
             simpleClassNamePackages = new HashMap<>();
         }
 
-        if (!simpleClassNamePackages.containsKey(simpleClassName)){
-            final Set<String> candidates = new HashSet<String>(){{
-                add("java.util");
-                add("java.net");
-                add("java.io");
-            }};
-            
-            for (String c : candidates){
+        if (!simpleClassNamePackages.containsKey(simpleClassName)) {
+            final Set<String> candidates = new HashSet<String>() {
+                {
+                    add("java.util");
+                    add("java.net");
+                    add("java.io");
+                }
+            };
+
+            for (String c : candidates) {
                 String fullName = c + "." + simpleClassName;
                 try {
                     Class.forName(fullName);
@@ -401,7 +427,7 @@ public class MopExtractor {
                 } catch (ClassNotFoundException ex) {
                 }
             }
-        }        
+        }
     }
 
     private String getFullClassName(String className) {

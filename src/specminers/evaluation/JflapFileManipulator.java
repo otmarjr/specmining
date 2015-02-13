@@ -246,6 +246,16 @@ public class JflapFileManipulator {
         dk.brics.automaton.Automaton dkAut = converter.convertToDkBricsAutomaton(labelsMappingJffToDK);
 
         List<String> expandedForbiddenSeqs = expandForbiddenSequencesWithWildCards(forbiddenSequences);
+        
+        String currentPackageName = this.getPackageName(this.correspondingClass);
+        expandedForbiddenSeqs = expandedForbiddenSeqs.stream()
+                .filter(seq -> 
+                        Arrays.asList(seq.split("\\)"))
+                    .stream().allMatch(signature -> 
+                            signature.startsWith(currentPackageName)
+                    ))
+                .collect(Collectors.toList());
+        
         Set<String> encodedForbiddenSeqs = new HashSet<>();
 
         for (String seq : expandedForbiddenSeqs) {
