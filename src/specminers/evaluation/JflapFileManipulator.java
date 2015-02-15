@@ -198,7 +198,7 @@ public class JflapFileManipulator {
                 Class<?> type = (Class<?>) t;
                 String className = t.getClass().getName();
 
-                if (className.startsWith("java.util") || className.startsWith("java.io") || className.startsWith("java.net")) {
+                if (className.startsWith("java.util") || className.startsWith("java.net")) {
                     String expansion = String.format("%s%s%s", beforeWildcardMethod, type.getName(), afterWildcard);
                     expansions.add(expansion);
                 }

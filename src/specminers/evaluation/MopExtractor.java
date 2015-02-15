@@ -6,7 +6,9 @@
 package specminers.evaluation;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.ClassPath;
+import com.google.common.reflect.ClassPath.ClassInfo;
 import com.mifmif.common.regex.Generex;
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +29,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Vector;
+import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
@@ -48,15 +51,11 @@ import javamop.parser.astex.mopspec.PropertyAndHandlersExt;
 import javamop.parser.main_parser.JavaMOPParser;
 import javamop.parser.main_parser.ParseException;
 import org.apache.commons.lang3.tuple.Pair;
-import org.reflections.Reflections;
-import org.reflections.scanners.ResourcesScanner;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
-import org.reflections.util.FilterBuilder;
 import specminers.FileHelper;
 import specminers.StringHelper;
-import sun.net.www.protocol.file.FileURLConnection;
+import jd.core.Decompiler;
+import jd.core.DecompilerException;
+import org.apache.commons.io.FileUtils;
 
 /**
  *
@@ -133,12 +132,6 @@ public class MopExtractor {
 
     private List<String> getRegexFormulaExpansions(String formulaRegex) throws ParseException {
         String simplifiedRegex = convertWordRegexToSingleCharRegex(formulaRegex);
-
-        try {
-            Generex g2 = new Generex(simplifiedRegex);
-        } catch (IllegalArgumentException iex) {
-            System.out.println("Regex " + formulaRegex + " is problematic!");
-        }
 
         Generex g = new Generex(simplifiedRegex);
 
@@ -254,17 +247,16 @@ public class MopExtractor {
                             .collect(Collectors.joining(" "));
 
                     invertedOptions.add(invertedOption);
-                }
-                else {
+                } else {
                     List<String> inversionSample = optionComponents.stream()
                             .map(c -> c.replace("+", "").replace("*", ""))
                             .collect(Collectors.toList());
                     inversionSample = Lists.reverse(inversionSample);
                     inversionSample.set(0, "(" + inversionSample.get(0).replace(")", ""));
-                    inversionSample.set(inversionSample.size()-1, inversionSample.get(inversionSample.size()-1).replace("(", "") + ")");
-                    
+                    inversionSample.set(inversionSample.size() - 1, inversionSample.get(inversionSample.size() - 1).replace("(", "") + ")");
+
                     invertedOptionComponents.addAll(inversionSample);
-                    
+
                     String invertedOption = invertedOptionComponents.stream()
                             .collect(Collectors.joining(" "));
 
@@ -415,7 +407,6 @@ public class MopExtractor {
                 {
                     add("java.util");
                     add("java.net");
-                    add("java.io");
                 }
             };
 
@@ -430,6 +421,29 @@ public class MopExtractor {
         }
     }
 
+    private String discoverFullClassName(String simpleClassName) {
+        final Set<String> candidates = new HashSet<String>() {
+            {
+                add("java.util");
+                add("java.net");
+            }
+        };
+        if (simpleClassNamePackages == null) {
+            simpleClassNamePackages = new HashMap<>();
+        }
+
+        for (String c : candidates) {
+            String fullName = c + "." + simpleClassName;
+            try {
+                Class.forName(fullName);
+                simpleClassNamePackages.put(simpleClassName, fullName);
+                return fullName;
+            } catch (ClassNotFoundException ex) {
+            }
+        }
+        return null;
+    }
+
     private String getFullClassName(String className) {
         this.discoverClassPackage(className);
         return simpleClassNamePackages.get(className);
@@ -441,8 +455,108 @@ public class MopExtractor {
             methodSignature = "<init>";
         }
 
+        return methodSignature;
+    }
+
+    private String getFormattedMethodSignatureFullyQualified(MethodPointCut methodPointCut) {
         return String.format("%s.%s()", getFullClassName(methodPointCut.getSignature().getOwner().getOp().replaceAll("[^A-Za-z0-9]", "")),
-                methodSignature);
+                getFormattedMethodSignature(methodPointCut));
+    }
+
+    private Set<String> javaNetClasses;
+    private Set<String> javaUtilClasses;
+
+    private Set<String> getJavaClassNamesFromPath(String packageName) {
+        String[] extensions = new String[]{"class"};
+        File root = new File(getJdkLibraryPathFolder() + packageName);
+
+        return FileUtils.listFiles(root, extensions, true)
+                .stream().filter(clsFile -> !clsFile.getName().contains("$"))
+                .map(clsFile -> clsFile.getAbsolutePath().replace(getJdkLibraryPathFolder(), "").replace("/", ".").replace("\\", ".").replace(".class", ""))
+                .collect(Collectors.toSet());
+    }
+
+    private Set<String> getJavaNetClasses() {
+        if (javaNetClasses == null) {
+            this.javaNetClasses = getJavaClassNamesFromPath("/java/net");
+        }
+
+        return javaNetClasses;
+    }
+
+    private Set<String> getJavaUtilClasses() {
+        if (javaUtilClasses == null) {
+            this.javaUtilClasses = this.javaNetClasses = getJavaClassNamesFromPath("/java/util");
+        }
+        return javaUtilClasses;
+    }
+
+    private String getJdkLibraryPathFolder() {
+        return "E:\\debug-instrumented-open-jdk6\\jre\\lib\\rt\\";
+    }
+
+    private Set<String> getAllSubtypesFrom(String baseClass) {
+        Set<String> subtypes = new HashSet<>();
+
+        Set<String> jdkClasses = Sets.union(getJavaNetClasses(), getJavaUtilClasses());
+        Class baseCls = null;
+        subtypes.add(baseClass);
+
+        try {
+            baseCls = Class.forName(baseClass);
+        } catch (ClassNotFoundException | NullPointerException ex) {
+            Logger.getLogger(MopExtractor.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        for (String clazz : jdkClasses) {
+            try {
+                Class cls = Class.forName(clazz, false, null);
+                if (baseCls.isInterface()) {
+                    List<Class> implementedInterfs = Arrays.asList(cls.getInterfaces());
+
+                    if (implementedInterfs.contains(baseCls)) {
+                        subtypes.add(clazz);
+                        subtypes.addAll(getAllSubtypesFrom(clazz));
+                    }
+                } else {
+                    if (cls.getSuperclass() != null && cls.getSuperclass().getName().endsWith(baseClass)) {
+                        subtypes.add(clazz);
+                        subtypes.addAll(getAllSubtypesFrom(clazz));
+                    }
+                }
+            } catch (ClassNotFoundException ex) {
+                System.out.println("Not possible to load " + clazz + " due to " + ex.getMessage());
+            }
+        }
+        return subtypes;
+    }
+
+    private List<String> getFormattedListMethodSignature(MethodPointCut methodPointCut) {
+        String sig = methodPointCut.getSignature().getMemberName();
+        List<String> methodSignatures = new LinkedList<>();
+        String className = methodPointCut.getSignature().getOwner().getOp();
+
+        String simpleClassName = "";
+
+        List<String> matchingClasses = new LinkedList<>();
+
+        if (className.endsWith("+")) {
+            simpleClassName = className.replace("+", "");
+            String fullClassName = discoverFullClassName(simpleClassName);
+            if (fullClassName != null) {
+                matchingClasses.addAll(getAllSubtypesFrom(fullClassName));
+            }
+        } else {
+            String fullClassName = discoverFullClassName(className);
+            matchingClasses.add(fullClassName);
+        }
+        List<String> matchingSigs = new LinkedList<>();
+
+        for (String clazz : matchingClasses) {
+            methodSignatures.add(String.format("%s.%s", clazz, sig));
+        }
+
+        return methodSignatures;
     }
 
     private List<MethodPointCut> flattenCombinedPointCut(CombinedPointCut pointcut, List<MethodPointCut> flattendSoFar) {
@@ -476,11 +590,11 @@ public class MopExtractor {
             List<MethodPointCut> methodPointcuts = flattenCombinedPointCut(cpc, new LinkedList<>());
 
             methodPointcuts.stream()
-                    .map(mpc -> getFormattedMethodSignature(mpc))
+                    .flatMap(mpc -> getFormattedListMethodSignature(mpc).stream())
                     .forEach(fullSig -> methodSigs.add(fullSig));
         } else {
             if (pc instanceof MethodPointCut) {
-                methodSigs.add(getFormattedMethodSignature((MethodPointCut) pc));
+                methodSigs.add(getFormattedMethodSignatureFullyQualified((MethodPointCut) pc));
             }
         }
 
@@ -492,7 +606,7 @@ public class MopExtractor {
 
         list1.stream().forEach((s) -> {
             list2.stream().forEach((t) -> {
-                output.add(s + " " + t);
+                output.add(String.format("%s %s",s,t));
             });
         });
         return output;
@@ -517,14 +631,17 @@ public class MopExtractor {
         List<String> expandedForbiddenSequence;
         expandedForbiddenSequence = new LinkedList<>();
 
+        Predicate<String> packageSigFilter = sig -> sig.startsWith("java.util") || sig.startsWith("java.net");
+
         for (String seq : forbidden) {
             String[] forbEvents = seq.split("\\s");
-
             List<String> joinedList = this.correspondingMethodSignaturesOfEvents.get(forbEvents[0]);
+            joinedList.retainAll(joinedList.stream().filter(packageSigFilter).collect(Collectors.toSet()));
 
             for (int i = 1; i < forbEvents.length; i++) {
                 List<String> currentList = this.correspondingMethodSignaturesOfEvents.get(forbEvents[i]);
-                joinedList = makeListsCartesianProduct(joinedList, currentList);
+                currentList.retainAll(currentList.stream().filter(packageSigFilter).collect(Collectors.toSet()));
+                joinedList =  makeListsCartesianProduct(joinedList, currentList);
             }
 
             expandedForbiddenSequence.addAll(joinedList);
