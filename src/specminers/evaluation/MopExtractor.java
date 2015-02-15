@@ -525,7 +525,6 @@ public class MopExtractor {
                     }
                 }
             } catch (ClassNotFoundException ex) {
-                System.out.println("Not possible to load " + clazz + " due to " + ex.getMessage());
             }
         }
         return subtypes;
@@ -601,8 +600,8 @@ public class MopExtractor {
         return methodSigs;
     }
 
-    private List<String> makeListsCartesianProduct(List<String> list1, List<String> list2) {
-        List<String> output = new LinkedList<>();
+    private List<String> makeListsCartesianProduct(List<String> list1, List<String> list2, List<String> output) {
+        output.clear();
 
         list1.stream().forEach((s) -> {
             list2.stream().forEach((t) -> {
@@ -636,15 +635,16 @@ public class MopExtractor {
         for (String seq : forbidden) {
             String[] forbEvents = seq.split("\\s");
             List<String> joinedList = this.correspondingMethodSignaturesOfEvents.get(forbEvents[0]);
+            List<String> cartesianProduct = new LinkedList<>();
             joinedList.retainAll(joinedList.stream().filter(packageSigFilter).collect(Collectors.toSet()));
 
             for (int i = 1; i < forbEvents.length; i++) {
                 List<String> currentList = this.correspondingMethodSignaturesOfEvents.get(forbEvents[i]);
                 currentList.retainAll(currentList.stream().filter(packageSigFilter).collect(Collectors.toSet()));
-                joinedList =  makeListsCartesianProduct(joinedList, currentList);
+                makeListsCartesianProduct(joinedList, currentList, cartesianProduct);
             }
 
-            expandedForbiddenSequence.addAll(joinedList);
+            expandedForbiddenSequence.addAll(cartesianProduct);
         }
 
         return expandedForbiddenSequence;

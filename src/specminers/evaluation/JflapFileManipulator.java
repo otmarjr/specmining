@@ -169,7 +169,7 @@ public class JflapFileManipulator {
 
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(JflapFileManipulator.class.getName()).log(Level.SEVERE, null, ex);
-            throw new RuntimeException(ex);
+            // throw new RuntimeException(ex);
         }
 
         return expansions;
