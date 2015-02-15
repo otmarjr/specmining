@@ -256,45 +256,7 @@ public class JflapFileManipulator {
                                 -> signature.startsWith(currentPackageName)
                         ))
                 .collect(Collectors.toList());
-
-        String testSeq = "";
-        List<String> testInput = null;
-        automata.State sbefore =  null;
-        automata.State safter =  null;
-
-        if (jffFile.getName().contains("DatagramSocket")) {
-            Set<String> expandedWithGetLocal = expandedForbiddenSeqs
-                    .stream().filter(s -> s.contains("getLocalAddress"))
-                    .collect(Collectors.toSet());
-
-            testInput = new LinkedList<>();
-            testInput.add("java.net.DatagramSocket.<init>()");
-            testInput.add("java.net.DatagramSocket.connect()");
-            testInput.add("java.net.DatagramSocket.disconnect()");
-            testInput.add("java.net.DatagramSocket.getLocalAddress()");
-            testInput.add("java.net.DatagramSocket.getLocalPort()");
-            testInput.add("java.net.DatagramPacket.<init>()");
-            testInput.add("java.net.DatagramSocket.setSoTimeout()");
-            testInput.add("java.net.DatagramSocket.send()");
-            testInput.add("java.net.DatagramSocket.receive()");
-            testInput.add("java.net.DatagramSocket.close()");
-            testInput.add("java.net.DatagramSocket.<init>()");
-            testInput.add("java.net.DatagramSocket.connect()");
-            testInput.add("java.net.DatagramSocket.disconnect()");
-            testInput.add("java.net.DatagramSocket.getLocalAddress()");
-            testInput.add("java.net.DatagramSocket.getLocalPort()");
-            testInput.add("java.net.DatagramPacket.<init>()");
-            testInput.add("java.net.DatagramSocket.setSoTimeout()");
-            testInput.add("java.net.DatagramSocket.send()");
-            testInput.add("java.net.DatagramSocket.receive()");
-            testInput.add("java.net.DatagramSocket.close()");
-            
-            testSeq = testInput.stream().map(sig -> Character.toString(this.labelsMappingJffToDK.get(sig)))
-                    .collect(Collectors.joining(""));
-
-            
-            sbefore = runInputOnAutomaton(testInput);
-        }
+      
         Set<String> encodedForbiddenSeqs = new HashSet<>();
 
         Map<String, String> forbiddenEncodings = new HashMap<>();
@@ -334,12 +296,6 @@ public class JflapFileManipulator {
         FiniteStateAutomaton prunedFSA = converter.convertToJFlapFSA(dkAut, labelsDkLabelToJffLabel);
 
         this.automaton = prunedFSA;
-        
-        if (jffFile.getName().contains("DatagramSocket")) {
-            safter = runInputOnAutomaton(testInput);
-            
-            assert this.automaton.isFinalState(safter) == this.automaton.isFinalState(sbefore);
-        }
     }
 
     private automata.State runInputOnAutomaton(List<String> input) {
