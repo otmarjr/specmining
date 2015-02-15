@@ -51,17 +51,16 @@ public class JflapToDkBricsTwoWayAutomatonConverter {
                 .collect(Collectors.toSet());
 
         /*
-        labelsMappingJffToDK = new HashMap();
-        labelsSourceJffToDK = new HashMap();
-        Character currentChar = 'a';
+         labelsMappingJffToDK = new HashMap();
+         labelsSourceJffToDK = new HashMap();
+         Character currentChar = 'a';
 
-        for (String l : labels) {
-            labelsMappingJffToDK.put(l, currentChar);
-            labelsSourceJffToDK.put(currentChar, l);
-            currentChar++;
-        }
-*/
-        
+         for (String l : labels) {
+         labelsMappingJffToDK.put(l, currentChar);
+         labelsSourceJffToDK.put(currentChar, l);
+         currentChar++;
+         }
+         */
         Set<automata.State> jffFinalStates = Arrays.stream(jflapFSA.getFinalStates())
                 .collect(Collectors.toSet());
 
@@ -97,7 +96,7 @@ public class JflapToDkBricsTwoWayAutomatonConverter {
         // Add all the states!
         int id = 0;
         for (dk.brics.automaton.State s : automaton.getStates()) {
-            statesMapping.put(s, fsa.createStateWithId(new java.awt.Point(id,id), id));
+            statesMapping.put(s, fsa.createStateWithId(new java.awt.Point(id, id), id));
             id++;
 
             if (automaton.getInitialState() == s) {
@@ -105,30 +104,27 @@ public class JflapToDkBricsTwoWayAutomatonConverter {
             }
         }
 
-        Set<Transition> dkTransitions = automaton.getStates().stream()
-                .flatMap(s -> s.getTransitions().stream())
-                .collect(Collectors.toSet());
-        
         Set<dk.brics.automaton.State> dkFinalStates = automaton.getAcceptStates();
-        
-        
+
         for (dk.brics.automaton.State dkState : statesMapping.keySet()) {
             automata.State jffState = statesMapping.get(dkState);
 
             if (dkFinalStates.contains(dkState)) {
                 fsa.addFinalState(jffState);
             }
-            
+
             Set<dk.brics.automaton.Transition> outwardTransitions = dkState.getTransitions();
 
             for (Transition dkt : outwardTransitions) {
                 automata.State target = statesMapping.get(dkt.getDest());
-                String label = labelsMapping.get(dkt.getMin());
-                automata.fsa.FSATransition t = new FSATransition(jffState,target, label );
-                fsa.addTransition(t);
+                for (char c = dkt.getMin(); c <= dkt.getMax(); c++) {
+                    String label = labelsMapping.get(c);
+                    automata.fsa.FSATransition t = new FSATransition(jffState, target, label);
+                    fsa.addTransition(t);
+                }
             }
         }
-        
+
         return fsa;
     }
 }

@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -246,17 +247,57 @@ public class JflapFileManipulator {
         dk.brics.automaton.Automaton dkAut = converter.convertToDkBricsAutomaton(labelsMappingJffToDK);
 
         List<String> expandedForbiddenSeqs = expandForbiddenSequencesWithWildCards(forbiddenSequences);
-        
+
         String currentPackageName = this.getPackageName(this.correspondingClass);
         expandedForbiddenSeqs = expandedForbiddenSeqs.stream()
-                .filter(seq -> 
-                        Arrays.asList(seq.split("\\)"))
-                    .stream().allMatch(signature -> 
-                            signature.startsWith(currentPackageName)
-                    ))
+                .filter(seq
+                        -> Arrays.asList(seq.split("\\)"))
+                        .stream().allMatch(signature
+                                -> signature.startsWith(currentPackageName)
+                        ))
                 .collect(Collectors.toList());
-        
+
+        String testSeq = "";
+        List<String> testInput = null;
+        automata.State sbefore =  null;
+        automata.State safter =  null;
+
+        if (jffFile.getName().contains("DatagramSocket")) {
+            Set<String> expandedWithGetLocal = expandedForbiddenSeqs
+                    .stream().filter(s -> s.contains("getLocalAddress"))
+                    .collect(Collectors.toSet());
+
+            testInput = new LinkedList<>();
+            testInput.add("java.net.DatagramSocket.<init>()");
+            testInput.add("java.net.DatagramSocket.connect()");
+            testInput.add("java.net.DatagramSocket.disconnect()");
+            testInput.add("java.net.DatagramSocket.getLocalAddress()");
+            testInput.add("java.net.DatagramSocket.getLocalPort()");
+            testInput.add("java.net.DatagramPacket.<init>()");
+            testInput.add("java.net.DatagramSocket.setSoTimeout()");
+            testInput.add("java.net.DatagramSocket.send()");
+            testInput.add("java.net.DatagramSocket.receive()");
+            testInput.add("java.net.DatagramSocket.close()");
+            testInput.add("java.net.DatagramSocket.<init>()");
+            testInput.add("java.net.DatagramSocket.connect()");
+            testInput.add("java.net.DatagramSocket.disconnect()");
+            testInput.add("java.net.DatagramSocket.getLocalAddress()");
+            testInput.add("java.net.DatagramSocket.getLocalPort()");
+            testInput.add("java.net.DatagramPacket.<init>()");
+            testInput.add("java.net.DatagramSocket.setSoTimeout()");
+            testInput.add("java.net.DatagramSocket.send()");
+            testInput.add("java.net.DatagramSocket.receive()");
+            testInput.add("java.net.DatagramSocket.close()");
+            
+            testSeq = testInput.stream().map(sig -> Character.toString(this.labelsMappingJffToDK.get(sig)))
+                    .collect(Collectors.joining(""));
+
+            
+            sbefore = runInputOnAutomaton(testInput);
+        }
         Set<String> encodedForbiddenSeqs = new HashSet<>();
+
+        Map<String, String> forbiddenEncodings = new HashMap<>();
 
         for (String seq : expandedForbiddenSeqs) {
             String sequenceEncodeAsCharsPerMethodSignature = "";
@@ -270,6 +311,7 @@ public class JflapFileManipulator {
                 }
             }
             encodedForbiddenSeqs.add(sequenceEncodeAsCharsPerMethodSignature);
+            forbiddenEncodings.put(sequenceEncodeAsCharsPerMethodSignature, seq);
         }
 
         char lastChar = this.labelsDkLabelToJffLabel.keySet().stream()
@@ -277,14 +319,46 @@ public class JflapFileManipulator {
                 .collect(Collectors.toList())
                 .get(this.labelsDkLabelToJffLabel.size() - 1);
 
+        char firstChar = this.labelsDkLabelToJffLabel.keySet().stream()
+                .sorted()
+                .collect(Collectors.toList())
+                .get(0);
+
         for (String encForb : encodedForbiddenSeqs) {
-            String forbiddenAsRegex = String.format("%s %s %s", "[a-" + lastChar + "]*", encForb, "[a-" + lastChar + "]*");
+            String forbiddenAsRegex = String.format("%s %s %s", "[" +  firstChar +"-" + lastChar + "]*", encForb, "[" +  firstChar +"-" + lastChar + "]*");
             RegExp forbRegex = new RegExp(forbiddenAsRegex);
             dk.brics.automaton.Automaton forbAut = forbRegex.toAutomaton();
             dkAut = dkAut.minus(forbAut);
         }
 
         FiniteStateAutomaton prunedFSA = converter.convertToJFlapFSA(dkAut, labelsDkLabelToJffLabel);
+
         this.automaton = prunedFSA;
+        
+        if (jffFile.getName().contains("DatagramSocket")) {
+            safter = runInputOnAutomaton(testInput);
+            
+            assert this.automaton.isFinalState(safter) == this.automaton.isFinalState(sbefore);
+        }
+    }
+
+    private automata.State runInputOnAutomaton(List<String> input) {
+        automata.State s = this.automaton.getInitialState();
+
+        for (String label : input){
+            Optional<FSATransition> ft = Stream.of(automaton.getTransitionsFromState(s))
+            .map(t -> (FSATransition)t)
+                    .filter(t -> t.getLabel().equals(label))
+                    .findFirst();
+            
+            if (ft.isPresent()){
+                s = ft.get().getToState();
+            }
+            else {
+                break;
+            }
+        }
+        
+        return s;
     }
 }
