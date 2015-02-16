@@ -131,13 +131,6 @@ public class JflapFileManipulator {
         }
     }
 
-    private Set<String> getAllMethodsFromClass(String fullClassName) {
-        Set<String> classMethods = this.getAllTransitionLabels()
-                .stream().filter(l -> l.startsWith(fullClassName))
-                .collect(Collectors.toSet());
-
-        return classMethods;
-    }
 
     private Set<String> getAllExpansionsForSequenceWithStarWildcard(String sequence) {
         Set<String> expansions = new HashSet<>();
@@ -298,7 +291,16 @@ public class JflapFileManipulator {
         this.automaton = prunedFSA;
     }
 
+    public boolean acceptsSequence(List<String> sequence){
+        State s = runInputOnAutomaton(sequence);
+        
+        return this.automaton.isFinalState(s);
+    }
+    
     private automata.State runInputOnAutomaton(List<String> input) {
+        if (this.automaton == null){
+            this.parseAutomaton();
+        }
         automata.State s = this.automaton.getInitialState();
 
         for (String label : input){

@@ -1,0 +1,160 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package specminers.evaluation;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javamop.parser.main_parser.ParseException;
+import org.apache.commons.io.FileUtils;
+import specminers.ExecutionArgsHelper;
+
+/**
+ *
+ * @author Otmar
+ */
+public class PrecisionEvaluator {
+
+    private final static String JFLAP_REFERENCE_SPECS_PATH = "-j";
+    private final static String TRACES_PATH_OPTION = "-t";
+    private final static String HELP_OPTION = "-h";
+    private final static String OUTPUT_OPTION = "-o";
+
+    public static void main(String[] args) throws IOException, ParseException {
+        Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
+
+        // Sample run args: -j "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\pruned_experimental\net" -t "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\filtered\net" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\precision\net"
+        if (options.containsKey(HELP_OPTION)) {
+            ExecutionArgsHelper.displayHelp(Arrays.asList(
+                    "In order to execute this program options:",
+                    "-j <PATH> : Where to recursivelly search for JFLAP reference specifications.",
+                    "-t <PATH> : Folder contaning trace calls to compare their precision against reference specs.",
+                    "-o <PATH> : Folder where precisions statistics per classes will be saved."
+            ));
+        }
+
+        if (validateInputArguments(options)) {
+            collectPrecisionStatisticsPerClass(options);
+        }
+    }
+
+    private static boolean validateInputArguments(Map<String, String> programOptions) {
+        boolean ok = true;
+        if (!programOptions.containsKey(JFLAP_REFERENCE_SPECS_PATH)) {
+            System.err.println("You must use the -j option to inform a valid path where to search for reference specification files.");
+            ok = false;
+        } else {
+            File f = new File(programOptions.get(JFLAP_REFERENCE_SPECS_PATH));
+
+            if (!f.exists()) {
+                System.err.println("The supplied jflap reference specs folder does not exist.");
+                ok = false;
+            }
+        }
+
+        if (!programOptions.containsKey(TRACES_PATH_OPTION)) {
+            System.err.println("You must use the -t option to inform a valid path where to search for unit tests execution traces.");
+            ok = false;
+        } else {
+            File f = new File(programOptions.get(TRACES_PATH_OPTION));
+
+            if (!f.exists()) {
+                System.err.println("The supplied unit tests' trace path does not exist.");
+                ok = false;
+            }
+        }
+
+        if (!programOptions.containsKey(OUTPUT_OPTION)) {
+            System.out.println("WARNING: No output file informed. Specification will be printed on standard output.");
+        }
+
+        return ok;
+    }
+
+    static class TracePrecisionStatistics {
+
+        public String className;
+        public int numberOfTraces;
+        public int numberOfAcceptedTraces;
+    }
+
+    private static void collectPrecisionStatisticsPerClass(Map<String, String> options) throws IOException, ParseException {
+
+        File testFilesFolder = new File(options.get(JFLAP_REFERENCE_SPECS_PATH));
+        String[] extensions = new String[]{"jff"};
+
+        List<File> files = FileUtils.listFiles(testFilesFolder, extensions, true).stream()
+                .collect(Collectors.toList());
+
+        // Key: class name Value: list of trace files containing filtered
+        // unit test traces.
+        Map<String, TracePrecisionStatistics> testTraces = new HashMap<>();
+
+        for (File f : files) {
+
+            String testedClass = f.getName().replace("_jflap_automaton_package_extended_package_full_merged_spec.jff", "");
+            String testedClassSimpleName = testedClass.substring(testedClass.lastIndexOf(".")+1);
+            File tracesFolder = Paths.get(options.get(TRACES_PATH_OPTION), testedClassSimpleName).toFile();
+
+            TracePrecisionStatistics statistics = new TracePrecisionStatistics();
+            statistics.className = testedClass;
+            if (tracesFolder.list() != null){
+                statistics.numberOfTraces = tracesFolder.list().length;
+            }
+            else{
+                continue;
+            }
+            
+
+            JflapFileManipulator jff = new JflapFileManipulator(f);
+            int numberOfAccepted = 0;
+
+            for (File t : tracesFolder.listFiles()) {
+                String fullTrace = FileUtils.readFileToString(t);
+                List<String> traceCalls = Stream.of(fullTrace.split("\\)"))
+                        .map(call -> call + ")")
+                        .collect(Collectors.toList());
+
+                if (jff.acceptsSequence(traceCalls)) {
+                    numberOfAccepted++;
+                }
+            }
+
+            statistics.numberOfAcceptedTraces = numberOfAccepted;
+            testTraces.put(testedClass, statistics);
+        }
+
+        List<String> allStats = new LinkedList<>();
+        for (String clazz : testTraces.keySet()) {
+            File statsFile = Paths.get(options.get(OUTPUT_OPTION), clazz + "_statistics.txt").toFile();
+            TracePrecisionStatistics st = testTraces.get(clazz);
+            double precision = st.numberOfAcceptedTraces*1D/st.numberOfTraces;
+            String stats = String.format("%s;%s;%s;%f", st.className, st.numberOfTraces, st.numberOfAcceptedTraces, precision);
+            
+            FileUtils.write(statsFile, stats);
+            
+            allStats.add(stats);
+        }
+        
+        File allStatsFile = Paths.get(options.get(OUTPUT_OPTION), "full_statistics.txt").toFile();
+        
+        FileUtils.writeLines(allStatsFile, allStats);
+        
+        
+    }
+}
