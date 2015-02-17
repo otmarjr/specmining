@@ -131,7 +131,6 @@ public class JflapFileManipulator {
         }
     }
 
-
     private Set<String> getAllExpansionsForSequenceWithStarWildcard(String sequence) {
         Set<String> expansions = new HashSet<>();
 
@@ -234,10 +233,17 @@ public class JflapFileManipulator {
         return expanded;
     }
 
-    public void removeInvalidSequences(List<String> forbiddenSequences) {
+    private dk.brics.automaton.Automaton getDkBricsAutomatonWithChars() {
         this.loadJffLabelsMapToChars();
         JflapToDkBricsTwoWayAutomatonConverter converter = new JflapToDkBricsTwoWayAutomatonConverter(automaton);
         dk.brics.automaton.Automaton dkAut = converter.convertToDkBricsAutomaton(labelsMappingJffToDK);
+
+        return dkAut;
+    }
+
+    public void removeInvalidSequences(List<String> forbiddenSequences) {
+
+        dk.brics.automaton.Automaton dkAut = this.getDkBricsAutomatonWithChars();
 
         List<String> expandedForbiddenSeqs = expandForbiddenSequencesWithWildCards(forbiddenSequences);
 
@@ -249,7 +255,7 @@ public class JflapFileManipulator {
                                 -> signature.startsWith(currentPackageName)
                         ))
                 .collect(Collectors.toList());
-      
+
         Set<String> encodedForbiddenSeqs = new HashSet<>();
 
         Map<String, String> forbiddenEncodings = new HashMap<>();
@@ -280,43 +286,69 @@ public class JflapFileManipulator {
                 .get(0);
 
         for (String encForb : encodedForbiddenSeqs) {
-            String forbiddenAsRegex = String.format("%s %s %s", "[" +  firstChar +"-" + lastChar + "]*", encForb, "[" +  firstChar +"-" + lastChar + "]*");
+            String forbiddenAsRegex = String.format("%s %s %s", "[" + firstChar + "-" + lastChar + "]*", encForb, "[" + firstChar + "-" + lastChar + "]*");
             RegExp forbRegex = new RegExp(forbiddenAsRegex);
             dk.brics.automaton.Automaton forbAut = forbRegex.toAutomaton();
             dkAut = dkAut.minus(forbAut);
         }
-
+        JflapToDkBricsTwoWayAutomatonConverter converter = new JflapToDkBricsTwoWayAutomatonConverter(automaton);
         FiniteStateAutomaton prunedFSA = converter.convertToJFlapFSA(dkAut, labelsDkLabelToJffLabel);
 
         this.automaton = prunedFSA;
     }
 
-    public boolean acceptsSequence(List<String> sequence){
+    public boolean acceptsSequence(List<String> sequence) {
         State s = runInputOnAutomaton(sequence);
-        
+
         return this.automaton.isFinalState(s);
     }
-    
+
+    private String convertJffSequenceToDkBricsAutomatonSequence(List<String> sequence){
+       String convertedSeq;
+       
+       convertedSeq = sequence
+               .stream()
+               .map(signature -> Character.toString(this.labelsMappingJffToDK.get(signature)))
+               .collect(Collectors.joining(""));
+       return convertedSeq;
+    }
+
+    public double calculateSequencesRecal(Set<List<String>> minedSequences) {
+        double recall = 0D;
+        dk.brics.automaton.Automaton dkAut = this.getDkBricsAutomatonWithChars();
+        Set<String> minedSequencesConvertedToDkAlphabet = minedSequences.stream()
+                .map(seq -> convertJffSequenceToDkBricsAutomatonSequence(seq))
+                .collect(Collectors.toSet());
+        
+        Set<dk.brics.automaton.Automaton> minedAutomata = minedSequencesConvertedToDkAlphabet
+                .stream()
+                .map(minedSequence -> new RegExp(minedSequence).toAutomaton())
+                .collect(Collectors.toSet());
+        
+        dk.brics.automaton.Automaton minedSpec = dk.brics.automaton.Automaton
+                .union(minedAutomata);
+        return recall;
+    }
+
     private automata.State runInputOnAutomaton(List<String> input) {
-        if (this.automaton == null){
+        if (this.automaton == null) {
             this.parseAutomaton();
         }
         automata.State s = this.automaton.getInitialState();
 
-        for (String label : input){
+        for (String label : input) {
             Optional<FSATransition> ft = Stream.of(automaton.getTransitionsFromState(s))
-            .map(t -> (FSATransition)t)
+                    .map(t -> (FSATransition) t)
                     .filter(t -> t.getLabel().equals(label))
                     .findFirst();
-            
-            if (ft.isPresent()){
+
+            if (ft.isPresent()) {
                 s = ft.get().getToState();
-            }
-            else {
+            } else {
                 break;
             }
         }
-        
+
         return s;
     }
 }
