@@ -91,9 +91,9 @@ public class MinedSpecsFilter {
         return false;
     }
 
-    public boolean isStandAloneTest() {
+    public boolean isStandAloneTest() throws IOException {
         // Inner classes of tests are marked with $ on their names!
-        return !unitTestFile.getName().contains("$");
+        return !unitTestFile.getName().contains("$") && !FileUtils.readFileToString(unitTestFile).contains("$");
     }
     public boolean containsExternalAPITest() throws IOException {
         return !testsLibraryProtectionViaExceptionThrowing();

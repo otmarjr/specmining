@@ -33,11 +33,12 @@ public class TracesFilter {
     private final static String TRACES_PATH_OPTION = "-t";
     private final static String HELP_OPTION = "-h";
     private final static String OUTPUT_OPTION = "-o";
+    private final static String TARGET_PACKAGE = "-p";
 
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
-        // Sample run args: -u "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-unit-tests\net-pradel" -t "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\net-pradel" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel"
+        // Sample run args: -u "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-unit-tests\net-pradel" -t "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\net-pradel" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel" -p java.net
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
                     "In order to execute this program options:",
@@ -85,6 +86,37 @@ public class TracesFilter {
         return ok;
     }
 
+    private static void copyTraceFilesToOutput(Map<String, Set<File>> filteredTests,
+            String testsType, Map<String, String> programOptions) throws IOException {
+        for (String clazz : filteredTests.keySet()) {
+            String fullyQualifiedClassName = String.format("%s.%s", programOptions.get(TARGET_PACKAGE), clazz);
+            File parentFolder = Paths.get(programOptions.get(TRACES_PATH_OPTION), clazz).toFile();
+            Path filteredOutputFolder = Paths.get(programOptions.get(OUTPUT_OPTION), clazz, testsType).toAbsolutePath();
+
+            filteredOutputFolder.toFile().delete();
+            filteredOutputFolder.toFile().mkdirs();
+            if (!Files.exists(filteredOutputFolder, LinkOption.NOFOLLOW_LINKS)) {
+                Files.createDirectory(filteredOutputFolder);
+            }
+
+            for (File testFile : filteredTests.get(clazz)) {
+                String traceFileName = testFile.getName().replace(".java", "_client_calls_trace.txt");
+                File traceFile = Paths.get(parentFolder.getAbsolutePath(), traceFileName).toFile();
+
+                if (traceFile.exists()) {
+                    TestTraceFilter traceFilter = new TestTraceFilter(traceFile, fullyQualifiedClassName);
+                    if (traceFilter.isValidTrace()) {
+                        FileUtils.copyFileToDirectory(traceFile, filteredOutputFolder.toFile());
+                    }
+                }
+            }
+
+            if (filteredOutputFolder.toFile().list().length == 0) {
+                FileUtils.deleteDirectory(filteredOutputFolder.toFile());
+            }
+        }
+    }
+
     private static void filterUnitTestExeceutionTraces(Map<String, String> options) throws IOException, ParseException {
 
         File testFilesFolder = new File(options.get(UNIT_TEST_FILES_CODE_PATH_OPTION));
@@ -109,7 +141,7 @@ public class TracesFilter {
             String testedClass = curFile.getName();
 
             MinedSpecsFilter filter = new MinedSpecsFilter(f);
-            if (!filter.isStandAloneTest()){
+            if (!filter.isStandAloneTest()) {
                 continue;
             }
             if (filter.containsExternalAPITest()) {
@@ -127,50 +159,8 @@ public class TracesFilter {
             }
         }
 
-        for (String clazz : externalFilteredTests.keySet()) {
-            File parentFolder = Paths.get(options.get(TRACES_PATH_OPTION), clazz).toFile();
-            Path filteredOutputFolder = Paths.get(options.get(OUTPUT_OPTION), clazz, "external").toAbsolutePath();
-
-            filteredOutputFolder.toFile().mkdirs();
-            if (!Files.exists(filteredOutputFolder, LinkOption.NOFOLLOW_LINKS)) {
-                Files.createDirectory(filteredOutputFolder);
-            }
-
-            for (File testFile : externalFilteredTests.get(clazz)) {
-                String traceFileName = testFile.getName().replace(".java", "_client_calls_trace.txt");
-                File traceFile = Paths.get(parentFolder.getAbsolutePath(), traceFileName).toFile();
-
-                if (traceFile.exists()) {
-                    FileUtils.copyFileToDirectory(traceFile, filteredOutputFolder.toFile());
-                }
-            }
-
-            if (filteredOutputFolder.toFile().list().length == 0) {
-                FileUtils.deleteDirectory(filteredOutputFolder.toFile());
-            }
-        }
+        copyTraceFilesToOutput(externalFilteredTests, "external", options);
+        copyTraceFilesToOutput(internalFilteredTests, "internal", options);
         
-        for (String clazz : internalFilteredTests.keySet()) {
-            File parentFolder = Paths.get(options.get(TRACES_PATH_OPTION), clazz).toFile();
-            Path filteredOutputFolder = Paths.get(options.get(OUTPUT_OPTION), clazz, "internal").toAbsolutePath();
-
-            filteredOutputFolder.toFile().mkdirs();
-            if (!Files.exists(filteredOutputFolder, LinkOption.NOFOLLOW_LINKS)) {
-                Files.createDirectory(filteredOutputFolder);
-            }
-
-            for (File testFile : internalFilteredTests.get(clazz)) {
-                String traceFileName = testFile.getName().replace(".java", "_client_calls_trace.txt");
-                File traceFile = Paths.get(parentFolder.getAbsolutePath(), traceFileName).toFile();
-
-                if (traceFile.exists()) {
-                    FileUtils.copyFileToDirectory(traceFile, filteredOutputFolder.toFile());
-                }
-            }
-
-            if (filteredOutputFolder.toFile().list().length == 0) {
-                FileUtils.deleteDirectory(filteredOutputFolder.toFile());
-            }
-        }
     }
 }
