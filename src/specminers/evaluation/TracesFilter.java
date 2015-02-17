@@ -39,6 +39,8 @@ public class TracesFilter {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
         // Sample run args: -u "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-unit-tests\net-pradel" -t "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\net-pradel" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel" -p java.net
+        // Another sample:  -u "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-unit-tests\\util-pradel" -t "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\\util-pradel" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\filtered-util-pradel" -p java.util
+        
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
                     "In order to execute this program options:",

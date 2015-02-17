@@ -40,7 +40,9 @@ public class PrecisionEvaluator {
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
-        // Sample run args: -j "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\pruned_experimental\net" -t "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel" -r "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\precision\net"
+        /* Sample run args: -j "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\pruned_experimental\net" -t "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel" -r "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\precision\net"
+        Sample run args: -j "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\pruned_experimental\\util" -t "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\filtered-util-pradel" -r "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap\\util" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\precision\\util"
+                */
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
                     "In order to execute this program options:",
@@ -132,6 +134,9 @@ public class PrecisionEvaluator {
             String testedClass = f.getName().replace("_jflap_automaton_package_extended_package_full_merged_spec.jff", "");
             String testedClassSimpleName = testedClass.substring(testedClass.lastIndexOf(".") + 1);
             File tracesFolder = Paths.get(options.get(TRACES_PATH_OPTION), testedClassSimpleName).toFile();
+            if (!tracesFolder.isDirectory() || !tracesFolder.exists()){
+                continue;
+            }
             Collection<File> traces = FileUtils.listFiles(tracesFolder, traceFileExtension, true);
             
             TracePrecisionStatistics statistics = new TracePrecisionStatistics();
@@ -144,7 +149,6 @@ public class PrecisionEvaluator {
             JflapFileManipulator jff = new JflapFileManipulator(f);
             Set<List<String>> minedSeqs;
             minedSeqs = new HashSet<>();
-            int numberOfAccepted = 0;
 
             for (File t : traces) {
                 String fullTrace = FileUtils.readFileToString(t);
@@ -160,7 +164,6 @@ public class PrecisionEvaluator {
                     statistics.numberOfExternalTraces++;
                     if (jff.acceptsSequence(traceCalls)) {
                         statistics.numberOfAcceptedExternalTraces++;
-                        numberOfAccepted++;
                     }
                 } else {
                     statistics.numberOfInternalTraces++;
@@ -168,7 +171,6 @@ public class PrecisionEvaluator {
                     // should not lead to an accepting state!
                     if (!jff.acceptsSequence(traceCalls)) {
                         statistics.numberOfAcceptedInternalTraces++;
-                        numberOfAccepted++;
                     }
                 }
             }
@@ -179,7 +181,7 @@ public class PrecisionEvaluator {
                     ).findFirst().get();
             
             JflapFileManipulator refRecall = new JflapFileManipulator(originalReferenceSpec);
-            statistics.recall = refRecall.calculateSequencesRecall(minedSeqs);
+            statistics.recall = 0D;//refRecall.calculateSequencesRecall(minedSeqs);
             testTraces.put(testedClass, statistics);
         }
 
