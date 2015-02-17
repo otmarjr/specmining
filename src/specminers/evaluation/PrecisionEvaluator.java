@@ -12,6 +12,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -38,7 +39,7 @@ public class PrecisionEvaluator {
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
-        // Sample run args: -j "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\pruned_experimental\net" -t "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\filtered\net" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\precision\net"
+        // Sample run args: -j "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\pruned_experimental\net" -t "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\precision\net"
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
                     "In order to execute this program options:",
@@ -97,6 +98,7 @@ public class PrecisionEvaluator {
 
         File testFilesFolder = new File(options.get(JFLAP_REFERENCE_SPECS_PATH));
         String[] extensions = new String[]{"jff"};
+        String[] traceFileExtension = new String[]{"txt"};
 
         List<File> files = FileUtils.listFiles(testFilesFolder, extensions, true).stream()
                 .collect(Collectors.toList());
@@ -108,30 +110,39 @@ public class PrecisionEvaluator {
         for (File f : files) {
 
             String testedClass = f.getName().replace("_jflap_automaton_package_extended_package_full_merged_spec.jff", "");
-            String testedClassSimpleName = testedClass.substring(testedClass.lastIndexOf(".")+1);
+            String testedClassSimpleName = testedClass.substring(testedClass.lastIndexOf(".") + 1);
             File tracesFolder = Paths.get(options.get(TRACES_PATH_OPTION), testedClassSimpleName).toFile();
-
+            Collection<File> traces = FileUtils.listFiles(tracesFolder, traceFileExtension, true);
+            
             TracePrecisionStatistics statistics = new TracePrecisionStatistics();
             statistics.className = testedClass;
-            if (tracesFolder.list() != null){
-                statistics.numberOfTraces = tracesFolder.list().length;
-            }
-            else{
+            if (traces != null && !traces.isEmpty()) {
+                statistics.numberOfTraces = traces.size();
+            } else {
                 continue;
             }
-            
 
             JflapFileManipulator jff = new JflapFileManipulator(f);
             int numberOfAccepted = 0;
 
-            for (File t : tracesFolder.listFiles()) {
+            for (File t : traces) {
                 String fullTrace = FileUtils.readFileToString(t);
+                boolean isExternalTest = t.getAbsolutePath().contains("external");
+
                 List<String> traceCalls = Stream.of(fullTrace.split("\\)"))
                         .map(call -> call + ")")
                         .collect(Collectors.toList());
 
-                if (jff.acceptsSequence(traceCalls)) {
-                    numberOfAccepted++;
+                if (isExternalTest) {
+                    if (jff.acceptsSequence(traceCalls)) {
+                        numberOfAccepted++;
+                    }
+                } else {
+                    // Tests for protection via exceptions being thrown
+                    // should not lead to an accepting state!
+                    if (!jff.acceptsSequence(traceCalls)) {
+                        numberOfAccepted++;
+                    }
                 }
             }
 
@@ -143,18 +154,17 @@ public class PrecisionEvaluator {
         for (String clazz : testTraces.keySet()) {
             File statsFile = Paths.get(options.get(OUTPUT_OPTION), clazz + "_statistics.txt").toFile();
             TracePrecisionStatistics st = testTraces.get(clazz);
-            double precision = st.numberOfAcceptedTraces*1D/st.numberOfTraces;
+            double precision = st.numberOfAcceptedTraces * 1D / st.numberOfTraces;
             String stats = String.format("%s;%s;%s;%f", st.className, st.numberOfTraces, st.numberOfAcceptedTraces, precision);
-            
+
             FileUtils.write(statsFile, stats);
-            
+
             allStats.add(stats);
         }
-        
+
         File allStatsFile = Paths.get(options.get(OUTPUT_OPTION), "full_statistics.txt").toFile();
-        
+
         FileUtils.writeLines(allStatsFile, allStats);
-        
-        
+
     }
 }
