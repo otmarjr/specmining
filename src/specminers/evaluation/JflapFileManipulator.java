@@ -10,6 +10,7 @@ import automata.Transition;
 import automata.fsa.FSATransition;
 import automata.fsa.FiniteStateAutomaton;
 import com.google.common.base.Predicates;
+import com.google.common.collect.Sets;
 import dk.brics.automaton.RegExp;
 import file.XMLCodec;
 import java.io.File;
@@ -313,20 +314,34 @@ public class JflapFileManipulator {
        return convertedSeq;
     }
 
-    public double calculateSequencesRecal(Set<List<String>> minedSequences) {
-        double recall = 0D;
+    public double calculateSequencesRecall(Set<List<String>> minedSequences) {
+        double recall;
         dk.brics.automaton.Automaton dkAut = this.getDkBricsAutomatonWithChars();
+        
+        // Remove self loops
+        for (dk.brics.automaton.State q : dkAut.getStates()){
+            Set<dk.brics.automaton.Transition> toRemoveTransitions = new HashSet<>();
+            for (dk.brics.automaton.Transition t : q.getTransitions()){
+                if (t.getDest().equals(q)){
+                    toRemoveTransitions.add(t);
+                }
+            }
+            
+            q.getTransitions().removeAll(toRemoveTransitions);
+        }
+        
+        int maximumSize = dkAut.getNumberOfStates();
+        if (maximumSize > 1){
+            maximumSize--;
+        }
+        Set<String> universe = dkAut.getStrings(maximumSize);
+        
         Set<String> minedSequencesConvertedToDkAlphabet = minedSequences.stream()
                 .map(seq -> convertJffSequenceToDkBricsAutomatonSequence(seq))
                 .collect(Collectors.toSet());
         
-        Set<dk.brics.automaton.Automaton> minedAutomata = minedSequencesConvertedToDkAlphabet
-                .stream()
-                .map(minedSequence -> new RegExp(minedSequence).toAutomaton())
-                .collect(Collectors.toSet());
+        recall = Sets.intersection(universe, minedSequencesConvertedToDkAlphabet).size()*1D/universe.size();
         
-        dk.brics.automaton.Automaton minedSpec = dk.brics.automaton.Automaton
-                .union(minedAutomata);
         return recall;
     }
 

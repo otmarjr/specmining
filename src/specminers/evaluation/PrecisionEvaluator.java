@@ -31,7 +31,8 @@ import specminers.ExecutionArgsHelper;
  */
 public class PrecisionEvaluator {
 
-    private final static String JFLAP_REFERENCE_SPECS_PATH = "-j";
+    private final static String JFLAP_FULL_REFERENCE_SPECS_PATH = "-j";
+    private final static String JFLAP_ORIGINAL_REFERENCE_SPECS_PATH = "-r";
     private final static String TRACES_PATH_OPTION = "-t";
     private final static String HELP_OPTION = "-h";
     private final static String OUTPUT_OPTION = "-o";
@@ -39,11 +40,11 @@ public class PrecisionEvaluator {
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
-        // Sample run args: -j "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\pruned_experimental\net" -t "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\precision\net"
+        // Sample run args: -j "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\pruned_experimental\net" -t "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel" -r "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\dataset\precision\net"
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
                     "In order to execute this program options:",
-                    "-j <PATH> : Where to recursivelly search for JFLAP reference specifications.",
+                    "-j <PATH> : Where to recursivelly search for JFLAP full reference specifications.",
                     "-t <PATH> : Folder contaning trace calls to compare their precision against reference specs.",
                     "-o <PATH> : Folder where precisions statistics per classes will be saved."
             ));
@@ -56,11 +57,23 @@ public class PrecisionEvaluator {
 
     private static boolean validateInputArguments(Map<String, String> programOptions) {
         boolean ok = true;
-        if (!programOptions.containsKey(JFLAP_REFERENCE_SPECS_PATH)) {
+        if (!programOptions.containsKey(JFLAP_FULL_REFERENCE_SPECS_PATH)) {
             System.err.println("You must use the -j option to inform a valid path where to search for reference specification files.");
             ok = false;
         } else {
-            File f = new File(programOptions.get(JFLAP_REFERENCE_SPECS_PATH));
+            File f = new File(programOptions.get(JFLAP_FULL_REFERENCE_SPECS_PATH));
+
+            if (!f.exists()) {
+                System.err.println("The supplied jflap reference specs folder does not exist.");
+                ok = false;
+            }
+        }
+        
+        if (!programOptions.containsKey(JFLAP_ORIGINAL_REFERENCE_SPECS_PATH)) {
+            System.err.println("You must use the -r option to inform a valid path where to search for original reference specification files.");
+            ok = false;
+        } else {
+            File f = new File(programOptions.get(JFLAP_ORIGINAL_REFERENCE_SPECS_PATH));
 
             if (!f.exists()) {
                 System.err.println("The supplied jflap reference specs folder does not exist.");
@@ -92,16 +105,21 @@ public class PrecisionEvaluator {
         public String className;
         public int numberOfTraces;
         public int numberOfAcceptedTraces;
+        public double recall;
     }
 
     private static void collectPrecisionStatisticsPerClass(Map<String, String> options) throws IOException, ParseException {
 
-        File testFilesFolder = new File(options.get(JFLAP_REFERENCE_SPECS_PATH));
+        File testFilesFolder = new File(options.get(JFLAP_FULL_REFERENCE_SPECS_PATH));
+        File originalReferenceSpecFolder = new File(options.get(JFLAP_ORIGINAL_REFERENCE_SPECS_PATH));
         String[] extensions = new String[]{"jff"};
         String[] traceFileExtension = new String[]{"txt"};
 
         List<File> files = FileUtils.listFiles(testFilesFolder, extensions, true).stream()
                 .collect(Collectors.toList());
+        
+        List<File> originalSpecFiles = FileUtils.listFiles(originalReferenceSpecFolder, extensions, true)
+                .stream().collect(Collectors.toList());
 
         // Key: class name Value: list of trace files containing filtered
         // unit test traces.
@@ -123,6 +141,8 @@ public class PrecisionEvaluator {
             }
 
             JflapFileManipulator jff = new JflapFileManipulator(f);
+            Set<List<String>> minedSeqs;
+            minedSeqs = new HashSet<>();
             int numberOfAccepted = 0;
 
             for (File t : traces) {
@@ -133,6 +153,7 @@ public class PrecisionEvaluator {
                         .map(call -> call + ")")
                         .collect(Collectors.toList());
 
+                minedSeqs.add(traceCalls);
                 if (isExternalTest) {
                     if (jff.acceptsSequence(traceCalls)) {
                         numberOfAccepted++;
@@ -145,8 +166,15 @@ public class PrecisionEvaluator {
                     }
                 }
             }
-
+            
+            File originalReferenceSpec;
+            originalReferenceSpec = originalSpecFiles.stream()
+                    .filter(refFile -> refFile.getName().equals(testedClass + "_jflap_automaton.jff")
+                    ).findFirst().get();
+            
+            JflapFileManipulator refRecall = new JflapFileManipulator(originalReferenceSpec);
             statistics.numberOfAcceptedTraces = numberOfAccepted;
+            statistics.recall = refRecall.calculateSequencesRecall(minedSeqs);
             testTraces.put(testedClass, statistics);
         }
 
@@ -155,7 +183,7 @@ public class PrecisionEvaluator {
             File statsFile = Paths.get(options.get(OUTPUT_OPTION), clazz + "_statistics.txt").toFile();
             TracePrecisionStatistics st = testTraces.get(clazz);
             double precision = st.numberOfAcceptedTraces * 1D / st.numberOfTraces;
-            String stats = String.format("%s;%s;%s;%f", st.className, st.numberOfTraces, st.numberOfAcceptedTraces, precision);
+            String stats = String.format("%s;%s;%s;%f;%f", st.className, st.numberOfTraces, st.numberOfAcceptedTraces, precision, st.recall);
 
             FileUtils.write(statsFile, stats);
 
