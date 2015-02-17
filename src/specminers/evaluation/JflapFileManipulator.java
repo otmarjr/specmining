@@ -304,45 +304,51 @@ public class JflapFileManipulator {
         return this.automaton.isFinalState(s);
     }
 
-    private String convertJffSequenceToDkBricsAutomatonSequence(List<String> sequence){
-       String convertedSeq;
-       
-       convertedSeq = sequence
-               .stream()
-               .filter(call -> this.labelsMappingJffToDK.containsKey(call))
-               .map(signature -> Character.toString(this.labelsMappingJffToDK.get(signature)))
-               .collect(Collectors.joining(""));
-       return convertedSeq;
+    private String convertJffSequenceToDkBricsAutomatonSequence(List<String> sequence) {
+        String convertedSeq;
+
+        convertedSeq = sequence
+                .stream()
+                .filter(call -> this.labelsMappingJffToDK.containsKey(call))
+                .map(signature -> Character.toString(this.labelsMappingJffToDK.get(signature)))
+                .collect(Collectors.joining(""));
+        return convertedSeq;
     }
 
     public double calculateSequencesRecall(Set<List<String>> minedSequences) {
         double recall;
         dk.brics.automaton.Automaton dkAut = this.getDkBricsAutomatonWithChars();
-        
+
         // Remove self loops
-        for (dk.brics.automaton.State q : dkAut.getStates()){
+        for (dk.brics.automaton.State q : dkAut.getStates()) {
             Set<dk.brics.automaton.Transition> toRemoveTransitions = new HashSet<>();
-            for (dk.brics.automaton.Transition t : q.getTransitions()){
-                if (t.getDest().equals(q)){
-                    toRemoveTransitions.add(t);
+            for (dk.brics.automaton.Transition t : q.getTransitions()) {
+                if (t.getDest().equals(q)) {
+                    //if (!q.isAccept()) {
+                        toRemoveTransitions.add(t);
+                    //}
                 }
             }
-            
+
             q.getTransitions().removeAll(toRemoveTransitions);
         }
-        
+
         int maximumSize = dkAut.getNumberOfStates();
-        if (maximumSize > 1){
+        if (maximumSize > 1) {
             maximumSize--;
         }
         Set<String> universe = dkAut.getStrings(maximumSize);
-        
+
         Set<String> minedSequencesConvertedToDkAlphabet = minedSequences.stream()
                 .map(seq -> convertJffSequenceToDkBricsAutomatonSequence(seq))
                 .collect(Collectors.toSet());
-        
-        recall = Sets.intersection(universe, minedSequencesConvertedToDkAlphabet).size()*1D/universe.size();
-        
+
+        double numberOfValidMinedSequences = minedSequencesConvertedToDkAlphabet.stream().filter(seq
+                -> universe.stream().anyMatch(us -> us.contains(seq)))
+                .count() * 1D;
+
+        recall = numberOfValidMinedSequences / universe.size();
+
         return recall;
     }
 

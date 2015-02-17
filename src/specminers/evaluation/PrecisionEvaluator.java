@@ -103,8 +103,10 @@ public class PrecisionEvaluator {
     static class TracePrecisionStatistics {
 
         public String className;
-        public int numberOfTraces;
-        public int numberOfAcceptedTraces;
+        public int numberOfExternalTraces;
+        public int numberOfAcceptedExternalTraces;
+        public int numberOfInternalTraces;
+        public int numberOfAcceptedInternalTraces;
         public double recall;
     }
 
@@ -134,11 +136,10 @@ public class PrecisionEvaluator {
             
             TracePrecisionStatistics statistics = new TracePrecisionStatistics();
             statistics.className = testedClass;
-            if (traces != null && !traces.isEmpty()) {
-                statistics.numberOfTraces = traces.size();
-            } else {
-                continue;
-            }
+            statistics.numberOfExternalTraces = 0;
+            statistics.numberOfAcceptedExternalTraces = 0;
+            statistics.numberOfInternalTraces = 0;
+            statistics.numberOfAcceptedInternalTraces = 0;
 
             JflapFileManipulator jff = new JflapFileManipulator(f);
             Set<List<String>> minedSeqs;
@@ -154,14 +155,19 @@ public class PrecisionEvaluator {
                         .collect(Collectors.toList());
 
                 minedSeqs.add(traceCalls);
+                
                 if (isExternalTest) {
+                    statistics.numberOfExternalTraces++;
                     if (jff.acceptsSequence(traceCalls)) {
+                        statistics.numberOfAcceptedExternalTraces++;
                         numberOfAccepted++;
                     }
                 } else {
+                    statistics.numberOfInternalTraces++;
                     // Tests for protection via exceptions being thrown
                     // should not lead to an accepting state!
                     if (!jff.acceptsSequence(traceCalls)) {
+                        statistics.numberOfAcceptedInternalTraces++;
                         numberOfAccepted++;
                     }
                 }
@@ -173,23 +179,30 @@ public class PrecisionEvaluator {
                     ).findFirst().get();
             
             JflapFileManipulator refRecall = new JflapFileManipulator(originalReferenceSpec);
-            statistics.numberOfAcceptedTraces = numberOfAccepted;
             statistics.recall = refRecall.calculateSequencesRecall(minedSeqs);
             testTraces.put(testedClass, statistics);
         }
 
         List<String> allStats = new LinkedList<>();
+        String header = "Class;External Traces;Accepted External Traces;External Precision;Internal Traces;Accepted Internal Traces;Internal Precision;Recall";
         for (String clazz : testTraces.keySet()) {
             File statsFile = Paths.get(options.get(OUTPUT_OPTION), clazz + "_statistics.txt").toFile();
             TracePrecisionStatistics st = testTraces.get(clazz);
-            double precision = st.numberOfAcceptedTraces * 1D / st.numberOfTraces;
-            String stats = String.format("%s;%s;%s;%f;%f", st.className, st.numberOfTraces, st.numberOfAcceptedTraces, precision, st.recall);
+            double externalPrecision = st.numberOfAcceptedExternalTraces * 1D / st.numberOfExternalTraces;
+            double internalPrecision = st.numberOfAcceptedInternalTraces * 1D / st.numberOfInternalTraces;
+            String stats = String.format("%s;%s;%s;%f;%s;%s;%f;%f", st.className, st.numberOfExternalTraces, st.numberOfAcceptedExternalTraces, externalPrecision
+                    ,st.numberOfInternalTraces, st.numberOfAcceptedInternalTraces, internalPrecision,
+                    st.recall);
 
-            FileUtils.write(statsFile, stats);
+            List<String> lines = new LinkedList();
+            lines.add(header);
+            lines.add(stats);
+            FileUtils.writeLines(statsFile, lines);
 
             allStats.add(stats);
         }
 
+        allStats.add(0,header);
         File allStatsFile = Paths.get(options.get(OUTPUT_OPTION), "full_statistics.txt").toFile();
 
         FileUtils.writeLines(allStatsFile, allStats);
