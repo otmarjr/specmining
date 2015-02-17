@@ -309,6 +309,7 @@ public class JflapFileManipulator {
        
        convertedSeq = sequence
                .stream()
+               .filter(call -> this.labelsMappingJffToDK.containsKey(call))
                .map(signature -> Character.toString(this.labelsMappingJffToDK.get(signature)))
                .collect(Collectors.joining(""));
        return convertedSeq;
