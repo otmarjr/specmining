@@ -90,6 +90,9 @@ public class TracesFilter {
 
     private static void copyTraceFilesToOutput(Map<String, Set<File>> filteredTests,
             String testsType, Map<String, String> programOptions) throws IOException {
+        
+        Map<String, Set<File>> testValidTraces = new HashMap<>();
+        
         for (String clazz : filteredTests.keySet()) {
             String fullyQualifiedClassName = String.format("%s.%s", programOptions.get(TARGET_PACKAGE), clazz);
             File parentFolder = Paths.get(programOptions.get(TRACES_PATH_OPTION), clazz).toFile();
@@ -101,6 +104,7 @@ public class TracesFilter {
                 Files.createDirectory(filteredOutputFolder);
             }
 
+            
             for (File testFile : filteredTests.get(clazz)) {
                 String traceFileName = testFile.getName().replace(".java", "_client_calls_trace.txt");
                 File traceFile = Paths.get(parentFolder.getAbsolutePath(), traceFileName).toFile();
@@ -108,11 +112,24 @@ public class TracesFilter {
                 if (traceFile.exists()) {
                     TestTraceFilter traceFilter = new TestTraceFilter(traceFile, fullyQualifiedClassName);
                     if (traceFilter.isValidTrace()) {
-                        FileUtils.copyFileToDirectory(traceFile, filteredOutputFolder.toFile());
+                        if (testValidTraces.get(clazz) == null){
+                            testValidTraces.put(clazz, new HashSet<>());
+                        }
+                        testValidTraces.get(clazz).add(traceFile);
                     }
                 }
             }
-
+        }
+        
+        testValidTraces = TestTraceFilter.removeSubTraces(testValidTraces, programOptions.get(TARGET_PACKAGE));
+        
+        for (String clazz : testValidTraces.keySet()){
+            Path filteredOutputFolder = Paths.get(programOptions.get(OUTPUT_OPTION), clazz, testsType).toAbsolutePath();
+            
+            for (File validTrace : testValidTraces.get(clazz)){
+                FileUtils.copyFileToDirectory(validTrace, filteredOutputFolder.toFile());
+            }
+            
             if (filteredOutputFolder.toFile().list().length == 0) {
                 FileUtils.deleteDirectory(filteredOutputFolder.toFile());
             }

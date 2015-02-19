@@ -7,9 +7,14 @@ package specminers.evaluation;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
@@ -91,23 +96,13 @@ public class MinedSpecsFilter {
         return false;
     }
     
-    // Some test cases intended for testing the API against bug not always
-    // contain full usage scenarios, because they are more focused on 
-    // setting up the minimal conditions requird to replicate a bug.
-    // Test cases oriented towards bugs are marked with @bug anottation, 
-    // according to JTreg docs.
-   private boolean notIntendedForBugReplication() throws IOException {
-        List<String> lines = FileUtils.readLines(unitTestFile);
-        
-        return lines.stream().allMatch(l->!l.contains("@bug"));
-    }
+   
 
     public boolean isStandAloneTest() throws IOException {
         // Inner classes of tests are marked with $ on their names!
         return !unitTestFile.getName().contains("$") && !FileUtils.readFileToString(unitTestFile).contains("$");
     }
     public boolean containsExternalAPITest() throws IOException {
-        return !testsLibraryProtectionViaExceptionThrowing() 
-                && notIntendedForBugReplication();
+        return !testsLibraryProtectionViaExceptionThrowing();
     }
 }
