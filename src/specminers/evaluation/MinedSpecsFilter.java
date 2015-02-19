@@ -90,12 +90,24 @@ public class MinedSpecsFilter {
 
         return false;
     }
+    
+    // Some test cases intended for testing the API against bug not always
+    // contain full usage scenarios, because they are more focused on 
+    // setting up the minimal conditions requird to replicate a bug.
+    // Test cases oriented towards bugs are marked with @bug anottation, 
+    // according to JTreg docs.
+   private boolean notIntendedForBugReplication() throws IOException {
+        List<String> lines = FileUtils.readLines(unitTestFile);
+        
+        return lines.stream().allMatch(l->!l.contains("@bug"));
+    }
 
     public boolean isStandAloneTest() throws IOException {
         // Inner classes of tests are marked with $ on their names!
         return !unitTestFile.getName().contains("$") && !FileUtils.readFileToString(unitTestFile).contains("$");
     }
     public boolean containsExternalAPITest() throws IOException {
-        return !testsLibraryProtectionViaExceptionThrowing();
+        return !testsLibraryProtectionViaExceptionThrowing() 
+                && notIntendedForBugReplication();
     }
 }
