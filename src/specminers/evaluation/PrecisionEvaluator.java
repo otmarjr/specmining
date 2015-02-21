@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javamop.parser.main_parser.ParseException;
 import org.apache.commons.io.FileUtils;
@@ -129,6 +130,11 @@ public class PrecisionEvaluator {
         // unit test traces.
         Map<String, TracePrecisionStatistics> testTraces = new HashMap<>();
 
+        Map<File, Set<String>> acceptedInternalTraces = new HashMap<>();
+        Map<File, Set<String>> rejectedInternalTraces = new HashMap<>();
+        Map<File, Set<String>> acceptedExternalTraces = new HashMap<>();
+        Map<File, Set<String>> rejectedExternalTraces = new HashMap<>();
+        
         for (File f : files) {
 
             String testedClass = f.getName().replace("_jflap_automaton_package_extended_package_full_merged_spec.jff", "");
@@ -150,6 +156,11 @@ public class PrecisionEvaluator {
             Set<List<String>> minedSeqs;
             minedSeqs = new HashSet<>();
 
+            acceptedInternalTraces.put(f, new HashSet<>());
+            rejectedInternalTraces.put(f, new HashSet<>());
+            acceptedExternalTraces.put(f, new HashSet<>());
+            rejectedExternalTraces.put(f, new HashSet<>());
+            
             for (File t : traces) {
                 String fullTrace = FileUtils.readFileToString(t);
                 boolean isExternalTest = t.getAbsolutePath().contains("external");
@@ -164,6 +175,10 @@ public class PrecisionEvaluator {
                     statistics.numberOfExternalTraces++;
                     if (jff.acceptsSequence(traceCalls)) {
                         statistics.numberOfAcceptedExternalTraces++;
+                        acceptedExternalTraces.get(f).add(t.getName() + ": " + fullTrace);
+                    }
+                    else{
+                        rejectedExternalTraces.get(f).add(t.getName() + ": " + fullTrace);
                     }
                 } else {
                     statistics.numberOfInternalTraces++;
@@ -171,6 +186,10 @@ public class PrecisionEvaluator {
                     // should not lead to an accepting state!
                     if (!jff.acceptsSequence(traceCalls)) {
                         statistics.numberOfAcceptedInternalTraces++;
+                        acceptedInternalTraces.get(f).add(t.getName() + ": " + fullTrace);
+                    }
+                    else{
+                        rejectedInternalTraces.get(f).add(t.getName() + ": " + fullTrace);
                     }
                 }
             }
@@ -208,6 +227,50 @@ public class PrecisionEvaluator {
         File allStatsFile = Paths.get(options.get(OUTPUT_OPTION), "full_statistics.txt").toFile();
 
         FileUtils.writeLines(allStatsFile, allStats);
+        
+        List<String> allDetailsLines = new LinkedList<>();
+        
+        for (File f : files) {
+
+            String testedClass = f.getName().replace("_jflap_automaton_package_extended_package_full_merged_spec.jff", "");
+            File detailsFile = Paths.get(options.get(OUTPUT_OPTION), testedClass + "_details.txt").toFile();
+            List<String> lines = new LinkedList<>();
+            lines.add(IntStream.range(0, 150).boxed().map(i -> "*").collect(Collectors
+            .joining()));
+            lines.add(String.format("Details for class: %s",testedClass));
+            lines.add(IntStream.range(0, 150).boxed().map(i -> "*").collect(Collectors
+            .joining()));
+            lines.add(IntStream.range(0, 30).boxed().map(i -> "=").collect(Collectors
+            .joining()));
+            lines.add("Accepted external traces");
+            lines.add(IntStream.range(0, 30).boxed().map(i -> "=").collect(Collectors
+            .joining()));
+            acceptedExternalTraces.get(f).forEach(seq -> lines.add(seq));
+            lines.add(IntStream.range(0, 30).boxed().map(i -> "=").collect(Collectors
+            .joining()));
+            lines.add("Rejected external traces");
+            lines.add(IntStream.range(0, 30).boxed().map(i -> "=").collect(Collectors
+            .joining()));
+            rejectedExternalTraces.get(f).forEach(seq -> lines.add(seq));
+            lines.add(IntStream.range(0, 30).boxed().map(i -> "=").collect(Collectors
+            .joining()));
+            lines.add("Accepted internal traces");
+            lines.add(IntStream.range(0, 30).boxed().map(i -> "=").collect(Collectors
+            .joining()));
+            acceptedInternalTraces.get(f).forEach(seq -> lines.add(seq));
+            lines.add(IntStream.range(0, 30).boxed().map(i -> "=").collect(Collectors
+            .joining()));
+            lines.add("Rejected internal traces");
+            lines.add(IntStream.range(0, 30).boxed().map(i -> "=").collect(Collectors
+            .joining()));
+            rejectedInternalTraces.get(f).forEach(seq -> lines.add(seq));
+            lines.add("");
+            FileUtils.writeLines(detailsFile, lines);
+            allDetailsLines.addAll(lines);
+        }
+        
+        File allDetailsFile = Paths.get(options.get(OUTPUT_OPTION), "full_details.txt").toFile();
+        FileUtils.writeLines(allDetailsFile, allDetailsLines);
 
     }
 }
