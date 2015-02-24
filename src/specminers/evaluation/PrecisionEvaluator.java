@@ -135,6 +135,7 @@ public class PrecisionEvaluator {
         Map<File, Set<String>> acceptedExternalTraces = new HashMap<>();
         Map<File, Set<String>> rejectedExternalTraces = new HashMap<>();
         
+        Set<File> filesWithTraces = new HashSet<>();
         for (File f : files) {
 
             String testedClass = f.getName().replace("_jflap_automaton_package_extended_package_full_merged_spec.jff", "");
@@ -143,6 +144,7 @@ public class PrecisionEvaluator {
             if (!tracesFolder.isDirectory() || !tracesFolder.exists()){
                 continue;
             }
+            filesWithTraces.add(f);
             Collection<File> traces = FileUtils.listFiles(tracesFolder, traceFileExtension, true);
             
             TracePrecisionStatistics statistics = new TracePrecisionStatistics();
@@ -230,7 +232,7 @@ public class PrecisionEvaluator {
         
         List<String> allDetailsLines = new LinkedList<>();
         
-        for (File f : files) {
+        for (File f : filesWithTraces) {
 
             String testedClass = f.getName().replace("_jflap_automaton_package_extended_package_full_merged_spec.jff", "");
             File detailsFile = Paths.get(options.get(OUTPUT_OPTION), testedClass + "_details.txt").toFile();
@@ -245,7 +247,8 @@ public class PrecisionEvaluator {
             lines.add("Accepted external traces");
             lines.add(IntStream.range(0, 30).boxed().map(i -> "=").collect(Collectors
             .joining()));
-            acceptedExternalTraces.get(f).forEach(seq -> lines.add(seq));
+            acceptedExternalTraces.get(f)
+                    .forEach(seq -> lines.add(seq));
             lines.add(IntStream.range(0, 30).boxed().map(i -> "=").collect(Collectors
             .joining()));
             lines.add("Rejected external traces");
