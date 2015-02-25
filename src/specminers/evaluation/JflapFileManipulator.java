@@ -112,15 +112,47 @@ public class JflapFileManipulator {
 
             State firstStateAfterInstantiation = instatiationTransition.getToState();
 
+            Set<String> upperCases = new HashSet<>();
+
+            for (int i = 0; i < 26; i++) {
+                char upper = (char) ('A' + i);
+                upperCases.add(Character.toString(upper));
+            }
+            
+            Set<String> getterMethodWildCards = upperCases.stream()
+                    .map(ul -> ".get" + ul).collect(Collectors.toSet());
+            
+            Set<String> setterMethodWildCards = upperCases.stream()
+                    .map(ul -> ".set" + ul).collect(Collectors.toSet());
+            
+            Set<String> specialGetterIs = upperCases.stream()
+                    .map(ul -> ".is" + ul).collect(Collectors.toSet());
+            
+            Set<String> specialGetterTo = upperCases.stream()
+                    .map(ul -> ".to" + ul).collect(Collectors.toSet());
+            
             Set<String> getterAndSettersTransitions = transitions.stream()
-                    .filter(t -> t.contains(".get") || t.startsWith(".set"))
+                    .filter(t -> getterMethodWildCards.stream().anyMatch(m -> t.contains(m)) 
+                            || setterMethodWildCards.stream().anyMatch(m -> t.contains(m))
+                            || t.contains(".hashCode") || t.contains(".equals")
+                            || specialGetterIs.stream().anyMatch(m -> t.contains(m)) 
+                            || specialGetterTo.stream().anyMatch(m -> t.contains(m)))
                     .collect(Collectors.toSet());
 
             for (String methodSig : getterAndSettersTransitions) {
                 Set<FSATransition> acceptedMethodSigs = getFSATransitionsFromState(firstStateAfterInstantiation);
 
-                if (!acceptedMethodSigs.stream().anyMatch(t -> t.getLabel().equalsIgnoreCase(methodSig))) {
+                if (!acceptedMethodSigs.stream().anyMatch(t -> t.getLabel().equalsIgnoreCase(methodSig) && t.getToState().equals(stateForGettersAndSettersOnly))) {
                     FSATransition fsaT = new FSATransition(firstStateAfterInstantiation, stateForGettersAndSettersOnly, methodSig);
+                    FSATransition fsaTransFromInit = new FSATransition(this.automaton.getInitialState(), stateForGettersAndSettersOnly, methodSig);
+                    this.automaton.addTransition(fsaT);
+                    this.automaton.addTransition(fsaTransFromInit);
+                }
+                
+                acceptedMethodSigs = getFSATransitionsFromState(stateForGettersAndSettersOnly);
+                
+                if (!acceptedMethodSigs.stream().anyMatch(t -> t.getLabel().equalsIgnoreCase(methodSig) && t.getToState().equals(stateForGettersAndSettersOnly))) {
+                    FSATransition fsaT = new FSATransition(stateForGettersAndSettersOnly, stateForGettersAndSettersOnly, methodSig);
                     this.automaton.addTransition(fsaT);
                 }
             }
@@ -171,13 +203,13 @@ public class JflapFileManipulator {
 
     private Set<String> getAllExpansionsForSequenceWithStarWildcard(String sequence) {
         Set<String> expansions = new HashSet<>();
-        
+
         int wildcardIndex = sequence.indexOf("*");
-        if (wildcardIndex == -1){
+        if (wildcardIndex == -1) {
             expansions.add(sequence);
             return expansions;
         }
-        
+
         int endIndexPreviousMethod = sequence.substring(0, wildcardIndex - 1).lastIndexOf(")");
         String beforeWildcardMethod = sequence.substring(0, endIndexPreviousMethod + 1);
         String afterWildcard = "";
@@ -215,7 +247,7 @@ public class JflapFileManipulator {
         Set<String> expansions = new HashSet<>();
 
         int wildcardIndex = sequence.indexOf("+");
-        if (wildcardIndex == -1){
+        if (wildcardIndex == -1) {
             expansions.add(sequence);
             return expansions;
         }
@@ -259,18 +291,17 @@ public class JflapFileManipulator {
         List<String> forbiddenWithExpandedSubtypes = new LinkedList<>();
 
         for (String seq : forbiddenSequences) {
-            if (seq.contains(allSubtypesWildCard)){
+            if (seq.contains(allSubtypesWildCard)) {
                 List<String> components = Arrays.asList(seq.split("\\s"));
                 Set<String> currentExpansions = getAllExpansionsForSequenceWithSubtypesWildcard(components.get(0));
-                
-                for (int i=1;i<components.size();i++){
+
+                for (int i = 1; i < components.size(); i++) {
                     Set<String> componentExpansions = getAllExpansionsForSequenceWithSubtypesWildcard(components.get(i));
-                    Set<List<String>> joinedSets = Sets.cartesianProduct(currentExpansions,componentExpansions);
+                    Set<List<String>> joinedSets = Sets.cartesianProduct(currentExpansions, componentExpansions);
                     currentExpansions = joinedSets.stream().map(l -> l.stream().collect(Collectors.joining(" "))).collect(Collectors.toSet());
                 }
                 forbiddenWithExpandedSubtypes.addAll(currentExpansions);
-            }
-            else{
+            } else {
                 forbiddenWithExpandedSubtypes.add(seq);
             }
         }
@@ -278,18 +309,17 @@ public class JflapFileManipulator {
         final String starWildCard = "*";
 
         for (String seq : forbiddenWithExpandedSubtypes) {
-            if (seq.contains(starWildCard)){
+            if (seq.contains(starWildCard)) {
                 List<String> components = Arrays.asList(seq.split("\\s"));
                 Set<String> currentExpansions = getAllExpansionsForSequenceWithStarWildcard(components.get(0));
-                
-                for (int i=1;i<components.size();i++){
+
+                for (int i = 1; i < components.size(); i++) {
                     Set<String> componentExpansions = getAllExpansionsForSequenceWithStarWildcard(components.get(i));
-                    Set<List<String>> joinedSets = Sets.cartesianProduct(currentExpansions,componentExpansions);
+                    Set<List<String>> joinedSets = Sets.cartesianProduct(currentExpansions, componentExpansions);
                     currentExpansions = joinedSets.stream().map(l -> l.stream().collect(Collectors.joining(" "))).collect(Collectors.toSet());
                 }
                 expanded.addAll(currentExpansions);
-            }
-            else{
+            } else {
                 expanded.add(seq);
             }
         }

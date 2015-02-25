@@ -65,6 +65,20 @@ public class GetMethodsViaRegexExtractor {
         return getPublicMethodsViaRegex(methodSigPattern);
     }
 
+    public boolean isPublicClass() throws IOException {
+        String className = this.javaFile.getName().replace(".java", "");
+
+        String textContent = FileUtils.readFileToString(javaFile);
+
+        String publicClassPattern = "public[\\s\\t]+(static|final|native|synchronized|abstract|threadsafe|transient)*[\\s\\t]+class[\\t\\s]+" + className;
+
+        Pattern p = Pattern.compile(publicClassPattern);
+        Matcher m = p.matcher(textContent);
+        boolean foundPublicClassDeclaration = m.find();
+        return foundPublicClassDeclaration;
+
+    }
+
     public String getBaseClass() throws IOException {
         String extendsPattern = "[\\s\\t]+extends[\\s\\t]([A-Z_]($[A-Z_]|[\\w_])*)";
 
