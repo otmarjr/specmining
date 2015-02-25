@@ -171,8 +171,13 @@ public class JflapFileManipulator {
 
     private Set<String> getAllExpansionsForSequenceWithStarWildcard(String sequence) {
         Set<String> expansions = new HashSet<>();
-
+        
         int wildcardIndex = sequence.indexOf("*");
+        if (wildcardIndex == -1){
+            expansions.add(sequence);
+            return expansions;
+        }
+        
         int endIndexPreviousMethod = sequence.substring(0, wildcardIndex - 1).lastIndexOf(")");
         String beforeWildcardMethod = sequence.substring(0, endIndexPreviousMethod + 1);
         String afterWildcard = "";
@@ -210,6 +215,10 @@ public class JflapFileManipulator {
         Set<String> expansions = new HashSet<>();
 
         int wildcardIndex = sequence.indexOf("+");
+        if (wildcardIndex == -1){
+            expansions.add(sequence);
+            return expansions;
+        }
         int endIndexPreviousMethod = sequence.substring(0, wildcardIndex - 1).lastIndexOf(")");
         String beforeWildcardMethod = sequence.substring(0, endIndexPreviousMethod + 1);
         String afterWildcard = "";
@@ -242,29 +251,46 @@ public class JflapFileManipulator {
         return expansions;
     }
 
-    private List<String> expandForbiddenSequencesWithWildCards(List<String> forbiddenSequences) {
-        List<String> expanded = new LinkedList<>();
+    private Set<String> expandForbiddenSequencesWithWildCards(List<String> forbiddenSequences) {
+        Set<String> expanded = new HashSet<>();
 
         final String allSubtypesWildCard = "+";
 
         List<String> forbiddenWithExpandedSubtypes = new LinkedList<>();
 
         for (String seq : forbiddenSequences) {
-            if (!seq.contains(allSubtypesWildCard)) {
+            if (seq.contains(allSubtypesWildCard)){
+                List<String> components = Arrays.asList(seq.split("\\s"));
+                Set<String> currentExpansions = getAllExpansionsForSequenceWithSubtypesWildcard(components.get(0));
+                
+                for (int i=1;i<components.size();i++){
+                    Set<String> componentExpansions = getAllExpansionsForSequenceWithSubtypesWildcard(components.get(i));
+                    Set<List<String>> joinedSets = Sets.cartesianProduct(currentExpansions,componentExpansions);
+                    currentExpansions = joinedSets.stream().map(l -> l.stream().collect(Collectors.joining(" "))).collect(Collectors.toSet());
+                }
+                forbiddenWithExpandedSubtypes.addAll(currentExpansions);
+            }
+            else{
                 forbiddenWithExpandedSubtypes.add(seq);
-            } else {
-                forbiddenWithExpandedSubtypes.addAll(getAllExpansionsForSequenceWithSubtypesWildcard(seq));
             }
         }
 
         final String starWildCard = "*";
 
         for (String seq : forbiddenWithExpandedSubtypes) {
-            if (!seq.contains(starWildCard)) {
+            if (seq.contains(starWildCard)){
+                List<String> components = Arrays.asList(seq.split("\\s"));
+                Set<String> currentExpansions = getAllExpansionsForSequenceWithStarWildcard(components.get(0));
+                
+                for (int i=1;i<components.size();i++){
+                    Set<String> componentExpansions = getAllExpansionsForSequenceWithStarWildcard(components.get(i));
+                    Set<List<String>> joinedSets = Sets.cartesianProduct(currentExpansions,componentExpansions);
+                    currentExpansions = joinedSets.stream().map(l -> l.stream().collect(Collectors.joining(" "))).collect(Collectors.toSet());
+                }
+                expanded.addAll(currentExpansions);
+            }
+            else{
                 expanded.add(seq);
-            } else {
-                Set<String> allExps = getAllExpansionsForSequenceWithStarWildcard(seq);
-                expanded.addAll(allExps);
             }
         }
 
@@ -283,7 +309,7 @@ public class JflapFileManipulator {
 
         dk.brics.automaton.Automaton dkAut = this.getDkBricsAutomatonWithChars();
 
-        List<String> expandedForbiddenSeqs = expandForbiddenSequencesWithWildCards(forbiddenSequences);
+        Set<String> expandedForbiddenSeqs = expandForbiddenSequencesWithWildCards(forbiddenSequences);
 
         String currentPackageName = this.getPackageName(this.correspondingClass);
         expandedForbiddenSeqs = expandedForbiddenSeqs.stream()
@@ -292,7 +318,7 @@ public class JflapFileManipulator {
                         .stream().allMatch(signature
                                 -> signature.startsWith(currentPackageName)
                         ))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
         Set<String> encodedForbiddenSeqs = new HashSet<>();
 
