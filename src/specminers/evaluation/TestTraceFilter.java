@@ -36,14 +36,20 @@ public class TestTraceFilter {
         this.classPackage = testedClass.substring(0, testedClass.lastIndexOf("."));
     }
     
-    private boolean containsOnlyCallsToTargetClass() throws IOException{
+    private boolean containsOnlyCallsToTargetClassPackage() throws IOException{
         return Stream.of(FileUtils.readFileToString(file).split("\\)"))
                 .allMatch(call -> call.startsWith(this.classPackage));
     }
     
+    private boolean containsAtLeastOneCallToTargetClass() throws IOException{
+        return Stream.of(FileUtils.readFileToString(file).split("\\)"))
+                .anyMatch(call -> call.startsWith(this.testedClass));
+    }
+    
     public boolean isValidTrace(){
         try {
-            return containsOnlyCallsToTargetClass();
+            return containsOnlyCallsToTargetClassPackage() 
+                    && containsAtLeastOneCallToTargetClass();
         } catch (IOException ex) {
             Logger.getLogger(TestTraceFilter.class.getName()).log(Level.SEVERE, null, ex);
             return false;

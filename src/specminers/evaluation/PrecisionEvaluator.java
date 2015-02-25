@@ -41,7 +41,7 @@ public class PrecisionEvaluator {
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
-        /* Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\pruned_experimental\net" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\net"
+        /* Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\pruned_experimental\net" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\net_v2.0"
         Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\pruned_experimental\\util" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-util-pradel" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\\util" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\\util"
                 */
         if (options.containsKey(HELP_OPTION)) {
