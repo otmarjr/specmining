@@ -13,6 +13,7 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Sets;
 import dk.brics.automaton.RegExp;
 import file.XMLCodec;
+import java.awt.Point;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -43,6 +44,7 @@ public class JflapFileManipulator {
     File jffFile;
     FiniteStateAutomaton automaton;
     private String correspondingClass;
+    private State stateForGettersAndSettersOnly;
 
     public JflapFileManipulator(String jffPath) {
         this(new File(jffPath));
@@ -50,6 +52,7 @@ public class JflapFileManipulator {
 
     public JflapFileManipulator(File jff) {
         this.jffFile = jff;
+        this.stateForGettersAndSettersOnly = null;
     }
 
     private void parseAutomaton() {
@@ -80,7 +83,7 @@ public class JflapFileManipulator {
     public void includeTransitions(Map<String, Set<String>> publicAPI, boolean restrictOnlyToClassMethods) {
         this.parseAutomaton();
         if (restrictOnlyToClassMethods) {
-            this.addTransitionsFromClass(correspondingClass, publicAPI.getOrDefault(correspondingClass, null));
+            this.addTransitionsFromClass(publicAPI.getOrDefault(correspondingClass, null));
         } else {
             String currentClassPackage = getPackageName(correspondingClass);
 
@@ -88,7 +91,39 @@ public class JflapFileManipulator {
                     .filter(k -> getPackageName(k).equals(currentClassPackage))
                     .collect(Collectors.toList());
 
-            samePackageClasses.forEach(c -> addTransitionsFromClass(c, publicAPI.getOrDefault(c, null)));
+            samePackageClasses.forEach(c -> addGettersAndSettersAfterInstantiation(publicAPI.getOrDefault(c, null)));
+            samePackageClasses.forEach(c -> addTransitionsFromClass(publicAPI.getOrDefault(c, null)));
+        }
+
+    }
+
+    private void addGettersAndSettersAfterInstantiation(Set<String> transitions) {
+        if (transitions != null && !transitions.isEmpty()) {
+            if (stateForGettersAndSettersOnly == null) {
+                State initialSt = this.automaton.getInitialState();
+                stateForGettersAndSettersOnly = this.automaton.createState(initialSt.getPoint());
+                this.automaton.addFinalState(stateForGettersAndSettersOnly);
+            }
+
+            FSATransition instatiationTransition = Stream.of(this.automaton.getFSATransitions())
+                    .filter(t -> t.getFromState().equals(this.automaton.getInitialState()) && t.getLabel().contains("<init>"))
+                    .collect(Collectors.toList())
+                    .get(0);
+
+            State firstStateAfterInstantiation = instatiationTransition.getToState();
+
+            Set<String> getterAndSettersTransitions = transitions.stream()
+                    .filter(t -> t.contains(".get") || t.startsWith(".set"))
+                    .collect(Collectors.toSet());
+
+            for (String methodSig : getterAndSettersTransitions) {
+                Set<FSATransition> acceptedMethodSigs = getFSATransitionsFromState(firstStateAfterInstantiation);
+
+                if (!acceptedMethodSigs.stream().anyMatch(t -> t.getLabel().equalsIgnoreCase(methodSig))) {
+                    FSATransition fsaT = new FSATransition(firstStateAfterInstantiation, stateForGettersAndSettersOnly, methodSig);
+                    this.automaton.addTransition(fsaT);
+                }
+            }
         }
     }
 
@@ -97,15 +132,17 @@ public class JflapFileManipulator {
                 .collect(Collectors.toSet());
     }
 
-    private void addTransitionsFromClass(String className, Set<String> transitions) {
+    private void addTransitionsFromClass(Set<String> transitions) {
         if (transitions != null) {
             for (State st : this.automaton.getStates()) {
-                for (String methodSig : transitions) {
-                    Set<FSATransition> acceptedMethodSigs = getFSATransitionsFromState(st);
+                if (!st.equals(automaton.getInitialState()) && !st.equals(this.stateForGettersAndSettersOnly)) {
+                    for (String methodSig : transitions) {
+                        Set<FSATransition> acceptedMethodSigs = getFSATransitionsFromState(st);
 
-                    if (!acceptedMethodSigs.stream().anyMatch(t -> t.getLabel().equalsIgnoreCase(methodSig))) {
-                        FSATransition fsaT = new FSATransition(st, st, methodSig);
-                        this.automaton.addTransition(fsaT);
+                        if (!acceptedMethodSigs.stream().anyMatch(t -> t.getLabel().equalsIgnoreCase(methodSig))) {
+                            FSATransition fsaT = new FSATransition(st, st, methodSig);
+                            this.automaton.addTransition(fsaT);
+                        }
                     }
                 }
             }
@@ -325,7 +362,7 @@ public class JflapFileManipulator {
             for (dk.brics.automaton.Transition t : q.getTransitions()) {
                 if (t.getDest().equals(q)) {
                     //if (!q.isAccept()) {
-                        toRemoveTransitions.add(t);
+                    toRemoveTransitions.add(t);
                     //}
                 }
             }
