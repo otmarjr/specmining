@@ -135,7 +135,7 @@ public class JflapFileManipulator {
     private void addTransitionsFromClass(Set<String> transitions) {
         if (transitions != null) {
             for (State st : this.automaton.getStates()) {
-                if (!st.equals(automaton.getInitialState()) && !st.equals(this.stateForGettersAndSettersOnly)) {
+                if (!st.equals(this.stateForGettersAndSettersOnly)) {
                     for (String methodSig : transitions) {
                         Set<FSATransition> acceptedMethodSigs = getFSATransitionsFromState(st);
 

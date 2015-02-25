@@ -33,6 +33,7 @@ public class PradelRefSpecsExtender {
     
     public static void main(String[] args) throws IOException{
         // Sample execution args:  -s "E:\openjdk-6-src-b33-14_oct_2014.tar\jdk\src\share\classes\java\net" -j "C:\Users\Otmar\dropbox\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\dropbox\SpecMining\dataset\specs\jflap_extended\net_v2.0"
+        // another example -s "E:\openjdk-6-src-b33-14_oct_2014.tar\jdk\src\share\classes\java\\util" -j "C:\Users\Otmar\dropbox\SpecMining\dataset\specs\jflap\\util" -o "C:\Users\Otmar\dropbox\SpecMining\dataset\specs\jflap_extended\\util_v2.0"
         // or -s "/Users/otmarpereira/Documents/openjdk6-b33/jdk/src/share/classes/java/net/" -j "/Users/otmarpereira/Documents/mute_dataset/specs/jflap/net" -o "/Users/otmarpereira/Documents/mute_dataset/specs/jflap_extended/net"
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
