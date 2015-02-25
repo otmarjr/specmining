@@ -117,6 +117,13 @@ public class TracesFilter {
                         }
                         testValidTraces.get(clazz).add(traceFile);
                     }
+                    else{
+                        if (traceFile.exists()){
+                            if (!traceFile.delete()){
+                                throw new RuntimeException("Not possible to delete invalid trace file " + traceFileName);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -125,6 +132,7 @@ public class TracesFilter {
         
         for (String clazz : testValidTraces.keySet()){
             Path filteredOutputFolder = Paths.get(programOptions.get(OUTPUT_OPTION), clazz, testsType).toAbsolutePath();
+            FileUtils.deleteDirectory(filteredOutputFolder.toFile());
             
             for (File validTrace : testValidTraces.get(clazz)){
                 FileUtils.copyFileToDirectory(validTrace, filteredOutputFolder.toFile());

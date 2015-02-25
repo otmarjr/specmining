@@ -43,7 +43,7 @@ public class TestTraceFilter {
     
     private boolean containsAtLeastOneCallToTargetClass() throws IOException{
         return Stream.of(FileUtils.readFileToString(file).split("\\)"))
-                .anyMatch(call -> call.startsWith(this.testedClass));
+                .anyMatch(call -> call.startsWith(this.testedClass + ".") );
     }
     
     public boolean isValidTrace(){
