@@ -41,8 +41,8 @@ public class PrecisionEvaluator {
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
-        /* Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\net_v2.0" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel_v2.0" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\net_v2.0"
-        Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\pruned_experimental\\util" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-util-pradel_v2.0" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\\util" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\\util_v2.0"
+        /* Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\net_v2.0" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel_v2.1" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\net_v2.1"
+        Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\pruned_experimental\\util" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-util-pradel_v2.1" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\\util" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\\util_v2.1"
                 */
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
@@ -144,8 +144,14 @@ public class PrecisionEvaluator {
             if (!tracesFolder.isDirectory() || !tracesFolder.exists()){
                 continue;
             }
-            filesWithTraces.add(f);
+            
             Collection<File> traces = FileUtils.listFiles(tracesFolder, traceFileExtension, true);
+            
+            if (traces.isEmpty()){
+                continue;
+            }
+            
+            filesWithTraces.add(f);
             
             TracePrecisionStatistics statistics = new TracePrecisionStatistics();
             statistics.className = testedClass;
@@ -201,28 +207,28 @@ public class PrecisionEvaluator {
                     .filter(refFile -> refFile.getName().equals(testedClass + "_jflap_automaton.jff")
                     ).findFirst().get();
             
-            JflapFileManipulator refRecall = new JflapFileManipulator(originalReferenceSpec);
-            statistics.recall = 0D;//refRecall.calculateSequencesRecall(minedSeqs);
             testTraces.put(testedClass, statistics);
         }
 
         List<String> allStats = new LinkedList<>();
-        String header = "Class;External Traces;Accepted External Traces;External Precision;Internal Traces;Accepted Internal Traces;Internal Precision;Recall";
+        String header = "Class;External Traces;Accepted External Traces;External Precision;Internal Traces;Accepted Internal Traces;Internal Precision";
         for (String clazz : testTraces.keySet()) {
             File statsFile = Paths.get(options.get(OUTPUT_OPTION), clazz + "_statistics.txt").toFile();
             TracePrecisionStatistics st = testTraces.get(clazz);
             double externalPrecision = st.numberOfAcceptedExternalTraces * 1D / st.numberOfExternalTraces;
             double internalPrecision = st.numberOfAcceptedInternalTraces * 1D / st.numberOfInternalTraces;
-            String stats = String.format("%s;%s;%s;%f;%s;%s;%f;%f", st.className, st.numberOfExternalTraces, st.numberOfAcceptedExternalTraces, externalPrecision
-                    ,st.numberOfInternalTraces, st.numberOfAcceptedInternalTraces, internalPrecision,
-                    st.recall);
+            String stats = String.format("%s;%s;%s;%f;%s;%s;%f", st.className, st.numberOfExternalTraces, st.numberOfAcceptedExternalTraces, externalPrecision
+                    ,st.numberOfInternalTraces, st.numberOfAcceptedInternalTraces, internalPrecision);
 
             List<String> lines = new LinkedList();
             lines.add(header);
             lines.add(stats);
             FileUtils.writeLines(statsFile, lines);
 
-            allStats.add(stats);
+            if (st.numberOfExternalTraces > 0 || st.numberOfInternalTraces > 0){
+                allStats.add(stats);
+            }
+            
         }
 
         allStats.add(0,header);
