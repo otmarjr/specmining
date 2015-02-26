@@ -41,15 +41,23 @@ public class TestTraceFilter {
                 .allMatch(call -> call.startsWith(this.classPackage));
     }
     
-    private boolean containsAtLeastOneCallToTargetClass() throws IOException{
-        return Stream.of(FileUtils.readFileToString(file).split("\\)"))
-                .anyMatch(call -> call.startsWith(this.testedClass + ".") );
+    private boolean containsAtLeastOneCallToTargetClassMethod() throws IOException{
+        // Checks if a instance is created
+        String constructorPattern = this.testedClass + ".<init>";
+        if(Stream.of(FileUtils.readFileToString(file).split("\\)"))
+                .anyMatch(call -> call.startsWith(constructorPattern)))
+        {
+            return Stream.of(FileUtils.readFileToString(file).split("\\)"))
+                .anyMatch(call -> call.startsWith(this.testedClass + ".") && !call.startsWith(constructorPattern));
+        }
+        return false;
+                
     }
     
     public boolean isValidTrace(){
         try {
             return containsOnlyCallsToTargetClassPackage() 
-                    && containsAtLeastOneCallToTargetClass();
+                    && containsAtLeastOneCallToTargetClassMethod();
         } catch (IOException ex) {
             Logger.getLogger(TestTraceFilter.class.getName()).log(Level.SEVERE, null, ex);
             return false;
