@@ -28,6 +28,7 @@ public class ForbiddenSequencesExtractor {
     private final static String HELP_OPTION = "-h";
     private final static String OUTPUT_OPTION = "-o";
 
+    // Sample arguments execution
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
