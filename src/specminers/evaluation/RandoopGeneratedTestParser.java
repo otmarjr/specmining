@@ -94,7 +94,9 @@ public class RandoopGeneratedTestParser {
                                 openBraces.add("{");
                             }
                             if (line.charAt(j) == '}') {
-                                openBraces.remove();
+                                if (!openBraces.isEmpty()){
+                                    openBraces.pop();
+                                }
                             }
                         }
                     }

@@ -87,6 +87,7 @@ public class RandoopAnalyzer {
 
         List<String> lines = new LinkedList<>();
         for (File file : originalSpecFiles) {
+            if (file.getName().equals("RandoopTest.java")) continue;
             RandoopGeneratedTestParser ra = new RandoopGeneratedTestParser(file);
             
             for (String test : ra.getTestMethodDetails().keySet()){
