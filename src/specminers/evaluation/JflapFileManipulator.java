@@ -17,6 +17,7 @@ import java.awt.Point;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -465,5 +466,155 @@ public class JflapFileManipulator {
         }
 
         return s;
+    }
+
+    BigInteger getNumberOfAcceptedStringsRoughly() {
+        dk.brics.automaton.Automaton dkAut = this.getDkBricsAutomatonWithChars();
+        
+        BigInteger total = BigInteger.ONE;
+        
+        for (dk.brics.automaton.State q : dkAut.getStates()) {
+            total = total.multiply(BigInteger.valueOf(q.getTransitions().size()));
+        }
+        
+        return total;
+        
+    }
+    
+    AutomataStats getAutomataStats() {
+        BigInteger totalScenarios = BigInteger.ONE;
+        
+        AutomataStats stats = new AutomataStats();
+        
+        this.parseAutomaton();
+        
+        dk.brics.automaton.Automaton dkAut = this.getDkBricsAutomatonWithChars();
+        
+        Map<dk.brics.automaton.State, Long> selfLoopsPerState = new HashMap();
+        
+        
+        for (dk.brics.automaton.State q : dkAut.getStates()) {
+            Set<dk.brics.automaton.Transition> toRemoveTransitions = new HashSet<>();
+            for (dk.brics.automaton.Transition t : q.getTransitions()) {
+                if (t.getDest().equals(q)) {
+                    //if (!q.isAccept()) {
+                    toRemoveTransitions.add(t);
+                    //}
+                    if (selfLoopsPerState.containsKey(q)){
+                        selfLoopsPerState.put(q, selfLoopsPerState.get(q)+1);
+                    }
+                    else{
+                        selfLoopsPerState.put(q, 1l);
+                    }
+                }
+            }
+
+            q.getTransitions().removeAll(toRemoveTransitions);
+        }
+        
+        Integer shortestScenarioSize = Integer.MAX_VALUE;
+        Integer longestSize = 0;
+        
+        String shortestExample = "";
+        String longestExample = "";
+        
+        for (int i=2;i<dkAut.getNumberOfStates();i++){
+            try
+            {
+                Set<String> acceptedStringsOfSize = dkAut.getStrings(i);
+                
+                if (!acceptedStringsOfSize.isEmpty()){
+                    
+                    if (i < shortestScenarioSize){
+                        shortestScenarioSize = i;
+                        shortestExample = acceptedStringsOfSize.iterator().next();
+                        List<String> events = new LinkedList<>();
+                        
+                        for (int j=0;j<shortestExample.length();j++){
+                            events.add(this.labelsDkLabelToJffLabel.get(shortestExample.charAt(j)));
+                        }
+                        
+                        shortestExample = events.stream().collect(Collectors.joining(", "));
+                    }
+                    
+                    if (i > longestSize){
+                        longestSize = i;
+                        longestExample = acceptedStringsOfSize.iterator().next();
+                        
+                        List<String> events = new LinkedList<>();
+                        
+                        for (int j=0;j<longestExample.length();j++){
+                            events.add(this.labelsDkLabelToJffLabel.get(longestExample.charAt(j)));
+                        }
+                        
+                        longestExample = events.stream().collect(Collectors.joining(", "));
+                    }
+                    
+                    totalScenarios = totalScenarios.add(BigInteger.valueOf(dkAut.getStrings(i).size()));
+                }
+                
+            }
+            catch (OutOfMemoryError error){
+                totalScenarios = getNumberOfAcceptedStringsRoughly();
+                break;
+            }
+            
+        }
+        
+        // SelfLoop multiplier!
+        BigInteger factor = BigInteger.ONE;
+        for (dk.brics.automaton.State key : selfLoopsPerState.keySet()){
+            factor = factor.multiply(BigInteger.valueOf(selfLoopsPerState.get(key)));
+        }
+        
+        stats.setNumberOfScenarios(totalScenarios);
+        stats.setLongestScenario(longestSize);
+        stats.setLongestScenarioExample(longestExample);
+        stats.setShortestScenario(shortestScenarioSize);
+        stats.setShortestScenarioExample(shortestExample);
+        
+        return stats;
+        
+    }
+    
+    Long getNumberOfAcceptedStrings() {
+        Long total = 0l;
+        
+        this.parseAutomaton();
+        
+        dk.brics.automaton.Automaton dkAut = this.getDkBricsAutomatonWithChars();
+        
+        Map<dk.brics.automaton.State, Long> selfLoopsPerState = new HashMap();
+        
+        
+        for (dk.brics.automaton.State q : dkAut.getStates()) {
+            Set<dk.brics.automaton.Transition> toRemoveTransitions = new HashSet<>();
+            for (dk.brics.automaton.Transition t : q.getTransitions()) {
+                if (t.getDest().equals(q)) {
+                    //if (!q.isAccept()) {
+                    toRemoveTransitions.add(t);
+                    //}
+                    if (selfLoopsPerState.containsKey(q)){
+                        selfLoopsPerState.put(q, selfLoopsPerState.get(q)+1);
+                    }
+                    else{
+                        selfLoopsPerState.put(q, 1l);
+                    }
+                }
+            }
+
+            q.getTransitions().removeAll(toRemoveTransitions);
+        }
+        
+        for (int i=2;i<dkAut.getNumberOfStates();i++){
+            total += dkAut.getStrings(i).size();
+        }
+        
+        // SelfLoop multiplier!
+        Long factor =1l;
+        for (dk.brics.automaton.State key : selfLoopsPerState.keySet()){
+            factor *= selfLoopsPerState.get(key);
+        }
+        return total*factor;
     }
 }

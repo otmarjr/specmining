@@ -28,7 +28,8 @@ public class ForbiddenSequencesExtractor {
     private final static String HELP_OPTION = "-h";
     private final static String OUTPUT_OPTION = "-o";
 
-    // Sample arguments execution
+    // Sample arguments execution -p "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\annotated-java-api\properties\java\net" -o "C:\Users\Otmar\dropbox\SpecMining\dataset\specs\java.net forbidden sequences"
+    // For Java Util: -p "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\annotated-java-api\properties\java\\util" -o "C:\Users\Otmar\dropbox\SpecMining\dataset\specs\java.util forbidden sequences"
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
@@ -75,7 +76,7 @@ public class ForbiddenSequencesExtractor {
 
             if (extractor.containsParseableSpec()) {
                 List<String> newLines = extractor.getForbiddenSequences();
-                newLines = newLines.stream().map(l -> l + "\t\t--File: " + f.getAbsolutePath())
+                newLines = newLines.stream()//.map(l -> l + "\t\t--File: " + f.getAbsolutePath())
                         .collect(Collectors.toList());
                 forbiddenSequences.addAll(newLines);
                 
