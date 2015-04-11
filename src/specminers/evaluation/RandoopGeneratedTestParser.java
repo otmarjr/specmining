@@ -38,27 +38,31 @@ public class RandoopGeneratedTestParser {
 
     public RandoopGeneratedTestParser(File javaFile) throws IOException {
         this.javaFile = javaFile;
-        this.lines = FileHelper.getTrimmedFileLines(javaFile);
+        this.lines = FileHelper.getTrimmedFileLines(javaFile)
+                .stream().filter(l -> StringUtils.isNotBlank(l))
+                .collect(Collectors.toList());
         this.loadTestMethods();
     }
 
     List<String> testMethods;
     Map<String, Map<String, String>> testMethodDetails;
 
-    public Map<String, Map<String, String>> getTestMethodDetails(){
+    public Map<String, Map<String, String>> getTestMethodDetails() {
         return this.testMethodDetails;
     }
-    
+
     private void loadTestMethods() {
         this.testMethods = new LinkedList<>();
         this.testMethodDetails = new HashMap<>();
         String testMethodRegularExpressionDeclaration = "^public\\svoid\\stest(\\d+)\\(\\).+$";
 
-        Deque<String> openBraces = new ArrayDeque<String>();
+        Deque<String> openBraces = new ArrayDeque<>();
         String currentMethod = null;
         List<String> statementsBeforeTryCatch = null;
         String currentClass = "";
         boolean foundTryCatchForCurrentTestMethod = false;
+        String firstVarFound = "";
+
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
 
@@ -74,18 +78,26 @@ public class RandoopGeneratedTestParser {
                     }
 
                     if (!line.contains("if (debug) { System.out.println();")) {
-                        if (line.contains("var0")) {
+                        if (line.contains("var")) {
                             if (!foundTryCatchForCurrentTestMethod) {
-                                if (line.contains("var0 = new java.")) {
-                                    int startIndex = line.indexOf(("var0 = new java."));
-                                    int endIndex = line.indexOf("(", startIndex);
-                                    currentClass = line.substring(startIndex, endIndex);
-                                    statementsBeforeTryCatch.add(currentClass + ".init<>()");
-                                } else {
-                                    int startIndex = line.lastIndexOf("var0.");
-                                    int endIndex = line.lastIndexOf("(");
-                                    String calledMethod = line.substring(startIndex, endIndex);
-                                    statementsBeforeTryCatch.add(currentClass + calledMethod + "()");
+                                if (StringUtils.isEmpty(firstVarFound)) {
+                                    String regex = "^var\\d+$";
+                                    firstVarFound = StringHelper.extractSingleValueWithRegex(line, regex, 0);
+                                }
+
+                                if (line.contains(firstVarFound)) {
+
+                                    if (line.contains(firstVarFound + " = new java.")) {
+                                        int startIndex = line.indexOf("new") + 3;
+                                        int endIndex = line.indexOf("(", startIndex);
+                                        currentClass = line.substring(startIndex, endIndex);
+                                        statementsBeforeTryCatch.add(currentClass + ".init<>()");
+                                    } else {
+                                        int startIndex = line.lastIndexOf(firstVarFound + ".") + 4;
+                                        int endIndex = line.lastIndexOf("(");
+                                        String calledMethod = line.substring(startIndex, endIndex);
+                                        statementsBeforeTryCatch.add(currentClass + calledMethod + "()");
+                                    }
                                 }
                             }
                         }
@@ -94,7 +106,7 @@ public class RandoopGeneratedTestParser {
                                 openBraces.add("{");
                             }
                             if (line.charAt(j) == '}') {
-                                if (!openBraces.isEmpty()){
+                                if (!openBraces.isEmpty()) {
                                     openBraces.pop();
                                 }
                             }
@@ -107,7 +119,11 @@ public class RandoopGeneratedTestParser {
                         Map<String, String> currentTestDetails = new HashMap<>();
                         currentTestDetails.put("foundTryCatch", foundTryCatchForCurrentTestMethod + "");
                         currentTestDetails.put("statementsBeforeTryCatch", testMethodStatements);
+
+                        if (StringUtils.isNotBlank(currentMethod)) {
                             testMethodDetails.put(currentMethod, currentTestDetails);
+                        }
+
                         currentMethod = "";
                         statementsBeforeTryCatch.clear();;
                         foundTryCatchForCurrentTestMethod = false;

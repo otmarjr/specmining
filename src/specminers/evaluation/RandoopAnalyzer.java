@@ -35,7 +35,7 @@ public class RandoopAnalyzer {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
         
-        // Sample run args: -t E:\randoop\gerados\java.net.DatagramSocket\6-t E:\randoop\gerados\java.net.DatagramSocket\6 -o "C:\Windows\Temp\randoop_analyzsis\java.net.DatagramSocket\6"
+        // Sample run args: -t /Users/otmarpereira/Documents/randoop/gerados/java.net.DatagramSocket/6 -o "/Users/otmarpereira/Documents/randoop_analysis"
         // -m "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\annotated-java-api\properties\java\\util" -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_extended\\util_v2.0" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\\util_v2.0"
         // or  -m "/Users/otmarpereira/Documents/mute_dataset/annotated-java-api/properties/java/util" -j "/Users/otmarpereira/Downloads/jflap_extended 2/util" -o "/Users/otmarpereira/Documents/mute_dataset/specs/jflap_pruned/util"
         if (options.containsKey(HELP_OPTION)) {
@@ -86,19 +86,19 @@ public class RandoopAnalyzer {
         List<File> originalSpecFiles = FileUtils.listFiles(testsFolder, extensions, true).stream().collect(Collectors.toList());
 
         List<String> lines = new LinkedList<>();
+        lines.add("Test File;Test Number;Valid Statements;Handles Exception?");
         for (File file : originalSpecFiles) {
             if (file.getName().equals("RandoopTest.java")) continue;
             RandoopGeneratedTestParser ra = new RandoopGeneratedTestParser(file);
             
             for (String test : ra.getTestMethodDetails().keySet()){
                 
-                String details = "";
+                String details = ra.getTestMethodDetails().get(test)
+                        .keySet().stream()
+                        .map(det -> ra.getTestMethodDetails().get(test).get(det))
+                        .collect(Collectors.joining(";"));
                 
-                for (String det : ra.getTestMethodDetails().get(test).keySet()){
-                    details += det + ";" + ra.getTestMethodDetails().get(test).get(det);
-                }
-                
-                String line = test + ";" + details;
+                String line = file.getName() + ";" +  test + ";" + details;
                 lines.add(line);
             }
         }
