@@ -93,15 +93,19 @@ public class RandoopGeneratedTestParser {
                                     if (line.contains(firstVarFound + " = new java.")) {
                                         int startIndex = line.indexOf("new") + 3;
                                         int endIndex = line.indexOf("(", startIndex);
-                                        currentClass = line.substring(startIndex, endIndex);
-                                        statementsBeforeTryCatch.add((currentClass + ".init<>()").trim());
+                                        try {
+                                            currentClass = line.substring(startIndex, endIndex);
+                                            statementsBeforeTryCatch.add((currentClass + ".init<>()").trim());
+                                        } catch (StringIndexOutOfBoundsException ex) {
+                                            System.out.println("Error parsing line " + line + " startIndex " + startIndex + " endIndex " + endIndex + " from java file " + javaFile.getAbsolutePath() + " current test method test" + currentMethod);
+                                        }
                                     } else {
                                         if (line.contains(firstVarFound + ".")) {
                                             int startIndex = line.indexOf(firstVarFound + ".") + 4;
                                             int endIndex = line.lastIndexOf("(");
                                             String calledMethod = "";
                                             calledMethod = line.substring(startIndex, endIndex);
-                                            statementsBeforeTryCatch.add(currentClass + (calledMethod.endsWith("(") ? "" : "(") +")");
+                                            statementsBeforeTryCatch.add(currentClass + (calledMethod.endsWith("(") ? "" : "(") + ")");
 
                                         }
                                     }
@@ -132,9 +136,10 @@ public class RandoopGeneratedTestParser {
                             testMethodDetails.put(currentMethod, currentTestDetails);
                         }
 
-                        currentMethod = "";
+                        currentMethod = null;
                         statementsBeforeTryCatch.clear();;
                         foundTryCatchForCurrentTestMethod = false;
+                        firstVarFound = null;
                         // Prepare for new method
                     }
                 }
