@@ -95,7 +95,7 @@ public class RandoopGeneratedTestParser {
                                         int endIndex = line.indexOf("(", startIndex);
                                         try {
                                             currentClass = line.substring(startIndex, endIndex);
-                                            statementsBeforeTryCatch.add((currentClass + ".init<>()").trim());
+                                            statementsBeforeTryCatch.add((currentClass + ".<init>()").trim());
                                         } catch (StringIndexOutOfBoundsException ex) {
                                             System.out.println("Error parsing line " + line + " startIndex " + startIndex + " endIndex " + endIndex + " from java file " + javaFile.getAbsolutePath() + " current test method test" + currentMethod);
                                         }
@@ -105,7 +105,7 @@ public class RandoopGeneratedTestParser {
                                             int endIndex = line.lastIndexOf("(");
                                             String calledMethod = "";
                                             calledMethod = line.substring(startIndex, endIndex);
-                                            statementsBeforeTryCatch.add(currentClass + (calledMethod.endsWith("(") ? "" : "(") + ")");
+                                            statementsBeforeTryCatch.add(currentClass + calledMethod + (calledMethod.endsWith("(") ? "" : "(") + ")");
 
                                         }
                                     }

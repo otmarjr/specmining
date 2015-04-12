@@ -43,7 +43,9 @@ public class PrecisionEvaluator {
 
         /* Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\net_v2.0" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel_v2.1" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\net_v2.1"
         Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\pruned_experimental\\util" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-util-pradel_v2.1" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\\util" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\\util_v2.1"
+        -j 
         -j /Users/otmarpereira/Documents/cores/specs/java6/Refined_Specs/java.net -t /Users/otmarpereira/Documents/sequences/java.net -o /Users/otmarpereira/Documents/sequences_precision/java.net -r /Users/otmarpereira/Documents/cores/specs/java6/Initial_Specs/Pradels_Specs/jflap/
+        -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\pruned_experimental\\net" -t "C:\Users\Otmar\Google Drive\randoop_traces\java.net" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\\net" -o "C:\Users\Otmar\Google Drive\randoop_precision\java.net"
                 */
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
@@ -172,7 +174,7 @@ public class PrecisionEvaluator {
             
             for (File t : traces) {
                 String fullTrace = FileUtils.readFileToString(t);
-                boolean isExternalTest = t.getAbsolutePath().contains("external");
+                boolean isExternalTest = !fullTrace.contains("xception");
 
                 List<String> traceCalls = Stream.of(fullTrace.split("\\)"))
                         .map(call -> call + ")")
