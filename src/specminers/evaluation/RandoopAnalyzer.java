@@ -149,21 +149,21 @@ public class RandoopAnalyzer {
         List<File> originalSpecFiles = FileUtils.listFiles(testsFolder, extensions, true).stream().collect(Collectors.toList());
 
         List<String> lines = new LinkedList<>();
+        lines.add("Test File;Test Number;Valid Statements;Handles Exception?");
         for (File file : originalSpecFiles) {
             if (file.getName().equals("RandoopTest.java")) {
                 continue;
             }
             RandoopGeneratedTestParser ra = new RandoopGeneratedTestParser(file);
-
-            for (String test : ra.getTestMethodDetails().keySet()) {
-
-                String details = "";
-
-                for (String det : ra.getTestMethodDetails().get(test).keySet()) {
-                    details += det + ";" + ra.getTestMethodDetails().get(test).get(det);
-                }
-
-                String line = test + ";" + details;
+            
+            for (String test : ra.getTestMethodDetails().keySet()){
+                
+                String details = ra.getTestMethodDetails().get(test)
+                        .keySet().stream()
+                        .map(det -> ra.getTestMethodDetails().get(test).get(det))
+                        .collect(Collectors.joining(";"));
+                
+                String line = file.getName() + ";" +  test + ";" + details;
                 lines.add(line);
             }
         }
