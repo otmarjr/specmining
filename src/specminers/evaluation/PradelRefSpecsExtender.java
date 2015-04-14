@@ -43,6 +43,8 @@ public class PradelRefSpecsExtender {
         // Sample execution args:  -s "E:\openjdk-6-src-b33-14_oct_2014.tar\jdk\src\share\classes\java\net" -j "C:\Users\Otmar\dropbox\SpecMining\dataset\specs\jflap\net" -p "C:\Users\Otmar\dropbox\SpecMining\dataset\specs\java.net public API" -o "C:\Users\Otmar\dropbox\SpecMining\dataset\specs\jflap_extended\net_v2.1"
         // another example -s "E:\openjdk-6-src-b33-14_oct_2014.tar\jdk\src\share\classes\java\\util" -j "C:\Users\Otmar\dropbox\SpecMining\dataset\specs\jflap\\util" -p "C:\Users\Otmar\dropbox\SpecMining\dataset\specs\java.util public API" -o "C:\Users\Otmar\dropbox\SpecMining\dataset\specs\jflap_extended\\util_v2.0"
         // or -s "/Users/otmarpereira/Documents/openjdk6-b33/jdk/src/share/classes/java/net/" -j "/Users/otmarpereira/Documents/mute_dataset/specs/jflap/net" -o "/Users/otmarpereira/Documents/mute_dataset/specs/jflap_extended/net"
+        // -s "/Users/otmarpereira/Documents/openjdk6-b33/jdk/src/share/classes/java/net/" -j "/Users/otmarpereira/Documents/mute_dataset/specs/jflap/net" -o "/Users/otmarpereira/Documents/cores/specs/java6/Initial_Specs/Pradels_Specs/jflap/"
+        // for util -s "/Users/otmarpereira/Documents/openjdk6-b33/jdk/src/share/classes/java/util/" -j "/Users/otmarpereira/Documents/mute_dataset/specs/jflap/util" -o "/Users/otmarpereira/Dropbox/SpecMining/dataset/specs/jflap_extended/util_v2.1/"
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
         if (options.containsKey(HELP_OPTION)) {

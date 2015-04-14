@@ -92,7 +92,9 @@ public class JflapFileManipulator {
                     .filter(k -> getPackageName(k).equals(currentClassPackage))
                     .collect(Collectors.toList());
 
-            samePackageClasses.forEach(c -> addGettersAndSettersAfterInstantiation(publicAPI.getOrDefault(c, null)));
+            samePackageClasses.forEach(c -> {
+                addGettersAndSettersAfterInstantiation(publicAPI.getOrDefault(c, null));
+            });
             samePackageClasses.forEach(c -> addTransitionsFromClass(publicAPI.getOrDefault(c, null)));
         }
 
@@ -119,39 +121,39 @@ public class JflapFileManipulator {
                 char upper = (char) ('A' + i);
                 upperCases.add(Character.toString(upper));
             }
-            
+
             Set<String> getterMethodWildCards = upperCases.stream()
                     .map(ul -> ".get" + ul).collect(Collectors.toSet());
-            
+
             Set<String> setterMethodWildCards = upperCases.stream()
                     .map(ul -> ".set" + ul).collect(Collectors.toSet());
-            
+
             Set<String> specialGetterIs = upperCases.stream()
                     .map(ul -> ".is" + ul).collect(Collectors.toSet());
-            
+
             Set<String> specialGetterTo = upperCases.stream()
                     .map(ul -> ".to" + ul).collect(Collectors.toSet());
-            
+
             Set<String> getterAndSettersTransitions = transitions.stream()
-                    .filter(t -> getterMethodWildCards.stream().anyMatch(m -> t.contains(m)) 
+                    .filter(t -> getterMethodWildCards.stream().anyMatch(m -> t.contains(m))
                             || setterMethodWildCards.stream().anyMatch(m -> t.contains(m))
                             || t.contains(".hashCode") || t.contains(".equals")
-                            || specialGetterIs.stream().anyMatch(m -> t.contains(m)) 
+                            || specialGetterIs.stream().anyMatch(m -> t.contains(m))
                             || specialGetterTo.stream().anyMatch(m -> t.contains(m)))
                     .collect(Collectors.toSet());
 
             for (String methodSig : getterAndSettersTransitions) {
                 Set<FSATransition> acceptedMethodSigs = getFSATransitionsFromState(firstStateAfterInstantiation);
 
-                if (!acceptedMethodSigs.stream().anyMatch(t -> t.getLabel().equalsIgnoreCase(methodSig) && t.getToState().equals(stateForGettersAndSettersOnly))) {
+                if (!acceptedMethodSigs.stream().anyMatch(t -> t.getLabel().equalsIgnoreCase(methodSig) && t.getFromState().equals(firstStateAfterInstantiation))) {
                     FSATransition fsaT = new FSATransition(firstStateAfterInstantiation, stateForGettersAndSettersOnly, methodSig);
                     FSATransition fsaTransFromInit = new FSATransition(this.automaton.getInitialState(), stateForGettersAndSettersOnly, methodSig);
                     this.automaton.addTransition(fsaT);
                     this.automaton.addTransition(fsaTransFromInit);
                 }
-                
+
                 acceptedMethodSigs = getFSATransitionsFromState(stateForGettersAndSettersOnly);
-                
+
                 if (!acceptedMethodSigs.stream().anyMatch(t -> t.getLabel().equalsIgnoreCase(methodSig) && t.getToState().equals(stateForGettersAndSettersOnly))) {
                     FSATransition fsaT = new FSATransition(stateForGettersAndSettersOnly, stateForGettersAndSettersOnly, methodSig);
                     this.automaton.addTransition(fsaT);
@@ -470,29 +472,28 @@ public class JflapFileManipulator {
 
     BigInteger getNumberOfAcceptedStringsRoughly() {
         dk.brics.automaton.Automaton dkAut = this.getDkBricsAutomatonWithChars();
-        
+
         BigInteger total = BigInteger.ONE;
-        
+
         for (dk.brics.automaton.State q : dkAut.getStates()) {
             total = total.multiply(BigInteger.valueOf(q.getTransitions().size()));
         }
-        
+
         return total;
-        
+
     }
-    
+
     AutomataStats getAutomataStats() {
         BigInteger totalScenarios = BigInteger.ONE;
-        
+
         AutomataStats stats = new AutomataStats();
-        
+
         this.parseAutomaton();
-        
+
         dk.brics.automaton.Automaton dkAut = this.getDkBricsAutomatonWithChars();
-        
+
         Map<dk.brics.automaton.State, Long> selfLoopsPerState = new HashMap();
-        
-        
+
         for (dk.brics.automaton.State q : dkAut.getStates()) {
             Set<dk.brics.automaton.Transition> toRemoveTransitions = new HashSet<>();
             for (dk.brics.automaton.Transition t : q.getTransitions()) {
@@ -500,10 +501,9 @@ public class JflapFileManipulator {
                     //if (!q.isAccept()) {
                     toRemoveTransitions.add(t);
                     //}
-                    if (selfLoopsPerState.containsKey(q)){
-                        selfLoopsPerState.put(q, selfLoopsPerState.get(q)+1);
-                    }
-                    else{
+                    if (selfLoopsPerState.containsKey(q)) {
+                        selfLoopsPerState.put(q, selfLoopsPerState.get(q) + 1);
+                    } else {
                         selfLoopsPerState.put(q, 1l);
                     }
                 }
@@ -511,82 +511,79 @@ public class JflapFileManipulator {
 
             q.getTransitions().removeAll(toRemoveTransitions);
         }
-        
+
         Integer shortestScenarioSize = Integer.MAX_VALUE;
         Integer longestSize = 0;
-        
+
         String shortestExample = "";
         String longestExample = "";
-        
-        for (int i=2;i<dkAut.getNumberOfStates();i++){
-            try
-            {
+
+        for (int i = 2; i < dkAut.getNumberOfStates(); i++) {
+            try {
                 Set<String> acceptedStringsOfSize = dkAut.getStrings(i);
-                
-                if (!acceptedStringsOfSize.isEmpty()){
-                    
-                    if (i < shortestScenarioSize){
+
+                if (!acceptedStringsOfSize.isEmpty()) {
+
+                    if (i < shortestScenarioSize) {
                         shortestScenarioSize = i;
                         shortestExample = acceptedStringsOfSize.iterator().next();
                         List<String> events = new LinkedList<>();
-                        
-                        for (int j=0;j<shortestExample.length();j++){
+
+                        for (int j = 0; j < shortestExample.length(); j++) {
                             events.add(this.labelsDkLabelToJffLabel.get(shortestExample.charAt(j)));
                         }
-                        
+
                         shortestExample = events.stream().collect(Collectors.joining(", "));
                     }
-                    
-                    if (i > longestSize){
+
+                    if (i > longestSize) {
                         longestSize = i;
                         longestExample = acceptedStringsOfSize.iterator().next();
-                        
+
                         List<String> events = new LinkedList<>();
-                        
-                        for (int j=0;j<longestExample.length();j++){
+
+                        for (int j = 0; j < longestExample.length(); j++) {
                             events.add(this.labelsDkLabelToJffLabel.get(longestExample.charAt(j)));
                         }
-                        
+
                         longestExample = events.stream().collect(Collectors.joining(", "));
                     }
-                    
+
                     totalScenarios = totalScenarios.add(BigInteger.valueOf(dkAut.getStrings(i).size()));
                 }
-                
-            }
-            catch (OutOfMemoryError error){
+
+            } catch (OutOfMemoryError error) {
                 totalScenarios = getNumberOfAcceptedStringsRoughly();
                 break;
             }
-            
+
         }
-        
+
         // SelfLoop multiplier!
         BigInteger factor = BigInteger.ONE;
-        for (dk.brics.automaton.State key : selfLoopsPerState.keySet()){
+        for (dk.brics.automaton.State key : selfLoopsPerState.keySet()) {
             factor = factor.multiply(BigInteger.valueOf(selfLoopsPerState.get(key)));
         }
-        
+
         stats.setNumberOfScenarios(totalScenarios);
         stats.setLongestScenario(longestSize);
         stats.setLongestScenarioExample(longestExample);
         stats.setShortestScenario(shortestScenarioSize);
         stats.setShortestScenarioExample(shortestExample);
-        
+
         return stats;
-        
+
     }
-    
+
     Long getNumberOfAcceptedStrings() {
         Long total = 0l;
-        
+
         this.parseAutomaton();
-        
+
         dk.brics.automaton.Automaton dkAut = this.getDkBricsAutomatonWithChars();
-        
+
         Map<dk.brics.automaton.State, Long> selfLoopsPerState = new HashMap();
-        
-        
+
         for (dk.brics.automaton.State q : dkAut.getStates()) {
             Set<dk.brics.automaton.Transition> toRemoveTransitions = new HashSet<>();
             for (dk.brics.automaton.Transition t : q.getTransitions()) {
@@ -594,10 +591,9 @@ public class JflapFileManipulator {
                     //if (!q.isAccept()) {
                     toRemoveTransitions.add(t);
                     //}
-                    if (selfLoopsPerState.containsKey(q)){
-                        selfLoopsPerState.put(q, selfLoopsPerState.get(q)+1);
-                    }
-                    else{
+                    if (selfLoopsPerState.containsKey(q)) {
+                        selfLoopsPerState.put(q, selfLoopsPerState.get(q) + 1);
+                    } else {
                         selfLoopsPerState.put(q, 1l);
                     }
                 }
@@ -605,16 +601,16 @@ public class JflapFileManipulator {
 
             q.getTransitions().removeAll(toRemoveTransitions);
         }
-        
-        for (int i=2;i<dkAut.getNumberOfStates();i++){
+
+        for (int i = 2; i < dkAut.getNumberOfStates(); i++) {
             total += dkAut.getStrings(i).size();
         }
-        
+
         // SelfLoop multiplier!
-        Long factor =1l;
-        for (dk.brics.automaton.State key : selfLoopsPerState.keySet()){
+        Long factor = 1l;
+        for (dk.brics.automaton.State key : selfLoopsPerState.keySet()) {
             factor *= selfLoopsPerState.get(key);
         }
-        return total*factor;
+        return total * factor;
     }
 }

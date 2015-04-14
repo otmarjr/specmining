@@ -173,11 +173,11 @@ public class PrecisionEvaluator {
             rejectedExternalTraces.put(f, new HashSet<>());
             
             for (File t : traces) {
-                String fullTrace = FileUtils.readFileToString(t);
+                String fullTrace = FileUtils.readFileToString(t).trim();
                 boolean isExternalTest = !fullTrace.contains("xception");
 
                 List<String> traceCalls = Stream.of(fullTrace.split("\\)"))
-                        .map(call -> call + ")")
+                        .map(call -> call.replace(".init<>", ".<init>") + ")")
                         .collect(Collectors.toList());
 
                 minedSeqs.add(traceCalls);
