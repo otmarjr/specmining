@@ -467,12 +467,12 @@ public class MopExtractor {
     private Set<String> javaUtilClasses;
 
     private Set<String> getJavaClassNamesFromPath(String packageName) {
-        String[] extensions = new String[]{"class"};
+        String[] extensions = new String[]{"java"};
         File root = new File(getJdkLibraryPathFolder() + packageName);
 
         return FileUtils.listFiles(root, extensions, true)
                 .stream().filter(clsFile -> !clsFile.getName().contains("$"))
-                .map(clsFile -> clsFile.getAbsolutePath().replace(getJdkLibraryPathFolder(), "").replace("/", ".").replace("\\", ".").replace(".class", ""))
+                .map(clsFile -> clsFile.getAbsolutePath().replace(getJdkLibraryPathFolder(), "").replace(".java", "").replace(".class", "").replace("/", ".").replace("\\", ".").replace(".java", "java"))
                 .collect(Collectors.toSet());
     }
 
@@ -492,7 +492,7 @@ public class MopExtractor {
     }
 
     private String getJdkLibraryPathFolder() {
-        return "E:\\debug-instrumented-open-jdk6\\jre\\lib\\rt\\";
+        return "/Users/otmarpereira/Documents/openjdk6-b33/jdk/src/share/classes";
     }
 
     private Set<String> getAllSubtypesFrom(String baseClass) {
@@ -525,6 +525,7 @@ public class MopExtractor {
                     }
                 }
             } catch (ClassNotFoundException ex) {
+                System.out.println("Error loading class " + clazz + " Error " + ex.getLocalizedMessage());
             }
         }
         return subtypes;

@@ -37,6 +37,8 @@ public class MergedSpecGenerator {
         // Sample run args: -m "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\annotated-java-api\properties\java\net" -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_extended\net_v2.1" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\net_v2.0"
         // -m "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\annotated-java-api\properties\java\\util" -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_extended\\util_v2.0" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\\util_v2.0"
         // or  -m "/Users/otmarpereira/Documents/mute_dataset/annotated-java-api/properties/java/util" -j "/Users/otmarpereira/Downloads/jflap_extended 2/util" -o "/Users/otmarpereira/Documents/mute_dataset/specs/jflap_pruned/util"
+        // or -m "/Users/otmarpereira/Documents/mute_dataset/annotated-java-api/properties/java/net" -j "/Users/otmarpereira/Dropbox/SpecMining/dataset/specs/jflap_extended/net_v2.2" -o "/Users/otmarpereira/Dropbox/SpecMining/dataset/specs/jflap_pruned/net_v2.1"
+        // or -m "/Users/otmarpereira/Documents/mute_dataset/annotated-java-api/properties/java/util" -j "/Users/otmarpereira/Dropbox/SpecMining/dataset/specs/jflap_extended/util_v2.1" -o "/Users/otmarpereira/Dropbox/SpecMining/dataset/specs/jflap_pruned/util_v2.1"
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
                     "In order to execute this program options:",
