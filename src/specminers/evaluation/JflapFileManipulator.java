@@ -448,6 +448,18 @@ public class JflapFileManipulator {
         return recall;
     }
 
+    private String charDkInputToOriginalSequence(String dkAutSequence) {
+        List<String> events = new LinkedList<>();
+
+        for (int j = 0; j < dkAutSequence.length(); j++) {
+            events.add(this.labelsDkLabelToJffLabel.get(dkAutSequence.charAt(j)));
+        }
+
+        String seq = events.stream().collect(Collectors.joining(", "));
+
+        return seq;
+    }
+
     private automata.State runInputOnAutomaton(List<String> input) {
         if (this.automaton == null) {
             this.parseAutomaton();
@@ -490,6 +502,9 @@ public class JflapFileManipulator {
 
         this.parseAutomaton();
 
+        State stGetSet = this.automaton.getStateWithID(this.automaton.getStates().length - 1);
+
+        //this.automaton.removeFinalState(stGetSet);
         dk.brics.automaton.Automaton dkAut = this.getDkBricsAutomatonWithChars();
 
         Map<dk.brics.automaton.State, Long> selfLoopsPerState = new HashMap();
@@ -521,35 +536,22 @@ public class JflapFileManipulator {
         for (int i = 2; i < dkAut.getNumberOfStates(); i++) {
             try {
                 Set<String> acceptedStringsOfSize = dkAut.getStrings(i);
-
+                List<String> acc  = new LinkedList<>();
+                acc.addAll(acceptedStringsOfSize);
                 if (!acceptedStringsOfSize.isEmpty()) {
 
                     if (i < shortestScenarioSize) {
                         shortestScenarioSize = i;
-                        shortestExample = acceptedStringsOfSize.iterator().next();
-                        List<String> events = new LinkedList<>();
-
-                        for (int j = 0; j < shortestExample.length(); j++) {
-                            events.add(this.labelsDkLabelToJffLabel.get(shortestExample.charAt(j)));
-                        }
-
-                        shortestExample = events.stream().collect(Collectors.joining(", "));
+                        shortestExample = charDkInputToOriginalSequence(acc.get(0));
                     }
 
                     if (i > longestSize) {
                         longestSize = i;
-                        longestExample = acceptedStringsOfSize.iterator().next();
-
-                        List<String> events = new LinkedList<>();
-
-                        for (int j = 0; j < longestExample.length(); j++) {
-                            events.add(this.labelsDkLabelToJffLabel.get(longestExample.charAt(j)));
-                        }
-
-                        longestExample = events.stream().collect(Collectors.joining(", "));
+                        longestExample = charDkInputToOriginalSequence(acc.get(0));
                     }
 
-                    totalScenarios = totalScenarios.add(BigInteger.valueOf(dkAut.getStrings(i).size()));
+                    totalScenarios = totalScenarios.add(BigInteger.valueOf(acc.size()));
+                    
                 }
 
             } catch (OutOfMemoryError error) {

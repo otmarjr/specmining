@@ -20,6 +20,7 @@ import javamop.parser.main_parser.ParseException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import specminers.ExecutionArgsHelper;
+import specminers.StringHelper;
 
 /**
  *
@@ -27,7 +28,6 @@ import specminers.ExecutionArgsHelper;
  */
 public class JflapStatsCollector {
     private final static String JFLAP_PATH_OPTION = "-j";
-    private final static String MOP_FILES_CODE_PATH_OPTION = "-m";
     private final static String HELP_OPTION = "-h";
     private final static String OUTPUT_OPTION = "-o";
     
@@ -35,15 +35,13 @@ public class JflapStatsCollector {
     public static void main(String[] args) throws IOException, ParseException{
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
-        // Sample run args: -m "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\annotated-java-api\properties\java\net" -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_extended\net_v2.1" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\net_v2.0"
-        // -m "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\annotated-java-api\properties\java\\util" -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_extended\\util_v2.0" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\\util_v2.0"
-        // or  -m "/Users/otmarpereira/Documents/mute_dataset/annotated-java-api/properties/java/util" -j "/Users/otmarpereira/Downloads/jflap_extended 2/util" -o "/Users/otmarpereira/Documents/mute_dataset/specs/jflap_pruned/util"
+        // Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\net_v2.1" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\"
+        //  -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\\util_v2.0" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\\util_v2.0"
+        // or  -j "/Users/otmarpereira/Downloads/jflap_extended 2/util" -o "/Users/otmarpereira/Documents/mute_dataset/specs/jflap_pruned/util"
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
                     "In order to execute this program options:",
                     "-j <PATH> : Where to recursivelly search for jflap files equivalent to Pradel's reference automata extended with public API.",
-                    "-m <PATH> : Folder where source code corresponding to mop files containing forbidden method sequences.",
-                    "-s <PATH> : Folder containing teste classes source code.",
                     "-o <PATH> : Folder where automata with extended transitions will be saved."
             ));
         }
@@ -87,6 +85,7 @@ public class JflapStatsCollector {
         
         List<File> originalSpecFiles = FileUtils.listFiles(originalSpecsFolder, extensions, true).stream().collect(Collectors.toList());
 
+        
         List<String> lines = new LinkedList<>();
         for (File file : originalSpecFiles) {
             JflapFileManipulator jffManipulator = new JflapFileManipulator(file);
@@ -99,7 +98,7 @@ public class JflapStatsCollector {
             lines.add(line);
         }
         
-        String statsPath = Paths.get(outputDir.getPath(), "java.util_automata_statistics.txt").toFile().getAbsolutePath();
+        String statsPath = Paths.get(outputDir.getPath(), StringHelper.getCurrentDateTimeStamp() + "_" + originalSpecsFolder.getName() + "automata_statistics.txt").toFile().getAbsolutePath();
         FileUtils.writeLines(new File(statsPath), lines);
     }
     

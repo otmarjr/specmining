@@ -467,7 +467,7 @@ public class MopExtractor {
     private Set<String> javaUtilClasses;
 
     private Set<String> getJavaClassNamesFromPath(String packageName) {
-        String[] extensions = new String[]{"java"};
+        String[] extensions = new String[]{"class"};
         File root = new File(getJdkLibraryPathFolder() + packageName);
 
         return FileUtils.listFiles(root, extensions, true)
@@ -492,7 +492,7 @@ public class MopExtractor {
     }
 
     private String getJdkLibraryPathFolder() {
-        return "/Users/otmarpereira/Documents/openjdk6-b33/jdk/src/share/classes";
+        return "E:\\debug-instrumented-open-jdk6\\jre\\lib\\rt\\";
     }
 
     private Set<String> getAllSubtypesFrom(String baseClass) {
