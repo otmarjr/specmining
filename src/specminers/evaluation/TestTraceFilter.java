@@ -45,10 +45,10 @@ public class TestTraceFilter {
         // Checks if a instance is created
         String constructorPattern = this.testedClass + ".<init>";
         if(Stream.of(FileUtils.readFileToString(file).split("\\)"))
-                .anyMatch(call -> call.startsWith(constructorPattern)))
+                .anyMatch(call -> call.toLowerCase().startsWith(constructorPattern.toLowerCase())))
         {
             return Stream.of(FileUtils.readFileToString(file).split("\\)"))
-                .anyMatch(call -> call.startsWith(this.testedClass + ".") && !call.startsWith(constructorPattern));
+                .anyMatch(call -> call.toLowerCase().startsWith(this.testedClass.toLowerCase() + ".") && !call.startsWith(constructorPattern));
         }
         return false;
                 

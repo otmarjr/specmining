@@ -38,8 +38,9 @@ public class TracesFilter {
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
-        // Sample run args: -u "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-unit-tests\net-pradel" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\net-pradel" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel_v2.1" -p java.net
-        // Another sample:  -u "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-unit-tests\\util-pradel" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\\util-pradel" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-util-pradel_v2.1" -p java.util
+        // Sample run args: -u "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-unit-tests\net-pradel" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\net-pradel_v2.0" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel_v2.2" -p java.net
+        // Another sample:  -u "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-unit-tests\\util-pradel" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\\util-pradel" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-util-pradel_v2.2" -p java.util
+        // Randoop: -u "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-unit-tests\net-pradel" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\net-pradel_v2.0" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel_v2.3-randoop" -p java.net
         
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(

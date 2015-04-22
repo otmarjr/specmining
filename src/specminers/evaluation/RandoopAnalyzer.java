@@ -41,6 +41,7 @@ public class RandoopAnalyzer {
 
         // Sample run args: -t E:\randoop\gerados\ -o "C:\Windows\Temp\randoop_analyzsis\"
         // -m "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\annotated-java-api\properties\java\\util" -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_extended\\util_v2.0" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\\util_v2.0"
+        // -t "C:\Users\Otmar\Google Drive\randoop\gerados" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\"
         // or  -m "/Users/otmarpereira/Documents/mute_dataset/annotated-java-api/properties/java/util" -j "/Users/otmarpereira/Downloads/jflap_extended 2/util" -o "/Users/otmarpereira/Documents/mute_dataset/specs/jflap_pruned/util"
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
@@ -58,7 +59,7 @@ public class RandoopAnalyzer {
     private static boolean validateInputArguments(Map<String, String> programOptions) {
         boolean ok = true;
         if (!programOptions.containsKey(RANDOOP_TESTS_FOLDER)) {
-            System.err.println("You must use the -j option to inform a valid path where to search for original jflap files.");
+            System.err.println("You must use the -t option to inform a valid path where to search for original jflap files.");
             ok = false;
         } else {
             File f = new File(programOptions.get(RANDOOP_TESTS_FOLDER));
