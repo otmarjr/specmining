@@ -37,17 +37,17 @@ public class TestTraceFilter {
     }
     
     private boolean containsOnlyCallsToTargetClassPackage() throws IOException{
-        return Stream.of(FileUtils.readFileToString(file).split("\\)"))
+        return Stream.of(FileUtils.readFileToString(file).trim().split("\\)"))
                 .allMatch(call -> call.startsWith(this.classPackage));
     }
     
     private boolean containsAtLeastOneCallToTargetClassMethod() throws IOException{
         // Checks if a instance is created
         String constructorPattern = this.testedClass + ".<init>";
-        if(Stream.of(FileUtils.readFileToString(file).split("\\)"))
+        if(Stream.of(FileUtils.readFileToString(file).trim().split("\\)"))
                 .anyMatch(call -> call.toLowerCase().startsWith(constructorPattern.toLowerCase())))
         {
-            return Stream.of(FileUtils.readFileToString(file).split("\\)"))
+            return Stream.of(FileUtils.readFileToString(file).trim().split("\\)"))
                 .anyMatch(call -> call.toLowerCase().startsWith(this.testedClass.toLowerCase() + ".") && !call.startsWith(constructorPattern));
         }
         return false;

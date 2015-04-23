@@ -34,20 +34,23 @@ public class TracesFilter {
     private final static String HELP_OPTION = "-h";
     private final static String OUTPUT_OPTION = "-o";
     private final static String TARGET_PACKAGE = "-p";
+    private final static String AUTOMATICALLY_GENERATED_TESTS = "-a";
 
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
         // Sample run args: -u "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-unit-tests\net-pradel" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\net-pradel_v2.0" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel_v2.2" -p java.net
+        // Sample run args: -u "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-unit-tests\net-pradel" -a -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\net-randoop" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel_v2.3-randoop" -p java.net
+        // Sample run args: -u "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-unit-tests\\util-pradel" -a -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\\util-randoop" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-util-pradel_v2.3-randoop" -p java.util
         // Another sample:  -u "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-unit-tests\\util-pradel" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\\util-pradel" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-util-pradel_v2.2" -p java.util
         // Randoop: -u "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-unit-tests\net-pradel" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\net-pradel_v2.0" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel_v2.3-randoop" -p java.net
-        
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
                     "In order to execute this program options:",
                     "-u <PATH> : Where to recursivelly search for unit tests source code.",
                     "-t <PATH> : Folder contaning trace calls.",
-                    "-o <PATH> : Folder where filtered traced unit test executions should be saved."
+                    "-o <PATH> : Folder where filtered traced unit test executions should be saved.",
+                    "-a : indicates that the input tests are automatically generated"
             ));
         }
 
@@ -91,8 +94,10 @@ public class TracesFilter {
 
     private static void copyTraceFilesToOutput(Map<String, Set<File>> filteredTests,
             String testsType, Map<String, String> programOptions) throws IOException {
-        
+
         Map<String, Set<File>> testValidTraces = new HashMap<>();
+
+        Set<File> validTraceFiles = new HashSet<>();
         
         for (String clazz : filteredTests.keySet()) {
             String fullyQualifiedClassName = String.format("%s.%s", programOptions.get(TARGET_PACKAGE), clazz);
@@ -105,40 +110,43 @@ public class TracesFilter {
                 Files.createDirectory(filteredOutputFolder);
             }
 
-            
             for (File testFile : filteredTests.get(clazz)) {
-                String traceFileName = testFile.getName().replace(".java", "_client_calls_trace.txt");
+                String traceFileName = testFile.getName();
                 File traceFile = Paths.get(parentFolder.getAbsolutePath(), traceFileName).toFile();
+                if (!programOptions.containsKey(AUTOMATICALLY_GENERATED_TESTS)) {
+                    traceFileName = testFile.getName().replace(".java", "_client_calls_trace.txt");
+                    traceFile = Paths.get(parentFolder.getAbsolutePath(), traceFileName).toFile();
+                }
 
                 if (traceFile.exists()) {
                     TestTraceFilter traceFilter = new TestTraceFilter(traceFile, fullyQualifiedClassName);
                     if (traceFilter.isValidTrace()) {
-                        if (testValidTraces.get(clazz) == null){
+                        if (testValidTraces.get(clazz) == null) {
                             testValidTraces.put(clazz, new HashSet<>());
                         }
                         testValidTraces.get(clazz).add(traceFile);
-                    }
-                    else{
-                        if (traceFile.exists()){
-                            if (!traceFile.delete()){
+                    } else {
+                        if (traceFile.exists()) {
+                            /*
+                            if (!traceFile.delete()) {
                                 throw new RuntimeException("Not possible to delete invalid trace file " + traceFileName);
-                            }
+                            }*/
                         }
                     }
                 }
             }
         }
-        
+
         testValidTraces = TestTraceFilter.removeSubTraces(testValidTraces, programOptions.get(TARGET_PACKAGE));
-        
-        for (String clazz : testValidTraces.keySet()){
+
+        for (String clazz : testValidTraces.keySet()) {
             Path filteredOutputFolder = Paths.get(programOptions.get(OUTPUT_OPTION), clazz, testsType).toAbsolutePath();
             FileUtils.deleteDirectory(filteredOutputFolder.toFile());
-            
-            for (File validTrace : testValidTraces.get(clazz)){
+
+            for (File validTrace : testValidTraces.get(clazz)) {
                 FileUtils.copyFileToDirectory(validTrace, filteredOutputFolder.toFile());
             }
-            
+
             if (filteredOutputFolder.toFile().list().length == 0) {
                 FileUtils.deleteDirectory(filteredOutputFolder.toFile());
             }
@@ -147,48 +155,77 @@ public class TracesFilter {
 
     private static void filterUnitTestExeceutionTraces(Map<String, String> options) throws IOException, ParseException {
 
-        File testFilesFolder = new File(options.get(UNIT_TEST_FILES_CODE_PATH_OPTION));
-        String[] extensions = new String[]{"java"};
-
-        List<File> files = FileUtils.listFiles(testFilesFolder, extensions, true).stream()
-                .collect(Collectors.toList());
-
         // Key: class name Value: list of trace files containing filtered
         // unit test traces.
         Map<String, Set<File>> externalFilteredTests = new HashMap<>();
-        Map<String, Set<File>> internalFilteredTests = new HashMap<>();
 
-        for (File f : files) {
+        if (options.containsKey(AUTOMATICALLY_GENERATED_TESTS)) {
+            File testFilesFolder = new File(options.get(UNIT_TEST_FILES_CODE_PATH_OPTION));
 
-            File curFile = f;
+            List<File> testFolders = Arrays.asList(testFilesFolder.listFiles());
 
-            while (!curFile.getParentFile().equals(testFilesFolder)) {
-                curFile = curFile.getParentFile();
+            for (File testFolder : testFolders) {
+                String testedClass = testFolder.getName();
+                // Check if there is traces for this folder:
+                File tracesFolder = new File(new File(options.get(TRACES_PATH_OPTION)), testFolder.getName());
+
+                if (tracesFolder.exists()) {
+                    String[] extensions = new String[]{"txt"};
+                    List<File> traces = FileUtils.listFiles(tracesFolder, extensions, true).stream()
+                            .collect(Collectors.toList());
+
+                    for (File f : traces) {
+                        if (!externalFilteredTests.containsKey(testedClass)) {
+                            externalFilteredTests.put(testedClass, new HashSet<>());
+                        }
+
+                        externalFilteredTests.get(testedClass).add(f);
+                    }
+                }
             }
+        } else {
+            File testFilesFolder = new File(options.get(UNIT_TEST_FILES_CODE_PATH_OPTION));
+            String[] extensions = new String[]{"java"};
 
-            String testedClass = curFile.getName();
+            List<File> files = FileUtils.listFiles(testFilesFolder, extensions, true).stream()
+                    .collect(Collectors.toList());
 
-            MinedSpecsFilter filter = new MinedSpecsFilter(f);
-            if (!filter.isStandAloneTest()) {
-                continue;
-            }
-            if (filter.containsExternalAPITest()) {
-                if (!externalFilteredTests.containsKey(testedClass)) {
-                    externalFilteredTests.put(testedClass, new HashSet<>());
+            // Key: class name Value: list of trace files containing filtered
+            // unit test traces.
+            Map<String, Set<File>> internalFilteredTests = new HashMap<>();
+
+            for (File f : files) {
+
+                File curFile = f;
+
+                while (!curFile.getParentFile().equals(testFilesFolder)) {
+                    curFile = curFile.getParentFile();
                 }
 
-                externalFilteredTests.get(testedClass).add(f);
-            } else {
-                if (!internalFilteredTests.containsKey(testedClass)) {
-                    internalFilteredTests.put(testedClass, new HashSet<>());
-                }
+                String testedClass = curFile.getName();
 
-                internalFilteredTests.get(testedClass).add(f);
+                MinedSpecsFilter filter = new MinedSpecsFilter(f);
+                if (!filter.isStandAloneTest()) {
+                    continue;
+                }
+                if (filter.containsExternalAPITest()) {
+                    if (!externalFilteredTests.containsKey(testedClass)) {
+                        externalFilteredTests.put(testedClass, new HashSet<>());
+                    }
+
+                    externalFilteredTests.get(testedClass).add(f);
+                } else {
+                    if (!internalFilteredTests.containsKey(testedClass)) {
+                        internalFilteredTests.put(testedClass, new HashSet<>());
+                    }
+
+                    internalFilteredTests.get(testedClass).add(f);
+                }
             }
+
+            copyTraceFilesToOutput(internalFilteredTests, "internal", options);
         }
-
         copyTraceFilesToOutput(externalFilteredTests, "external", options);
-        copyTraceFilesToOutput(internalFilteredTests, "internal", options);
-        
+
     }
 }
