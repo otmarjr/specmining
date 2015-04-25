@@ -39,7 +39,8 @@ public class RandoopAnalyzer {
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
-        // Sample run args: -t E:\randoop\gerados\ -o "C:\Windows\Temp\randoop_analyzsis\"
+        // -t E:\randoop\gerados-java-net-denovo -o "C:\Windows\Temp\randoop_analyzsis-java-net-de-novo"
+        //Sample run args: -t E:\randoop\gerados\ -o "C:\Windows\Temp\randoop_analyzsis-java-net-de-novo"
         // -m "C:\Users\Otmar\Google Drive\Mestrado\SpecMining\annotated-java-api\properties\java\\util" -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_extended\\util_v2.0" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\\util_v2.0"
         // -t "C:\Users\Otmar\Google Drive\randoop\gerados" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\"
         // or  -m "/Users/otmarpereira/Documents/mute_dataset/annotated-java-api/properties/java/util" -j "/Users/otmarpereira/Downloads/jflap_extended 2/util" -o "/Users/otmarpereira/Documents/mute_dataset/specs/jflap_pruned/util"

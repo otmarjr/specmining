@@ -41,7 +41,11 @@ public class PrecisionEvaluator {
     public static void main(String[] args) throws IOException, ParseException {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
-        /* Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\net_v2.1" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel_v2.2" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\net_v2.2"
+        
+        /* Sample run args: 
+                -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\net_v2.1" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel_v2.3-randoop" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\net_v2.3-randoop"
+                -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\net_v2.1" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-net-pradel_v2.2" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\net_v2.2"
+        -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\\util_v2.1" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-util-pradel_v2.3-randoop" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\\util" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\\util_v2.4-randoop"
         -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\\util_v2.1" -t "C:\Users\Otmar\Dropbox\SpecMining\dataset\mute_log\dissertation-traces\filtered-util-pradel_v2.2" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\\util" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\\util_v2.3"
         //Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\\util_v2.1" -t "C:\Users\Otmar\Google Drive\randoop_traces\java.util" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\\util" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\precision\\util_v2.2"
         
@@ -49,6 +53,7 @@ public class PrecisionEvaluator {
         -j /Users/otmarpereira/Dropbox/SpecMining/dataset/specs/jflap_pruned/net_v2.1 -t /Users/otmarpereira/Documents/sequences/java.net -o /Users/otmarpereira/Documents/sequences_precision/java.net -r /Users/otmarpereira/Documents/cores/specs/java6/Initial_Specs/Pradels_Specs/jflap/
         -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\pruned_experimental\\net" -t "C:\Users\Otmar\Google Drive\randoop_traces\java.net" -r "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\\net" -o "C:\Users\Otmar\Google Drive\randoop_precision\java.net"
                 */
+        
         if (options.containsKey(HELP_OPTION)) {
             ExecutionArgsHelper.displayHelp(Arrays.asList(
                     "In order to execute this program options:",
