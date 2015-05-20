@@ -36,6 +36,8 @@ public class JflapStatsCollector {
         Map<String, String> options = ExecutionArgsHelper.convertArgsToMap(args);
 
         // Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\net_v2.1" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\"
+        // Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\net" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\"
+        // Sample run args: -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap\\util" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\"
         //  -j "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\\util_v2.0" -o "C:\Users\Otmar\Dropbox\SpecMining\dataset\specs\jflap_pruned\\util_v2.0"
         // or  -j "/Users/otmarpereira/Downloads/jflap_extended 2/util" -o "/Users/otmarpereira/Documents/mute_dataset/specs/jflap_pruned/util"
         if (options.containsKey(HELP_OPTION)) {
@@ -47,7 +49,7 @@ public class JflapStatsCollector {
         }
 
         if (validateInputArguments(options)) {
-            extendedOriginalSpecification(options);
+            collectMethodsStatistics(options);
         }
     }
 
@@ -72,8 +74,40 @@ public class JflapStatsCollector {
 
         return ok;
     }
+    
+    
+     private static void collectMethodsStatistics(Map<String, String> options)  throws IOException, ParseException {
+        
+        File originalSpecsFolder = new File(options.get(JFLAP_PATH_OPTION));
+        String[] extensions = new String[]{"jff"};
+        File outputDir = null;
 
-    private static void extendedOriginalSpecification(Map<String, String> options)  throws IOException, ParseException {
+        if (options.containsKey(OUTPUT_OPTION)) {
+            outputDir = new File(options.get(OUTPUT_OPTION));
+        }
+        
+        List<File> originalSpecFiles = FileUtils.listFiles(originalSpecsFolder, extensions, true).stream().collect(Collectors.toList());
+
+        
+        List<String> lines = new LinkedList<>();
+        for (File file : originalSpecFiles) {
+            String classname = file.getName().replace("_jflap_automaton.jff", "");
+            JflapFileManipulator jffManipulator = new JflapFileManipulator(file);
+            AutomataStats stats = jffManipulator.getAutomataMethodsStats(classname);
+            String line = FilenameUtils.removeExtension(file.getName()) + ";" + 
+                    stats.getNumberOfPublicMethods() + ";"
+                    + stats.getNumberOfRelevantMethods() + ";"
+                    + stats.getNumberOfComplexRelevantMethods()
+            + ";" + stats.getComplexRelevantMethods().stream().collect(Collectors.joining(","));
+            lines.add(line);
+        }
+        
+        String statsPath = Paths.get(outputDir.getPath(), StringHelper.getCurrentDateTimeStamp() + "_" + originalSpecsFolder.getName() + "automatas_method_statistics.txt").toFile().getAbsolutePath();
+        lines.add(0, "Class name;# of public methods;# of relevant methods;# of complex relevant methods;Complex method signatures");
+        FileUtils.writeLines(new File(statsPath), lines);
+    }
+
+    private static void collectScenariosStatistics(Map<String, String> options)  throws IOException, ParseException {
         
         File originalSpecsFolder = new File(options.get(JFLAP_PATH_OPTION));
         String[] extensions = new String[]{"jff"};
@@ -89,7 +123,7 @@ public class JflapStatsCollector {
         List<String> lines = new LinkedList<>();
         for (File file : originalSpecFiles) {
             JflapFileManipulator jffManipulator = new JflapFileManipulator(file);
-            AutomataStats stats = jffManipulator.getAutomataStats();
+            AutomataStats stats = jffManipulator.getAutomataScenariosStats();
             String line = FilenameUtils.removeExtension(file.getName()) + ";" + 
                     stats.getShortestScenario() + ";" + stats.getShortestScenarioExample()
                     + ";" + stats.getLongestScenario() + ";"

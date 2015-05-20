@@ -17,12 +17,19 @@ import java.awt.Point;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -30,10 +37,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.ClassUtils;
 import org.reflections.ReflectionUtils;
 import static org.reflections.ReflectionUtils.withModifier;
-import static org.reflections.ReflectionUtils.withParametersCount;
-import static org.reflections.ReflectionUtils.withPrefix;
 import org.reflections.Reflections;
 
 /**
@@ -334,6 +340,7 @@ public class JflapFileManipulator {
         this.loadJffLabelsMapToChars();
         JflapToDkBricsTwoWayAutomatonConverter converter = new JflapToDkBricsTwoWayAutomatonConverter(automaton);
         dk.brics.automaton.Automaton dkAut = converter.convertToDkBricsAutomaton(labelsMappingJffToDK);
+        
 
         return dkAut;
     }
@@ -495,7 +502,83 @@ public class JflapFileManipulator {
 
     }
 
-    AutomataStats getAutomataStats() {
+    AutomataStats getAutomataMethodsStats(String clazzName) {
+        AutomataStats stats = new AutomataStats();
+        
+        this.parseAutomaton();
+        
+        stats.setNumberOfRelevantMethods(this.getAllTransitionLabels().size());
+        
+        Set<String> relevantMethods = new HashSet<>(this.getAllTransitionLabels());
+        
+        try {
+            Class<?> cls = Class.forName(clazzName);
+            List<Method> methods = Arrays.asList(cls.getMethods());
+            stats.setNumberOfPublicMethods(methods.size());
+            stats.setNumberOfComplexRelevantMethods(0);
+            
+            
+            
+            for (Method m : methods){
+                String signature = String.format("%s.%s()", clazzName, m.getName());
+                if (relevantMethods.contains(signature)){
+                    
+                    Type superClass = cls.getGenericSuperclass();
+                    
+                    ParameterizedType paramType = null;
+                    
+                    if (superClass instanceof ParameterizedType){
+                        paramType = (ParameterizedType)superClass;
+                    }
+                    else{
+                        Logger.getLogger(JflapFileManipulator.class.getName()).log(Level.INFO, "signature of class" + cls.getName() + " has no generic type parameters.");
+                    }
+                    List<Type> genericTypeArguments = new LinkedList<>();
+                    
+                   
+                    if (paramType != null){
+                        genericTypeArguments = Arrays.asList(paramType.getActualTypeArguments());
+                    }
+                    
+                    List<Type> genericParamTypes = Arrays.asList(m.getGenericParameterTypes());
+                    
+                    for (int i=0;i<m.getParameterTypes().length;i++){
+                        Class<?> c = m.getParameterTypes()[i];
+                        Type t = m.getGenericParameterTypes()[i];
+                        
+                        boolean primitiveOrGeneric = ClassUtils.isPrimitiveOrWrapper(c) || genericTypeArguments.contains(t) || c.equals(String.class);
+                        //ArrayDeque.remove(Object o)
+                        boolean declaredObjectForParametrizedClass = !genericParamTypes.isEmpty()
+                                && c.equals(Object.class);
+                        
+                        boolean collectionOfGenericType = false;
+                        
+                        if (c.equals(Collection.class)){
+                            ParameterizedType pt2 = (ParameterizedType)t;
+                            for (Type t2 : pt2.getActualTypeArguments()){
+                                if (t2 instanceof WildcardType || genericParamTypes.contains(t2)){
+                                    collectionOfGenericType = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        boolean selfType = c.isAssignableFrom(cls);
+                        if (!primitiveOrGeneric && !declaredObjectForParametrizedClass && !collectionOfGenericType && !selfType){
+                            stats.setNumberOfComplexRelevantMethods(stats.getNumberOfComplexRelevantMethods()+1);
+                            stats.getComplexRelevantMethods().add(signature);
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(JflapFileManipulator.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return stats;
+    }
+    
+    AutomataStats getAutomataScenariosStats() {
         BigInteger totalScenarios = BigInteger.ONE;
 
         AutomataStats stats = new AutomataStats();

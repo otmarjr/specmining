@@ -6,6 +6,8 @@
 package specminers.evaluation;
 
 import java.math.BigInteger;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  *
@@ -19,6 +21,12 @@ public class AutomataStats {
     private String shortestScenarioExample;
     private String longestScenarioExample;
 
+    private Integer numberOfPublicMethods;
+    private Integer numberOfRelevantMethods;
+    private Integer numberOfComplexRelevantMethods;
+    
+    private List<String> complexRelevantMethods = new LinkedList<String>();
+    
     /**
      * @return the numberOfScenarios
      */
@@ -87,5 +95,37 @@ public class AutomataStats {
      */
     public void setLongestScenarioExample(String longestScenarioExample) {
         this.longestScenarioExample = longestScenarioExample;
+    }
+
+    public Integer getNumberOfPublicMethods() {
+        return numberOfPublicMethods;
+    }
+
+    public void setNumberOfPublicMethods(Integer numberOfPublicMethods) {
+        this.numberOfPublicMethods = numberOfPublicMethods;
+    }
+
+    public Integer getNumberOfRelevantMethods() {
+        return numberOfRelevantMethods;
+    }
+
+    public void setNumberOfRelevantMethods(Integer numberOfRelevantMethods) {
+        this.numberOfRelevantMethods = numberOfRelevantMethods;
+    }
+
+    public Integer getNumberOfComplexRelevantMethods() {
+        return numberOfComplexRelevantMethods;
+    }
+
+    public void setNumberOfComplexRelevantMethods(Integer numberOfComplexRelevantMethods) {
+        this.numberOfComplexRelevantMethods = numberOfComplexRelevantMethods;
+    }
+
+    public List<String> getComplexRelevantMethods() {
+        return complexRelevantMethods;
+    }
+
+    public void setComplexRelevantMethods(List<String> complexRelevantMethods) {
+        this.complexRelevantMethods = complexRelevantMethods;
     }
 }
